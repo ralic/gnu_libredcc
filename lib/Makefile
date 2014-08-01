@@ -23,8 +23,8 @@ subdirs: $(SUBDIRS)
 
 $(SUBDIRS):
 	$(MAKE) -C $@; 
+	mkdir -p avr
 	mv $@/lib$@.a avr/
-	touch libs
 
 #dependencies:
 #     foo: baz
