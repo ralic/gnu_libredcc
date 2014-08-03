@@ -1,0 +1,88 @@
+% LibreS88 
+% Andre Gruening 
+
+# Copyright
+
+Copyright 2014 André Grüning <libredcc@email.de>
+
+This file is part of LibreDCC
+
+LibreDCC is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+LibreDCC is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
+
+# Introduction
+
+S88 is a protocol to speak to feedback sensors. We implement a S88 decoder that listens to sensors on an S88 bus, see [http://www.s88-n.eu/index-en.html] for a specification. The
+decoder is implemented on an Arduino board and connects to a
+software command station (such as rocrail, see
+[http://wiki.rocrail.net/doku.php]) on a PC via USB using the HSI-88 protocol, see
+[http://ldt-infocenter.com/dokuwiki/doku.php?id=en:dl_hsi_88].
+
+# Requirements
+
+For AVR targets (eg Arduino boards):
+  ~ `avr-gcc` -- a AVR cross compiler for AVR targets
+  ~ `avr-libc` -- a subset of the standard glibc libraries for AVR
+  ~ `avrdude` -- to upload code from your desktop to AVR uC (for example to Arduino boards)
+
+This packages are part of many standard Linux distributions. 
+
+# Compilation
+
+Run `make` in this folder. This produces `hex` files for upload into a microcontroller
+
+# Installation
+
+- If you are using an Arduino board for the LibreS88 at port `/dev/ttyACM0`, simply run `make install`. 
+- Otherwise adapt the `Makefile` for the port, `avrdude` parameters for different board, and probably even different AVR programmes, see [XXX] for more information.
+
+# Connecting to the S88 bus.
+
+For the standard Arduino board, Arduino pins are used as follows and
+should be connected with the corresponding pins of the S88 bus cable: 
+
+> TO BE DONE -- for the time being check pin definitions in header `s88_hardware.h`.
+
+Note output pins of ATmega128p used on Arduino boards can only drive
+XX mA and depends on the number and type of the S88 feedback encoders
+you are using whether the load will exceed that current or not. 
+
+Therefore it is a good idea to switch an S88-N booster between the
+Arduino and the actual S88 bus with all the feedback encoders on
+them, see for example
+[http://digital-bahn.de/bau_s88n/s88-n-p_v2.htm]. [Other sources?]
+
+# Connecting to a software command station
+
+In principle any command station that support HSI-88 to read the S88 bus can be used. The Arduino board reports as `\dev\ttyACM0` or `\dev\ttyACM1` etc to the desktop (under linux). Check the precise device name and then
+
+Rocrail:
+  ~ 
+
+# Extension and Deviation to the HSI-protocol.
+
+# Speed of S88 bus and Implementation details of the S88-N bus.
+
+- The speed is about have of the maximum recommended at [Ref to S88]
+<!-- how do I do a ref to URLs in pandoc? Could all this also be -->
+<!-- implented in doxygen? It would be better placed there. --> 
+
+
+# Typesetting
+
+This document is typeset using markdown / pandoc
+[http://johnmacfarlane.net/pandoc/], an unobtrusive markup (or rather
+markdown) language that also document source files to be
+human-reading, while allowing easy transformation into other formats, such as HTML or LaTeX. 
+
+Run `pandoc README -o README.pdf` to create a pdf version of this document.
