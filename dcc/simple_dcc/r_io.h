@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 André Grüning <libredcc@email.de>
+ *  Copyright 2014 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -16,15 +16,31 @@
  * You should have received a copy of the GNU General Public License
  * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef R_IO_H
+#define R_IO_H
 
-#ifndef S88_IAV_H
-#define S88_IAV_H 1
+#include <stdio.h>
 
-//#define TEST
-#ifdef TEST
-#define EOL_CHAR '\n' // only for testing, for real it should be \r!
-#else
-#define EOL_CHAR '\r' 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+char* r_fgets(char* str, const uint8_t size, FILE* const stream);
+  //uint8_t r_fputs(const char* str, FILE* const stream);
+
+
+#warning EOL is currently \r
+#define EOLSTR "\r"
+#define EOLCHAR '\r'
+
+#define FPUTL(string, fileptr)			\
+  do {						\
+    fputs(string EOLSTR, (fileptr));		\
+  } while(0)
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif
+

@@ -1,5 +1,4 @@
-/* 
- * Copyright 2014 André Grüning <libredcc@email.de>
+/* Copyright 2014 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -16,15 +15,17 @@
  * You should have received a copy of the GNU General Public License
  * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef ServiceMode 
+#define ServiceMode
 
-#ifndef S88_IAV_H
-#define S88_IAV_H 1
+#include <dcc.h>
 
-//#define TEST
-#ifdef TEST
-#define EOL_CHAR '\n' // only for testing, for real it should be \r!
-#else
-#define EOL_CHAR '\r' 
-#endif
+void service_mode_on();
+void service_mode_off();
 
+/** \file This file contains functions to send service mode packets, see NRMA RP 9.2.3 
+ */
+
+/** send a direct mode packet embedded into the appropriate number of resets and repitition and decoder recovery time **/
+uint8_t send_sm_dm_sequence(const dcc_packet * const packet);
 #endif

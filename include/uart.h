@@ -19,6 +19,11 @@
 #ifndef UART_H
 #define UART_H 1
 
+/** @file
+    Header file for communication with the UART.
+*/
+
+
 #include <stdio.h>
 //#include <avr/io.h>
 
@@ -28,12 +33,12 @@ extern "C" {
 #endif
 
   /**
-   * read a char from the uart -- blocking if buffer is empty.
+   * read a char from the uart. It blocks if buffer is empty. 
    */
   unsigned char uart_getc_buffered();
 
-  /// write a char to the uart -- if buffer full, an error char is
-  /// outputted and the original char to be written is discarded.  
+  /** write a char to the uart -- if buffer full, an error char is
+      outputted and the original char to be written is discarded.  */
   void uart_putc_buffered(const uint8_t ch);
 
   ///  write a char to the uart -- blocking if buffer is full.
@@ -45,51 +50,7 @@ extern "C" {
   /// returns currently available (ie received) bytes in the uart receiver buffer.
   uint8_t uart_rx_received();
 
-  /// returns true if tx buffer is halffull.
-  //uint8_t is_tx_buffer_halffull(); // is this used somewhere?
-  
-  /// tidy the buffer
-  //void tidy_tx_buffer(); // is this used somewhere?
-
-  /* ----- below is depreacted */
-
-#if 0
-  /** 
-      sends a char to the uart -- not needed currently -- uart_tx_init must be included :-(
-  */
-#define uart_send(__char) do {			\
-    while (!(UCSR0A & _BV(UDRE0)));		\
-    UDR0 = __char;				\
-  } while(0)
-
-
-#define uart_send_nibble(__byte) uart_send(nibble2digit(__byte));
-
-#define uart_send_byte(__byte) do {		\
-    uart_send_nibble(__byte >> 4);		\
-    uart_send_nibble(__byte);			\
-  } while(0)
-  
-#define buffered_uart_send_byte(__byte) do {	\
-    buffered_uart_send_nibble(__byte >> 4);	\
-    buffered_uart_send_nibble(__byte);		\
-  } while(0);
-
-#define buffered_uart_send_nibble(__nibble) uart_putc_buffered(nibble2digit(__nibble));
-
-
-  /** functions to wrap our own function such that they work with the standard IO streams*/
-
-  // only used for internal purposes
-  
-  //  int uart_put_stdio(const char c, FILE* const stream);
-  //int uart_get_stdio(FILE* const stream);
-  
-  // and the corresponding file stream:
-
-#endif  
-
-  //! file structure that writes and reads to the UART using the nonblocking write 
+  //! file structure for the UART using the bloc
   extern FILE uart;
 
 #ifdef __cplusplus

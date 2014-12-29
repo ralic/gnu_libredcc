@@ -20,16 +20,22 @@
 #include <uart.h>
 #include <avr/interrupt.h>
 
-// to be executed before main -- also make sure that uart_init.o is included!
+/*! This file contains functions to transmit bytes over the AVR uart. It implements a send buffer, where characters are stored, and then subsequently send to the UART proper in an ISR.
+*/
+
+
+/** enables the transmitter.
+    \note to be executed before main -- also make sure that uart_init.o is linked to the executable.
+ */
 void uart_tx_init() __attribute__((naked)) __attribute__((section(".init8"))); 
 void uart_tx_init() {
     UCSR0B |= _BV(TXEN0); // enable transmitter.
 }
 
-//! length of transmit buffer
-#define TX_BUFFER_SIZE 128
 
-//! transmit buffer that holds the chars to be transmitted
+#define TX_BUFFER_SIZE 128 //! length of transmit buffer in byte
+
+//! transmit buffer that holds the chars to be transmitted.
 static volatile uint8_t tx_buffer[TX_BUFFER_SIZE]; 
 
 //! index to the next byte to be written (post increment scheme)
@@ -38,11 +44,13 @@ static volatile uint8_t tx_write_idx = 0;
 /** 
     Places a byte into the transmission buffer to be sent over the UART.
 
-    The caller needs to tolerate that interrupts are temporily disabled.
-    Interrupts are unconditionally enabled after the return from this function.
+    \pre The caller needs to tolerate that interrupts are temporily disabled.
+    \post Interrupts are unconditionally enabled after the return from this function.
     
     If the transmit buffer is full, the new byte is ignored, but the
     last byte of the transmit buffer is set to "H" as a marker. 
+
+    @todo implement better way to deal with buffer overflows.
 
     @param byte to be written into the transmit buffer
 
@@ -61,23 +69,26 @@ void uart_putc_buffered(const uint8_t byte) {
   //! if not, write new byte into buffer.
   else { 
     tx_buffer[tx_write_idx++] = byte;
-    // indicating that we have something to tx.
+    // indicate that we have something to tx in case the USART_UDRE was disabled in ISR()
     UCSR0B |= _BV(UDRIE0); 
   }
-
   sei(); 
 }
 
+/*!  
+  puts a char into the transmit queue of the uart, and potentially
+  blocks/waits until space in the transmit queue becomes available. 
+  \pre interrupts must be enabled.
+  \todo is this used somewhere?
+ */
 void uart_putc_blocking(const uint8_t byte) {
-
   while(!uart_tx_free());
   uart_putc_buffered(byte);
-
 }
 
 
-/*! check how empty tx buffer is 
-  @return the number of bytes that the tx buffer can still hold.
+/*! check how much space there is in the tx buffer.
+  @return the number of bytes that the tx buffer can still take.
  */
 uint8_t uart_tx_free() {
   return TX_BUFFER_SIZE - tx_write_idx;
@@ -85,15 +96,16 @@ uint8_t uart_tx_free() {
 
 /**
  * This is the ISR that actually sends the bytes over the UART. Will
- * only be called when the UART is ready to send a new byte, ie when
+ * be trigger when the UART is ready to send a new byte, ie when
  * the UDR (uart data register ready) interrupt is enabled.
+ * Take the bytes to send from the tx buffer.
  */
 ISR(USART_UDRE_vect) {
 
   //! points always to the next byte to be read. (post increment scheme)
   static uint8_t tx_read_idx = 0; 
 
-  /* @todo do we need to check whether tx_read_idx <= tx_write_idx at the
+  /** @todo do we need to check whether tx_read_idx <= tx_write_idx at the
      beginning? Not if we make sure that the interrupt is enabled only
      when there is something to tx_write... and disable this interrupt if
      there is nothing to tx_write  */  
@@ -102,16 +114,17 @@ ISR(USART_UDRE_vect) {
   // we disable the UDRIE (ourselves) if there is nothing more to send currently
   // and at the same time reset the buffer:
   // should we perhals disable UDRIE in the setup? Can it be that is enabled for the Arduino board?
+  // We could also do this check at the beginning of this IRS -- would not change the runtime.
   if(tx_read_idx >= tx_write_idx) {
     UCSR0B &= ~(_BV(UDRIE0));
     tx_read_idx = 0;
     tx_write_idx = 0;
-    // like the bit buffer I should also check here to what depth the buffer is actually used
+    //! \todo like the bit buffer I should also check here to what depth the buffer is actually used
   }
 } 
 
 /**
- * caller needs to make sure this is not interrupted with other
+ * \pre caller needs to make sure this is not interrupted with other
  * interrupts
  */    
 /*

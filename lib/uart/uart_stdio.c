@@ -16,19 +16,52 @@
  * You should have received a copy of the GNU General Public License
  * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include <uart.h>
 
-/// perhaps make these not static again?
+/** @file
+    The function in this file serve to interfacemore primitive
+    functions for reading and writing from the uart to the stdio
+    library.  
 
-/// should I split these into two files?
-static inline int uart_put(const char c, FILE* const stream) {
+    \todo split this source file into two, one each for reading and
+    writing so that they can be imported separatly.
+
+    See also section for avr-glib on stdlib
+    \todo Insert url to avr-glib
+ */
+
+/**
+   wraps primitive uart_putc_buffered() to something that is stdlib
+   compatible
+   \returns always 0 (should return error code in case of error)
+
+   \todo implement EOF return
+
+   @param byte to write to stream
+   @param stream file stream to write to
+
+ */   
+static int uart_put(const char c, FILE* const stream) {
   uart_putc_buffered(c);
   return 0;
 }
 
+
+/**
+   wraps uart_getc_buffer() to be used with stdio.
+
+   @return a byte that is read from stream
+   @todo implement handling of EOF
+   @param stream file stream to read from.
+ */
 static inline int uart_get(FILE* const stream) {
   return uart_getc_buffered();
 }
 
-FILE uart // ; // = //FDEV_SETUP_STREAM(NULL, uart_getc_buffered, _FDEV_SETUP_READ);
-= FDEV_SETUP_STREAM(uart_put, uart_get, _FDEV_SETUP_RW);
+
+/**
+   provides a file stream structure to read from and write to the uart
+   for use with stdio functions.
+ */
+FILE uart = FDEV_SETUP_STREAM(uart_put, uart_get, _FDEV_SETUP_RW);

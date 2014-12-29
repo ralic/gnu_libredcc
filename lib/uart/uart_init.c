@@ -1,6 +1,7 @@
-/* 
- * Copyright 2014 André Grüning <libredcc@email.de>
+/*! \file
+ * \copyright Copyright 2014 André Grüning <libredcc@email.de>
  *
+ * \license
  * This file is part of LibreDCC
  *
  * LibreDCC is free software: you can redistribute it and/or modify
@@ -15,26 +16,43 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
+
 #include <avr/io.h>
 #include <avr/power.h>
 
+/** initialises the UART. The baudrate is hardcoded at compile time to
+    the value of macro BAUD. If BAUD is undefined, the default is
+    9600bd.
+
+    The (naked) function is included in section .init7 so that is
+    executed before main. \see avr-glibc
+    manual. \todo add link to avr-glibc manual
+
+    \param BAUD a macro that defines the baudrate. If undefined, BAUD
+    will be set to 9600.
+    \param BAUD_TOL a macro that defines the permitted tolarance of
+    baud rate settings.
+
+    \todo make baudrate settable in software to create a more flexible
+    library.
+ */
 void uart_init() __attribute__((naked)) __attribute__((section(".init7"))); 
 void uart_init() {
 
-    // enabling the UART:
-    power_usart0_enable();
+  // enabling the UART:
+  power_usart0_enable();
 
-  
 #ifndef BAUD_TOL
 #define BAUD_TOL 3 
 #endif
 
 #ifndef BAUD
-#warning "This should be settable in software -- so reread the macros as functions?"
 #define BAUD 9600
 #endif
 
+  // This include defines the macros used below to calculate the baud rate
 #include <util/setbaud.h>
   
   UBRR0H = UBRRH_VALUE;

@@ -21,12 +21,20 @@
 
 #include "s88_types.h"
 
-/*! It would actually be good to implement the queue as a class -- we
-  could then use it a lot of times in a lot of code, and C++ is not
-  that much slower than plain C if used carefully */
 
+
+/*! \file
+  \todo It would actually be good to implement the queue as a class -- we
+  could then use it a lot of times in a lot of code, and C++ is not
+  that much slower than plain C if used carefully and we could use templates! */
+
+//! is there an element in the queue?
 uint8_t has_reading();
+
+//! push an element onto the queue.
 void queue_reading(const reading_t reading);
+
+//! pop an element from the queue.
 reading_t dequeue_reading();
 
 

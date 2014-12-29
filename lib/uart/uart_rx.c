@@ -1,4 +1,5 @@
-/* 
+/* @file
+ *
  *  Copyright 2014 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
@@ -16,44 +17,49 @@
  * You should have received a copy of the GNU General Public License
  * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include <avr/interrupt.h>
 #include <string.h>
 
 /** 
- * make sure uart_init is also included for receiving under the assumpition that it has
- * already been enabled for transmitting -- 
+ * initialises the UART for sending.
+ *
+ * \pre make sure uart_init is also linked into the excutable for receiving.
  * 
- * @todo The receiver part seems to work -- at least as long as I do not try so send something.
+ * @todo The receiver part seems to work -- at least as long as I do not try to send something.
  *
  * @note ATmega328p has an internal receive buffer of two bytes. And
  * therefore we probably do not need a receiver buffer as serial
  * transmission is slow compared to CPU freq of the AVR?
  
- @todo von den unscharfen <= auf != und == übergehen.
+ @todo von den unscharfen <= auf != und == übergehen because this might help detect any errors
+
  */
 void init_uart_rx() __attribute__((naked)) __attribute__((section(".init8")));
 void init_uart_rx() {
 
-  //! @todo  is the below redundant or was it only necessarey because of the arduino bootloader?
-  // setup RXD0 pin (doubling as PORTD0, PD0)
-  PORTD &= ~(_BV(PD0)); // switch pull up off -- redundant (why again?)
-  DDRD &= ~(_BV(PD0)); // make input -- redundant. 
+  /*! @todo  is the below redundant or was it only necessarey because of the arduino bootloader?
+    setup RXD0 pin (doubling as PORTD0, PD0) */
+  PORTD &= ~(_BV(PD0)); 
+  DDRD &= ~(_BV(PD0)); 
 	     
   // enable reciever and enable the receive interrupt:
   UCSR0B |= _BV(RXEN0) | _BV(RXCIE0);
 }
 
 //! length of receiver buffer
-#define RX_BUFFER_LEN 64 // change from 32, have tried 2 and 64
+#define RX_BUFFER_LEN 64 
 
 //! the receiver buffer
 volatile static uint8_t rx_buffer[RX_BUFFER_LEN];
 
-//! index of the position to be written next
+//! index of the buffer position to be written to next
 volatile static uint8_t rx_write_idx = 0;
 
 /** 
- ISR that reads a byte from the UART into the buffer
+ ISR that reads a byte from the UART into the rd buffer
+
+ \todo improve dealing with buffer overruns.
 */
 ISR(USART_RX_vect) {
 
@@ -106,7 +112,15 @@ static inline void tidy_rx_buffer() {
 static uint8_t rx_read_idx = 0; // only to be read in the main thread.
 
 
-//! only on main thread!
+/*! \pre to be called on main thread only.
+
+  Function checks whether the the read index into the buffer has
+  advanced to the write index -- that there are no more bytes to read
+  from the buffer. If so, it reset both indices to the beginning of
+  the buffer.
+  \note should be called regularly to avoid a receiver buffer overrun.
+  \post interrupts will be enabled.
+ */
 static inline void uart_rx_tidy_buffer() {
   if(rx_read_idx != 0 && rx_read_idx >= rx_write_idx) { // if no more chars left in read buffer
     cli();  // disable all interrupts -- infact RXCIE0 would be enough, if this works as fast as the cli -- does it?
@@ -122,28 +136,32 @@ static inline void uart_rx_tidy_buffer() {
   }
 }
     
-
-
 /** 
-    gets a new character from the buffer or blocks until one is there
-    -- caller must make sure that interrupts are enabled when this
-    method is called as it release on the buffer being filled by the
-    uart -- so it should not be called from an other interrupt
-    handler?
-    
+    gets a byte from the buffer or blocks until one is there
 
-    @todo write non-blocking version.
+    \pre caller must make sure that interrupts are enabled when this 
+      method is called as it relies on the buffer being filled by the
+      uart 
+    \pre  it must not be called from an other interrupt
+    handler
+
+    @todo write a proper non-blocking version.
+
 */
 unsigned char uart_getc_buffered() {
 
+  /// \todo is it necessary that we tidy buffer every time? Or is it a
+  /// waste of time?
   uart_rx_tidy_buffer();
 
   // block until a new byte gets delivered into the buffer, perhaps
   // with sleeping -- later on! 
-  while(rx_read_idx >= rx_write_idx); // and now really wait for the next byte via the UART
+  while(rx_read_idx >= rx_write_idx); // and now really wait for the
+				      // next byte via the UART -- blocking!
   return rx_buffer[rx_read_idx++];
 }
 
+//! @return number of bytes ready to be read from the buffer.
 uint8_t uart_rx_received() {
   uart_rx_tidy_buffer();
   return rx_write_idx - rx_read_idx;
