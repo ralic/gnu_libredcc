@@ -16,15 +16,35 @@
  * You should have received a copy of the GNU General Public License
  * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef DECODER_H
-#define DECODER_H 1
 
-#include "compose_packet.h"
+#include <share/compose_packet.h>
 
-void handle_packet();
+#include<stdint.h>
 
-#ifdef HAS_NO_INIT
-void init_decoder();
+//#include "sniffer.h"
+#include<dcc.h>
+
+#include <eeprom_hw.h>
+#include <error.h>
+
+#include <dcc.h>
+
+#include "io.h"
+
+#ifdef __AVR
+/* #elif SDCC_pic14 -- not yet implemented due to lack of implementation of PIC uart yet. And lack of fprintf support in the librariess for PIC*/
+#else 
+#error "Architecture not implemented"
 #endif
 
-#endif
+/** pretty prints the current packet to the uart */
+void handle_packet() {
+
+  uint8_t i;
+  for(i = 0; i < packet.len; i++) {
+    fprintf(&uart, " %02x" ,packet.pp.byte[i]);
+  }
+  fputc('\n', &uart);
+  return;
+}
+

@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
  */
-// $Id$
 
 // Some centrals might send activate packets continuously (LEnz), so only the first should be reacted to... (so we need to store our state...) -- what is the source of this? 
 //! @todo: change attributes to near, pure, const
@@ -25,6 +24,10 @@
 1. does not initialise static locals and 
 2. could not deal with const pointer in certain circumstance 
 3. and perhals cannot well initialise structs
+
+\todo WHY THE DECODER MIGHT GET STUCK:
+- TRYING TO use the uart while on the interrupt?
+- but would this survive the reset? does the crash survive a reaset?
  */
 
 #include<stdint.h>
@@ -41,18 +44,15 @@
 
 static uint16_t port_id[PORTS];
 
-#if 0
-Sample ifdef harfe
 #ifdef __AVR
 #elif SDCC_pic14
 #else 
 #error "Unknown Architecture"
 #endif
-#endif
 
 //! extracts the address information of a ba command as a uint16_t without really calculating the address
 #define BA_PORTID(__packet) ((__packet).pp.packet2 & ~(_BV(8))) // it is two 
-#warning define a #define instead BV(8) or is ths even the same as the ba.on bit?
+// \todo define a #define instead of BV(8) or is ths even the same as the ba.on bit?
 
 //! normal ba output mode.
 inline static void handle_ba_opmode() {
@@ -64,7 +64,7 @@ inline static void handle_ba_opmode() {
     if(port_id[i] == portid) {
       // bei vorherigem button progmode muessen wir noch ein wenig
       // warten bevor wir das naechste Packet annehmen?  
-      activate_output((i << 2) + packet.pp.ba.gate); // and deactive the other one?
+      activate_output((i << 2) + packet.pp.ba.gate); // \todo and deactive the other one?
       INFO("BA");
     }
   }
@@ -87,7 +87,7 @@ inline static void handle_ba_progmode(const uint8_t port) {
 							 // on PIC and
 							 // ??ms on AVR
   }
-  // we probavly also need to delay here to enaure we get no programme twice in case the central sends same BA packet multiple times. 
+  // we probably also need to delay here to enaure we get no programme twice in case the central sends same BA packet multiple times. 
   RESET_ERROR(); // we will have missed many DCC bits as EEPROM programming takes long.
 }
 

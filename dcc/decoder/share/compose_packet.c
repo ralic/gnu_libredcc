@@ -16,26 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
  */
-/* 
- *  Copyright 2014 André Grüning <libredcc@email.de>
- *
- * This file is part of LibreDCC
- *
- * LibreDCC is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * LibreDCC is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
- */
+
 /**
- * $Id$
+ * \file
  *
  * Basic code to decode signal bits from the DCC signal and compose bits into a DCC packet.
  * The DCC packet itself to be parsed elsewhere, in \code handle_packet
@@ -63,7 +46,7 @@ dcc_packet packet = {len: 0};
 #endif 
 
 #ifdef NO_LOCAL_STATICS
-//! state the receiver can be in:
+//! states the DCC receiver can be in:
 typedef enum {START_BIT = 0, BYTE = 1, STOP_BIT = 2} DCC_SIGNAL_STATE;
 
 static struct {
@@ -180,12 +163,6 @@ void compose_packet(const uint8_t bit) {
     ERROR(dcc_fall_through);
   }
 }
-
-/** 
- below the correct header with the architecture dependend file is
- imported. We do it via a header files, as this mean the above
- functions can be inlined into the code below
-*/
 
 #ifdef NO_LOCAL_STATICS
 

@@ -48,7 +48,7 @@ void compose_packet(const uint8_t bit);
  * It is assume that execute_packet accesses packet below readonly, and that upon return of execute packet the packet can be * overwritten
  * The code in dcc_receiver calls handle_packet when it has a packet ready. The packet is passed in the global var packet below. o 
  */
-void handle_packet();
+extern void handle_packet();
 
 /** 
     The packet itself. Use of passing a packet between compose_packet

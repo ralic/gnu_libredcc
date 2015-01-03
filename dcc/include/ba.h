@@ -77,6 +77,11 @@ typedef union  {
 #define BA_PORTADDR2ADDR_L(__addr)   ( (__addr) >> 2) // & 0x3F (2bits already gone to the port, only 6 bit count)
 #define BA_PORTADDR2ADDR_HNOT(__addr) (~( (__addr) >> 8)) // & 0x7 (only 3 bits count), 2+6 bits gone
 
-
+/*! extracts the address information of a ba command as a uint16_t
+  without really calculating the address. Useful for checking an
+  address match in dcc ba decoders. 
+  \todo define a #define instead of BV(8) or is ths even the same as
+  the ba.on bit? */
+#define BA_PORTID(__packet) ((__packet).pp.packet2 & ~(_BV(8))) // it is two 
 
 #endif
