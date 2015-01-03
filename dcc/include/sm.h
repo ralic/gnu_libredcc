@@ -62,7 +62,7 @@ typedef //union {
 
 //#define SM_DM_CHECKSUM_IDX 3;
 
-#define is_sm_direct_packet(__packet) ( ( (__packet).sm.prefix == SM_PREFIX) && \
+#define is_sm_direct_packet(__packet) ( ( (__packet).pp.sm.prefix == SM_PREFIX) && \
 					( (__packet).len == SM_DIRECT_PACKET_LEN))
 
 #define CV_HIGH(__cv) ( ( (__cv) >> 8) ) // 2 MSB of 10

@@ -57,9 +57,9 @@ typedef union  {
  * Assumes packet has a length of at least 1.
  * 
  */
-#define is_ba_packet(__packet)  ( ( (__packet).ba.prefix == BA_PREFIX) && \
+#define is_ba_packet(__packet)  ( ( (__packet).pp.ba.prefix == BA_PREFIX) && \
 				  ( (__packet).len == BA_PACKET_LEN) && \
-				  ( (__packet).ba.one))
+				  ( (__packet).pp.ba.one))
 
 /// could also be implemented as a macro
 /**

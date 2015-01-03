@@ -124,20 +124,20 @@ typedef struct {
   @param p a pointer to that dcc_packet that is to be checked
   @return true if the packet is the idle packet.
  */
-#define is_idle_packet(pack) ((pack->byte[0] == 0xFF) && (pack->len == 3) && (pack->byte[1] == 0x00) && (pack->byte[2] == 0xFF))
+#define is_idle_packet(__packet) (((__packet)->pp.byte[0] == 0xFF) && ((__packet)->len == 3) && ((__packet)->pp.byte[1] == 0x00) && ((__packet)->pp.byte[2] == 0xFF))
 
 #define is_reset_packet(__packet) ( \
   ( \
-   (__packet).byte[0] == 0x00 \
+   (__packet).pp.byte[0] == 0x00 \
     ) && \
   ( \
    (__packet).len == 3\
     ) && \
   ( \
-   (__packet).byte[1] == 0x00 \
+   (__packet).pp.byte[1] == 0x00 \
    ) && \
   ( \
-   (__packet).byte[2] == 0x00 \
+   (__packet).pp.byte[2] == 0x00 \
    ) \
   )
 

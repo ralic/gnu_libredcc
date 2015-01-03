@@ -1,0 +1,187 @@
+/* 
+ * Copyright 2014 André Grüning <libredcc@email.de>
+ *
+ * This file is part of LibreDCC
+ *
+ * LibreDCC is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * LibreDCC is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
+ */
+// $Id$
+#include "error.h"
+
+
+// AVR
+
+/** @todo
+- check EINT und timer2 are enables / disabled in a time locked fashion
+- check that for running EINT must occur before TIM2_int can occur again
+- simplify TIM2 and TIM0 interrupt handling
+- disable and enable the interrupts alternatingly, early sei() in the timer interrupt to allow early EINT0, and to really have strong time locking
+*/
+
+/*
+ * The code uses interrupt INT0 to let timer2 rum for 3/4 of
+ * PERIOD_1. (\see eint0_isr.S for the actual ISR)
+ * whenever we get a rising edge of the DCC signal. If the timer has
+ * elapsed then we sample the DCC signal again (using the timer2
+ * match interrupt). 
+ * If the signal is still high, then the current bit is a 0 and if it
+ * has changed back to low, it is a 1, compare to [NRMA].
+ * 
+ * This code owes much to [XXXX] released under a GNU licence. However
+ * as released on 20/12/2011 it contained a number of inaccurucies
+ * etc. I reimplemented the code following the ideas there in a more
+ * structured way. 
+ *
+ * We will use TMER2 for the timing of DCC signals as it is the timer
+ * with the highedst priorty.
+ * 
+ * For the ATdmega328p pin PD2 doubles as INT0 -- so this is the pin we
+ * are using to feed the DCC signal.
+ */
+
+#include<share/compose_packet.h>
+
+#include<avr/power.h>
+#include<avr/interrupt.h>
+
+/**
+ * useful for 16MHz -- might need to be chosen differently for a
+ * different F_CPU
+ */
+#define PRESCALER 8 
+
+/**
+ * We sample the DCC signal 3/4 of the period of a 1 signal after a
+ * rising edge. This corresponds to the following number of timer
+ * ticks. (This is the average of half the standard durations of a
+ * PERIOD_1 and a PERIOD_0 -- to sample the signal with a maximal
+ * margin to the respective negative signal edges.
+ *signal 
+ */
+#ifndef F_CPU
+#error "F_CPU not defined"
+#endif
+#define TICKS_PER_US (F_CPU / 1000000)
+#define SAMPLE_TICKS ((3 * PERIOD_1 * TICKS_PER_US) / (PRESCALER * 4))
+
+// non essential error check -- not compulsory,
+#if SAMPLE_TICKS > 250 
+#error SAMPLE_TICKS to high (> 250)
+#elif SAMPLE_TICKS < 10
+#error SAMPLE_TICKS to low (<10)
+#endif
+//# "Sample ticks are " ## SAMPLE_TICKS
+								 
+/**
+ * A c version of the ISR in \see eint0_isr.S.
+ *
+ * Assembler is not really necessary, as timing is not really
+ * critically, but it is annoying to see how many instructions the
+ * compiler uses when looking at the disassembled code.
+ */
+/*
+ISR(INT0_vect) {
+// start timer 2 with prescaler 8. 
+  TCCR2B = _BV(CS21); 
+  EIMSK &= ~(_BV(INT2)); // disable ourselves
+} */
+
+/**
+ * Interrupt service routine to sample the signal when timer2 has
+ * gone SAMPLE_TICKS. It converts the signal into a bit. It then calls
+ * the function compose_packet which composed the bits into a DCC
+ * packet.
+ */
+ISR(TIMER2_COMPA_vect) {
+  // bit = 0 if PIND2 is high and bit = 1 if PIND2 is low 87us after a
+  // positive edge detected via INT0.
+  const uint8_t bit = (PIND & _BV(PD2)) ? 0 : 1;  // I think I should swap this around \todo or make this !(PIND & _BV(PD2))
+
+  // stop timer
+  TCCR2B = 0; //~(_BV(CS20) | _BV(CS21) | _BV(CS20));
+
+  // reset timer
+  TCNT2 = 0;
+
+
+  /* clear interrupt flag in case there was a positive edge in the
+   * mean time, in order to ignore any pending interrupts that might
+   * have occured while we where processing the bit. Compare eg 
+   * 13.2.3 of [328].
+   */
+  EIFR = _BV(INTF0); 
+  EIMSK |= _BV(INT0); // reenable interrupt INT0.
+
+  {
+
+    // this construct with running is superflows: if we still running, then reactiviating intrerrupts here, means we could as well have check runnning at the beginning of this isr, as nothing will change anyway.as if
+    static volatile uint8_t running = 0;
+    
+    if(!running) { // if still running, we miss a bit :-( could be
+		   // avoided using a bit queue... but is probably not
+		   // worth the efford (well it is for PIC).
+      running++; // running is one now.
+      sei();
+      // call function to compose bits into a DCC packet.
+      compose_packet(bit); // from here onwards it is no longer hardware
+      // dependent -- it would also be worth to think
+      // about whether to delegate already here to
+      // the main thread or a different software
+      // interrupt or to enable interrupts again!
+      // how about a bit queue?
+      running = 0;
+    }
+    // led goes on if we miss a bit :-( -- just to see where we loose
+    // the time.
+    else {
+      // we are loosing a bit! -- at least for the sniffer! -- so I should resturcuted with either packet queue or a bit queue (as for the PIC)
+      //      ERROR(lost_bit); // can this lead to a dead lock as we are calling something that potentially locks from a non interruptable part of the programme? No, as the called function does not lock, but
+      // when this return sei() will have been called, so interrupts are already enabled at this point
+      // can this also lead to problems if we are writing to the uart_buffer here and in the main thread?
+      // in any case, runs show that we do loose a bit whenever we execute a packet! -- so we should also make a bit queue for AVR! -- well it happens when we have a lot of calls to fprintf etc.
+    }
+  }
+
+}
+
+/**
+ * This function initialises the AVR hardware, especially timer2 and
+ * PD2/INT0. It is executed before any main method.
+ */  
+// keep?
+// does static work here??
+void init_dcc_receiver() __attribute__((naked));
+void init_dcc_receiver() __attribute__((section(".init8"))); // to be executed before main.
+void init_dcc_receiver() {
+
+  // enable timer2:
+  power_timer2_enable();
+
+  // enable INT0 on positive edge:
+  EICRA |= _BV(ISC01) | _BV(ISC00); // change this to negative edge (becazse tgat might save an instruction later when converting port readings to read bits.
+  EIMSK |= _BV(INT0);
+
+  // set timer2 to normal mode, no outputs needed:
+  TCCR2A = 0; 
+
+  // set output compare register:
+  OCR2A =   SAMPLE_TICKS; // 87us
+
+  // enable compare match interrupt
+  TIMSK2 = _BV(OCIE2A);
+  
+  // switch on pull-up for PD2/PINT0 (as optocoupler only goes to mass) --
+  DDRD &= ~(_BV(PD2)); // make pin 2 of portD input
+  PORTD |= _BV(PD2); // switch on pull-up
+}
