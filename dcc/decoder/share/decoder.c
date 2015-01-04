@@ -17,18 +17,20 @@
  * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// Some centrals might send activate packets continuously (LEnz), so only the first should be reacted to... (so we need to store our state...) -- what is the source of this? 
+/** \file */
+
+//! \todo Some centrals might send activate packets continuously (LEnz), so only the first should be reacted to... (so we need to store our state...) -- what is the source of this? 
 //! @todo: change attributes to near, pure, const
 
-/* there were 2 provblem with sdcc: 
-1. does not initialise static locals and 
-2. could not deal with const pointer in certain circumstance 
-3. and perhals cannot well initialise structs
+/* there were 2 problems with sdcc: 
+   1. does not initialise static locals and 
+   2. could not deal with const pointer in certain circumstance 
+   3. and perhals cannot well initialise structs
 
-\todo WHY THE DECODER MIGHT GET STUCK:
-- TRYING TO use the uart while on the interrupt?
-- but would this survive the reset? does the crash survive a reaset?
- */
+   \todo WHY THE DECODER MIGHT GET STUCK:
+   - TRYING TO use the uart while on the interrupt?
+   - but would this survive the reset? does the crash survive a reaset?
+*/
 
 #include<stdint.h>
 
@@ -47,12 +49,8 @@ static uint16_t port_id[PORTS];
 #ifdef __AVR
 #elif SDCC_pic14
 #else 
-#error "Unknown Architecture"
+#error "Architecture not implemented"
 #endif
-
-//! extracts the address information of a ba command as a uint16_t without really calculating the address
-#define BA_PORTID(__packet) ((__packet).pp.packet2 & ~(_BV(8))) // it is two 
-// \todo define a #define instead of BV(8) or is ths even the same as the ba.on bit?
 
 //! normal ba output mode.
 inline static void handle_ba_opmode() {
@@ -94,25 +92,20 @@ inline static void handle_ba_progmode(const uint8_t port) {
 inline static void handle_ba_packet() {
 
 #if 0
-  // future handling of BROADCAST_ADDR...
-  // if(addr == BA_BROADCAST_ADDR) {
-  //    return; // we ought to return here! Or do something sensible
-  //    with the package. We must not program!
-  // or at least prevent programming mode...
-  // }
+  // future handling of BROADCAST packets here?
 #endif
   
   if(!packet.pp.ba.on) return; // ignore packets that are off commands, we do our own timing.
 
   // is this thread safe?? better not to be interrupted by OVR_FLOW INTERRUPT.
-  //** @todo: we must have a timeout here, so that if the  entral sends
+  //** @todo: we must have a timeout here, so that if the central sends
   // commands multiple times, subsequent addresses are not
   // reprogrammend. 
   // also there ought to be protection that two outputs of the same
   // gate are not activated at the same time :-)
   // finally red and green should be done properly.
   if(button_count) { // progmode.
-    #warning this is not thread-safe. as the prog button might be pressed between the previous and following line of code
+#warning this is not thread-safe. as the prog button might be pressed between the previous and following line of code
     // on PIC this is not a problem as both the output routne and compose packet run on the main thread
     // on AVR this could be a problem if the DCC interrupt allows other interrupts to occur.
     // for AVR -- so I need to make sure the AVR does not reenable
@@ -125,37 +118,9 @@ inline static void handle_ba_packet() {
   else { 
     handle_ba_opmode();
   }
-
-  // INFO("All the packet data to follow:");
-  /*  print:
-      uart_putc_buffered(nibble2digit(addr / 0x100));
-      buffered_uart_send_byte(addr % 0x100);
-      uart_putc_buffered(':');
-      uart_putc_buffered(nibble2digit(packet.ba.port));
-      uart_putc_buffered(':');
-      uart_putc_buffered(nibble2digit(packet.ba.gate));
-      uart_putc_buffered(':');
-      uart_putc_buffered(nibble2digit(packet.ba.on));
-      uart_putc_buffered('\r');
-      uart_putc_buffered('\n');
-  */
 }
-
-#if 1
+  
 void handle_packet() {
-
-  uint8_t i;
-  for(i = 0; i < packet.len; i++) {
-    fprintf(&uart, " %02x" , packet.pp.byte[i]);
-  }
-  fputc('\n', &uart);
-  return;
-}
-#endif
-
-
-
-void handle_packet_real() {
 
   /*! postmode currently not utilised as the ba decoder does not
     accept any opmode commands that could also be progmode commands...
@@ -163,7 +128,7 @@ void handle_packet_real() {
   typedef enum {opmode, premode, smmode, postmode} modes; 
 
   static uint8_t previous_mode = opmode;
-  #warning the above init does not work with sdcc
+#warning the above init does not work with sdcc
   uint8_t next_mode = opmode; // default is the next mode is opmode
 
   // ignore all op mode packets but BA backets:
@@ -174,16 +139,16 @@ void handle_packet_real() {
     if(previous_mode == premode || previous_mode == smmode) {
       next_mode == smmode;
       /* we are not handling postmode as it cannot lead to any confusion anyway with our ba decoder
-       smmode: we enter it if previous was a reset packet, we stay in
-       as long as we are receiving sm packets, otherwise we leave it
-       to an intermediate state and thence only back to opmode if we
-       have received an oppacket that is not identical to an sm
-       packet. Here we can leave sm mode immedietalz to opmode as we
-       do not understand those opmode packets that could be similar to
-       an sm mode pacewt (some 4 byte long short ga packets that would
-       be).  So we only keep track of wether previous packet was reset
-       or sm: then we are in opmode. -- For all other packets we leave
-       sm_mode immediately.  */
+	 smmode: we enter it if previous was a reset packet, we stay in
+	 as long as we are receiving sm packets, otherwise we leave it
+	 to an intermediate state and thence only back to opmode if we
+	 have received an oppacket that is not identical to an sm
+	 packet. Here we can leave sm mode immedietalz to opmode as we
+	 do not understand those opmode packets that could be similar to
+	 an sm mode pacewt (some 4 byte long short ga packets that would
+	 be).  So we only keep track of wether previous packet was reset
+	 or sm: then we are in opmode. -- For all other packets we leave
+	 sm_mode immediately.  */
       //How to implement the 20ms timeout to switch back from smmode? */
       // handle_sm_direct_packet();
     }
@@ -193,20 +158,20 @@ void handle_packet_real() {
     }
   }
   else  if(is_reset_packet(packet)) {
-    if(previous_mode = smmode) { // or postmode }
+    if(previous_mode == smmode) { // or postmode }
       // next_mode == opmode; // clear by default
     }
     else {next_mode = premode;} // ie for opmode, premode.
     // shall we perhaps only save the new cv values if we are leaving progmode, beause in progmode itself, we should not write to eeprom as it takes to long in case the central sends several sm packets in a row?
-      // what else todo? deactiveate outputs?
-      // reset progmode states? Perhaps rather not -- what if a central sends reset packets all the time? butten_counts
+    // what else todo? deactiveate outputs?
+    // reset progmode states? Perhaps rather not -- what if a central sends reset packets all the time? butten_counts
   }
 
   if ((previous_mode == smmode) && (next_mode != smmode)) {
-	// just switching away from progmode at this step. -- disadvantage is that of this to be reached this requires the central to send one more non sm mode command (my central does this). However we must also take into account that the central does not do this (eg powerdown??) and hence call the function to write after the timeout of 20ms! Best would perhaps be to have smmode ticking away like on of the outputs and then burns it into the eeprom after 20ms... 
-	// Also change the eeprom write routine for PIC so that it waits before a write, not after -- do we need to wait before a read as well?
-	// write_cv_eeprom()? 
-    }
+    // just switching away from progmode at this step. -- disadvantage is that of this to be reached this requires the central to send one more non sm mode command (my central does this). However we must also take into account that the central does not do this (eg powerdown??) and hence call the function to write after the timeout of 20ms! Best would perhaps be to have smmode ticking away like on of the outputs and then burns it into the eeprom after 20ms... 
+    // Also change the eeprom write routine for PIC so that it waits before a write, not after -- do we need to wait before a read as well?
+    // write_cv_eeprom()? 
+  }
   previous_mode = next_mode;
 }
 
