@@ -6,7 +6,7 @@ ifndef $(PRG)
 PRG = decoder
 endif
 
-OBJ = main.o interrupts.o ../share/compose_packet.o eint0_isr.o ../share/$(PRG).o ../share/io.o io_hw.o eeprom_hw.o error_hw.o
+OBJ = main.o interrupts.o ../share/compose_packet.o eint0_isr.o ../share/$(PRG).o ../share/io.o io_hw.o eeprom_hw.o error_hw.o ../share/bitqueue.o
 
 INCLUDE_DIR = -I . -I .. -I ../../include -I ../../../include
 LIB_DIR = -L ../../lib/$(ARCH) -L ../../../lib/$(ARCH)

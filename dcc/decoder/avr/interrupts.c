@@ -17,6 +17,7 @@
  * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
  */
 // $Id$
+
 #include "error.h"
 
 
@@ -94,7 +95,8 @@
 ISR(INT0_vect) {
 // start timer 2 with prescaler 8. 
   TCCR2B = _BV(CS21); 
-  EIMSK &= ~(_BV(INT2)); // disable ourselves
+  EIMSK &= ~(_BV(INT2)); // disable ourselves (why is it INT0 in the assembler file_
+  EIFR |= _BV(INTF=); // clear any spurios interrupt that might have occoured -- is this neccessary
 } */
 
 /**
@@ -115,6 +117,8 @@ ISR(TIMER2_COMPA_vect) {
   TCNT2 = 0;
 
 
+  queue_bit(bit); // from here onwards it is no longer hardware dependent.
+
   /* clear interrupt flag in case there was a positive edge in the
    * mean time, in order to ignore any pending interrupts that might
    * have occured while we where processing the bit. Compare eg 
@@ -122,36 +126,6 @@ ISR(TIMER2_COMPA_vect) {
    */
   EIFR = _BV(INTF0); 
   EIMSK |= _BV(INT0); // reenable interrupt INT0.
-
-  {
-
-    // this construct with running is superflows: if we still running, then reactiviating intrerrupts here, means we could as well have check runnning at the beginning of this isr, as nothing will change anyway.as if
-    static volatile uint8_t running = 0;
-    
-    if(!running) { // if still running, we miss a bit :-( could be
-		   // avoided using a bit queue... but is probably not
-		   // worth the efford (well it is for PIC).
-      running++; // running is one now.
-      sei();
-      // call function to compose bits into a DCC packet.
-      compose_packet(bit); // from here onwards it is no longer hardware
-      // dependent -- it would also be worth to think
-      // about whether to delegate already here to
-      // the main thread or a different software
-      // interrupt or to enable interrupts again!
-      // how about a bit queue?
-      running = 0;
-    }
-    // led goes on if we miss a bit :-( -- just to see where we loose
-    // the time.
-    else {
-      // we are loosing a bit! -- at least for the sniffer! -- so I should resturcuted with either packet queue or a bit queue (as for the PIC)
-      //      ERROR(lost_bit); // can this lead to a dead lock as we are calling something that potentially locks from a non interruptable part of the programme? No, as the called function does not lock, but
-      // when this return sei() will have been called, so interrupts are already enabled at this point
-      // can this also lead to problems if we are writing to the uart_buffer here and in the main thread?
-      // in any case, runs show that we do loose a bit whenever we execute a packet! -- so we should also make a bit queue for AVR! -- well it happens when we have a lot of calls to fprintf etc.
-    }
-  }
 
 }
 

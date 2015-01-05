@@ -27,6 +27,8 @@
 #include <avr/power.h>
 
 #include <error.h>
+#include <../share/bitqueue.h>
+#include <share/compose_packet.h>
 
 /*! When all is setup, processing occurs only on interrupts for avr,
   so we try to save energy by sleeping */
@@ -58,5 +60,17 @@ void init_avr() {
 int main(void) {
   sei();
   INFO("Starting Decoder");
+
+  //! @todo loop can be make more efficient by sending to sleep as currently done in exit.
+  while(1) {
+
+    while(!has_next_bit()); // wait for next bit.
+    compose_packet(next_bit());
+
+  }
+
+
+
+
   return 0;
 }
