@@ -41,6 +41,9 @@
 void handle_packet() {
 
   uint8_t i;
+
+  INFO("Packet: ");
+
   for(i = 0; i < packet.len; i++) {
     fprintf(&uart, " %02x" ,packet.pp.byte[i]);
   }

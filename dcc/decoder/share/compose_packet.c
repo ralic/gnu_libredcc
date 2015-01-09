@@ -38,6 +38,11 @@
 #include "compose_packet.h"
 #include <error.h>
 
+
+#ifdef DEBUG
+#include <avr/io.h>
+#endif
+
 #ifdef NO_STRUCT_INIT
 dcc_packet packet; 
 #else
@@ -104,7 +109,10 @@ void compose_packet(const uint8_t bit) {
   static uint8_t xor = 0;
 #endif
 
-  // INFO(bit ? "1" : "0"); // for debugging to test whether 0 and 1 arrive.
+  //INFO(bit ? "1" : "0"); // for debugging to test whether 0 and 1 arrive.
+
+  //  UDR0 = bit ? '1' : '0';
+  //  return;
 
   if( (int8_t) state < 0) {
     state++; // inc state, but only
@@ -125,6 +133,8 @@ void compose_packet(const uint8_t bit) {
 #ifndef NO_LOCAL_STATICS
     static uint8_t bits = 0; 
 #endif
+
+    //    INFO("BYTE\n");
 
     bitpattern <<= 1;
     if(bit) bitpattern++;

@@ -55,6 +55,7 @@
 
 #include<avr/power.h>
 #include<avr/interrupt.h>
+#include<share/bitqueue.h>
 
 /**
  * useful for 16MHz -- might need to be chosen differently for a
@@ -124,7 +125,7 @@ ISR(TIMER2_COMPA_vect) {
    * have occured while we where processing the bit. Compare eg 
    * 13.2.3 of [328].
    */
-  EIFR = _BV(INTF0); 
+  EIFR = _BV(INTF0);  
   EIMSK |= _BV(INT0); // reenable interrupt INT0.
 
 }

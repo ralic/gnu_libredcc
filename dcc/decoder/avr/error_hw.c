@@ -1,15 +1,16 @@
 #ifdef DEBUG
 
 #include "error.h"
+#include <share/defs.h>
 
 char* error_msg[NUM_ERRORS] = { 
-  [no_error] = "OK",
-  [dcc_fall_through] = "DCC fall through -- coding error",
-  [preamble_too_short] = "Preamble too short",
-  [packet_too_long] = "Packet too long",
-  [checksum_nonzero] = "Checksum error",
-  [size_error] = "Size Errors",
-  [lost_bit] = "Lost bit"
+  [no_error] = "OK" EOLSTR,
+  [dcc_fall_through] = "DCC fall through -- coding error" EOLSTR,
+  [preamble_too_short] = "Preamble too short" EOLSTR,
+  [packet_too_long] = "Packet too long" EOLSTR,
+  [checksum_nonzero] = "Checksum error" EOLSTR,
+  [size_error] = "Size Errors" EOLSTR,
+  [lost_bit] = "Lost bit" EOLSTR,
 };
 
 #endif

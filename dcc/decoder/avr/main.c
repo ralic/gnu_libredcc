@@ -18,7 +18,8 @@
  */
 
 /** \file
- * \todo is there another version of error_hw.c?
+ * \todo watchdog timer
+ * \todo move io from interrupt to main thread
  */
 
 
@@ -30,8 +31,10 @@
 #include <../share/bitqueue.h>
 #include <share/compose_packet.h>
 
+#if 0
 /*! When all is setup, processing occurs only on interrupts for avr,
-  so we try to save energy by sleeping */
+  so we try to save energy by sleeping. 
+  This function is only needed if all processing is done on interrupts */
 void exit() __attribute__((naked)) __attribute__((noreturn));
 void exit(int retval) {
   set_sleep_mode(SLEEP_MODE_IDLE);
@@ -40,6 +43,7 @@ void exit(int retval) {
     sleep_cpu();
   }
 }
+#endif
 
 /*! to be executed before any setup of the individual modules.
   essentially does some clean up after the Arduino bootloader and
@@ -55,22 +59,19 @@ void init_avr() {
   power_all_disable(); // to save as much power as possible.
 }
 
-//int main(void) __attribute__((noreturn));
-/*! not much to do, except enabling the interripts */
+int main(void) __attribute__((noreturn));
 int main(void) {
   sei();
   INFO("Starting Decoder");
-
   //! @todo loop can be make more efficient by sending to sleep as currently done in exit.
   while(1) {
-
     while(!has_next_bit()); // wait for next bit.
     compose_packet(next_bit());
-
+#define NUM_BITS 2
+    if(bit_pointer > (1 << (NUM_BITS))) {
+      INFO("More than 2\n");
+    }
   }
-
-
-
-
   return 0;
 }
+
