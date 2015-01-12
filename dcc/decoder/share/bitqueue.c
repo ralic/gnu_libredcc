@@ -1,8 +1,38 @@
 #include "bitqueue.h"
 #include <avr/interrupt.h>
 
-static uint8_t bit_buffer; // no need to initialise
-uint8_t bit_pointer = 0;
+//! volatile as being used between two threads (main and interrupt)
+volatile static uint8_t bit_buffer; // no need to initialise
+volatile uint8_t bit_pointer = 0;
+
+#undef SIMPLE_BQ
+//#define SIMPLE_BQ 2
+
+#if SIMPLE_BQ > 1
+#warning SIMPLEST_BQ -- only for debugging.
+void queue_bit(bit_t bit) {
+  compose_packet(bit);
+}
+bit_t next_bit() {
+return 0;
+}
+#elif defined SIMPLE_BQ 
+#warning SIMPLE_BQ is on -- only for debugging
+
+inline bit_t next_bit() {
+  bit_pointer = 0; 
+  return bit_buffer;
+
+}
+
+void queue_bit(bit_t bit) {
+
+  bit_pointer = 1; 
+  bit_buffer = bit;
+}
+#else
+#warning This is the right bit_queue.
+
 
 inline bit_t next_bit() {
   cli(); // is this necessary to disable global interrutpts? (On which architetures?)
@@ -16,7 +46,6 @@ inline bit_t next_bit() {
 
     sei(); // yes, it is necessary at least to disable the interrupt that changes bit_pointer and bit_buffer -- to be sure they are consistnet.
 
-#warning check that the above instructuin is compile into a single machine instruction.
   return bit;
 }
 
@@ -41,4 +70,4 @@ void queue_bit(bit_t bit) {
   if(bit) bit_buffer++;
 }
   
-
+#endif

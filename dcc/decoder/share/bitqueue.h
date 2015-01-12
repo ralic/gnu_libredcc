@@ -4,13 +4,21 @@
 #include <stdint.h>
 
 typedef uint8_t bit_t;
+
+
 //! holds the bits mask pointer to the bitqueue.
-extern uint8_t bit_pointer;
+extern volatile uint8_t bit_pointer;
+
 
 /**
  @return true if there is at least one bit waiting to be processed in the bitqueue.
  check whether at least one bit is available. Dummy argument to be ignored. \todo can the dummy argument be removed */
 #define has_next_bit(dummy) (bit_pointer != 0)
+
+
+
+
+
 
 /**
 @return the next bit to be processes from the bitqueue.
