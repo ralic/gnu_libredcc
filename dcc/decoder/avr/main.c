@@ -18,7 +18,6 @@
  */
 
 /** \file
- * \todo is there another version of error_hw.c?
  */
 
 
@@ -68,9 +67,6 @@ int main(void) {
     compose_packet(next_bit());
 
   }
-
-
-
 
   return 0;
 }

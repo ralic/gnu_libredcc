@@ -95,8 +95,8 @@
 ISR(INT0_vect) {
 // start timer 2 with prescaler 8. 
   TCCR2B = _BV(CS21); 
-  EIMSK &= ~(_BV(INT2)); // disable ourselves (why is it INT0 in the assembler file_
-  EIFR |= _BV(INTF=); // clear any spurios interrupt that might have occoured -- is this neccessary
+  EIMSK &= ~(_BV(INT0)); // disable ourselves (why is it INT0 in the assembler file_
+  EIFR |= _BV(INTF0); // clear any spurios interrupt that might have occoured -- is this neccessary
 } */
 
 /**
@@ -133,8 +133,6 @@ ISR(TIMER2_COMPA_vect) {
  * This function initialises the AVR hardware, especially timer2 and
  * PD2/INT0. It is executed before any main method.
  */  
-// keep?
-// does static work here??
 void init_dcc_receiver() __attribute__((naked));
 void init_dcc_receiver() __attribute__((section(".init8"))); // to be executed before main.
 void init_dcc_receiver() {
@@ -143,7 +141,7 @@ void init_dcc_receiver() {
   power_timer2_enable();
 
   // enable INT0 on positive edge:
-  EICRA |= _BV(ISC01) | _BV(ISC00); // change this to negative edge (becazse tgat might save an instruction later when converting port readings to read bits.
+  EICRA |= _BV(ISC01) | _BV(ISC00); // \todo change this to negative edge (becazse tgat might save an instruction later when converting port readings to read bits.
   EIMSK |= _BV(INT0);
 
   // set timer2 to normal mode, no outputs needed:
