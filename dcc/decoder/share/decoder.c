@@ -32,6 +32,8 @@
    - but would this survive the reset? does the crash survive a reaset?
 */
 
+#include <share/defs.h>
+
 #include<stdint.h>
 
 #include "decoder.h"
@@ -56,19 +58,24 @@ static uint16_t port_id[PORTS];
 inline static void handle_ba_opmode() {
 
   const uint16_t portid = BA_PORTID(packet);
-  
-  uint8_t i;
+
+   uint8_t i;
   for(i = 0; i < PORTS; i++) {
     if(port_id[i] == portid) {
       // bei vorherigem button progmode muessen wir noch ein wenig
       // warten bevor wir das naechste Packet annehmen?  
       activate_output((i << 2) + packet.pp.ba.gate); // \todo and deactive the other one?
-      INFO("BA");
+      INFO("Execute BA packet" EOLSTR);
+      return; // this precludes having two outputs programmed to the same address
     }
   }
+
+  INFO("BA Packet not for us" EOLSTR);
 }
 
 inline static void handle_ba_progmode(const uint8_t port) {
+
+  INFO("In BA Progmode");
 
   if(port < PORTS) {
     const uint16_t portid = BA_PORTID(packet);
@@ -84,9 +91,10 @@ inline static void handle_ba_progmode(const uint8_t port) {
 							 // about 5ms
 							 // on PIC and
 							 // ??ms on AVR
+    INFO("BA Address programmed");
   }
   // we probably also need to delay here to enaure we get no programme twice in case the central sends same BA packet multiple times. 
-  RESET_ERROR(); // we will have missed many DCC bits as EEPROM programming takes long.
+  //  RESET_ERROR(); // we will have missed many DCC bits as EEPROM programming takes long. But restting here is futible.
 }
 
 inline static void handle_ba_packet() {
@@ -95,16 +103,23 @@ inline static void handle_ba_packet() {
   // future handling of BROADCAST packets here?
 #endif
   
-  if(!packet.pp.ba.on) return; // ignore packets that are off commands, we do our own timing.
+  // ignore packets that are off commands, we do our own timing.
+  if(!packet.pp.ba.on) {
+    INFO("Ignore BA off packet" EOLSTR);
+    return; 
+  } 
 
-  // is this thread safe?? better not to be interrupted by OVR_FLOW INTERRUPT.
   //** @todo: we must have a timeout here, so that if the central sends
   // commands multiple times, subsequent addresses are not
   // reprogrammend. 
   // also there ought to be protection that two outputs of the same
   // gate are not activated at the same time :-)
   // finally red and green should be done properly.
+
+  //  INFO("Got BA on packet" EOLSTR);
+
   if(button_count) { // progmode.
+    INFO("BA prog mode");
 #warning this is not thread-safe. as the prog button might be pressed between the previous and following line of code
     // on PIC this is not a problem as both the output routne and compose packet run on the main thread
     // on AVR this could be a problem if the DCC interrupt allows other interrupts to occur.
@@ -116,11 +131,14 @@ inline static void handle_ba_packet() {
     button_count++;
   }
   else { 
+    INFO("BA opmode" EOLSTR);
     handle_ba_opmode();
   }
 }
   
 void handle_packet() {
+
+  //  INFO("Got valid packet" EOLSTR);
 
   /*! postmode currently not utilised as the ba decoder does not
     accept any opmode commands that could also be progmode commands...
@@ -133,9 +151,11 @@ void handle_packet() {
 
   // ignore all op mode packets but BA backets:
   if (is_ba_packet(packet)) {
+    //    INFO("BA Packet");
     handle_ba_packet();
   }
   else if(is_sm_direct_packet(packet)) {
+    INFO("Got SM dircect packet");
     if(previous_mode == premode || previous_mode == smmode) {
       next_mode == smmode;
       /* we are not handling postmode as it cannot lead to any confusion anyway with our ba decoder
@@ -158,6 +178,7 @@ void handle_packet() {
     }
   }
   else  if(is_reset_packet(packet)) {
+    INFO("Reset Packet" EOLSTR);
     if(previous_mode == smmode) { // or postmode }
       // next_mode == opmode; // clear by default
     }
@@ -166,6 +187,9 @@ void handle_packet() {
     // what else todo? deactiveate outputs?
     // reset progmode states? Perhaps rather not -- what if a central sends reset packets all the time? butten_counts
   }
+
+
+  //  INFO("End Handling packet" EOLSTR);
 
   if ((previous_mode == smmode) && (next_mode != smmode)) {
     // just switching away from progmode at this step. -- disadvantage is that of this to be reached this requires the central to send one more non sm mode command (my central does this). However we must also take into account that the central does not do this (eg powerdown??) and hence call the function to write after the timeout of 20ms! Best would perhaps be to have smmode ticking away like on of the outputs and then burns it into the eeprom after 20ms... 
