@@ -193,10 +193,6 @@ inline void tick() {
 
   const uint8_t button_new = get_progbutton(); 
 
-#warning WHY NEVER CAÖÖED IS IZ STARVIMG
-
-
-
   if(button_new && !button) { // ie the button has just been released.
     button_count++;
     if(button_count > PORTS) { // irgendwie ist es nicht schoen, hier

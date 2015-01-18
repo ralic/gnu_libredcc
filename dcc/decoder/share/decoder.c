@@ -129,6 +129,9 @@ inline static void handle_ba_packet() {
     // run in its own interript, while the rest runs on the main programme)
     handle_ba_progmode(button_count-1);
     button_count++;
+    if(button_count >= PORTS) { // if we have reached the end of the ports, stop the programming mode
+      button_count = 0;
+    }
   }
   else { 
     INFO("BA opmode" EOLSTR);
@@ -156,6 +159,7 @@ void handle_packet() {
   }
   else if(is_sm_direct_packet(packet)) {
     INFO("Got SM dircect packet");
+    button_count = 0; // end button prog mode if we have a prog packet
     if(previous_mode == premode || previous_mode == smmode) {
       next_mode == smmode;
       /* we are not handling postmode as it cannot lead to any confusion anyway with our ba decoder

@@ -110,9 +110,9 @@ void compose_packet(const uint8_t bit) {
 #endif
 
   //INFO(bit ? "1" : "0"); // for debugging to test whether 0 and 1 arrive.
-
   //  UDR0 = bit ? '1' : '0';
   //  return;
+
 
   if( (int8_t) state < 0) {
     state++; // inc state, but only

@@ -72,6 +72,5 @@ int main(void) {
       INFO("More than 2\n");
     }
   }
-  return 0;
 }
 
