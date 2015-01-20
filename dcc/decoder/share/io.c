@@ -264,14 +264,21 @@ inline void tick() {
  */
 void activate_output(const uint8_t output) {
 
-  if(output_timer[output] == 0) { // make sure we are not processing the
+  // an ontime of 0 means we switch on the output permanently
+  if(output_ontime[output] == 0) {
+    reset_output(output^1); // switch off the paired output
+    set_output(output); // switch on this output
+  }
+  else {
+    if(output_timer[output] == 0) { // make sure we are not processing the
 				// same command twice
     // we are interrupe here and output_timer is 0 nothing happens.
     // if we are interrupted here and output timer was 1, then we have
     // just intentionally missed an activation.
     //    RC2 = 1;
 #warning we are here -- it seems output is activated at correct times, once the programming is done, LED is flashing -- why do I not see anything on the osci?? Now check when the output is really activated! For example in the function that actually sets the output to true
-    output_timer[output] = output_ontime[output];
+      output_timer[output^1] = 0;
+      output_timer[output] = output_ontime[output];
     //    output_timer[output ^ 1] = 0; // never have the two outputs
     //    of one port on at the same time. -- Is this then still
     //    thread safe -- because if we interrupt tick_outputs, we have
@@ -283,6 +290,7 @@ void activate_output(const uint8_t output) {
     //    make sure that timer0 does not allow interruption by timer2
     //    -- but also the otherway round seems problematic - think
     //    about that.
+  }
   }
 }
 
