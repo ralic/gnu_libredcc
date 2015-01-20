@@ -67,9 +67,9 @@ int main(void) {
   while(1) {
     while(!has_next_bit()); // wait for next bit.
     compose_packet(next_bit());
-#define NUM_BITS 2
+#define NUM_BITS 3
     if(bit_pointer > (1 << (NUM_BITS))) {
-      INFO("More than 2\n");
+      INFO("More than 3\n");
     }
   }
 }

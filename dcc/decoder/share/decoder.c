@@ -59,13 +59,17 @@ inline static void handle_ba_opmode() {
 
   const uint16_t portid = BA_PORTID(packet);
 
-   uint8_t i;
+  uint8_t i;
   for(i = 0; i < PORTS; i++) {
     if(port_id[i] == portid) {
       // bei vorherigem button progmode muessen wir noch ein wenig
       // warten bevor wir das naechste Packet annehmen?  
-      activate_output((i << 2) + packet.pp.ba.gate); // \todo and deactive the other one?
-      INFO("Execute BA packet" EOLSTR);
+      activate_output((i << 1) + packet.pp.ba.gate); // \todo and deactive the other one?
+      //      INFO("Execute BA packet" EOLSTR);
+#if DEBUG
+      fprintf(&uart, "for port/gate %u/%u\n", i, packet.pp.ba.gate);
+      #warning remove this.
+#endif
       return; // this precludes having two outputs programmed to the same address
     }
   }
@@ -73,9 +77,12 @@ inline static void handle_ba_opmode() {
   INFO("BA Packet not for us" EOLSTR);
 }
 
+/*!
+  @param port -- the port to progamme in the range 0..PORTS-1
+ */
 inline static void handle_ba_progmode(const uint8_t port) {
 
-  INFO("In BA Progmode");
+  //  INFO("In BA Progmode");
 
   if(port < PORTS) {
     const uint16_t portid = BA_PORTID(packet);
@@ -91,7 +98,12 @@ inline static void handle_ba_progmode(const uint8_t port) {
 							 // about 5ms
 							 // on PIC and
 							 // ??ms on AVR
-    INFO("BA Address programmed");
+    //    INFO("BA Address programmed");
+#ifdef DEBUG
+    fprintf(&uart, "for port %u, address id %x\n", port, portid);
+#warning remove this.
+#endif
+
   }
   // we probably also need to delay here to enaure we get no programme twice in case the central sends same BA packet multiple times. 
   //  RESET_ERROR(); // we will have missed many DCC bits as EEPROM programming takes long. But restting here is futible.
@@ -129,7 +141,7 @@ inline static void handle_ba_packet() {
     // run in its own interript, while the rest runs on the main programme)
     handle_ba_progmode(button_count-1);
     button_count++;
-    if(button_count >= PORTS) { // if we have reached the end of the ports, stop the programming mode
+    if(button_count > PORTS) { // if we have reached the end of the ports, stop the programming mode
       button_count = 0;
     }
   }
@@ -146,10 +158,11 @@ void handle_packet() {
   /*! postmode currently not utilised as the ba decoder does not
     accept any opmode commands that could also be progmode commands...
   */
-  typedef enum {opmode, premode, smmode, postmode} modes; 
-
+  //typedef enum {opmode, premode, smmode, postmode} modes; 
+  enum {opmode, premode, smmode, postmode};
+#ifndef NO_LOCAL_STATICS
   static uint8_t previous_mode = opmode;
-#warning the above init does not work with sdcc
+#endif
   uint8_t next_mode = opmode; // default is the next mode is opmode
 
   // ignore all op mode packets but BA backets:
@@ -161,7 +174,7 @@ void handle_packet() {
     INFO("Got SM dircect packet");
     button_count = 0; // end button prog mode if we have a prog packet
     if(previous_mode == premode || previous_mode == smmode) {
-      next_mode == smmode;
+      next_mode = smmode;
       /* we are not handling postmode as it cannot lead to any confusion anyway with our ba decoder
 	 smmode: we enter it if previous was a reset packet, we stay in
 	 as long as we are receiving sm packets, otherwise we leave it

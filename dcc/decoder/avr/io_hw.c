@@ -27,8 +27,6 @@ ISR(TIMER0_OVF_vect) {
   tick();
 }
 
-
-
 void init_io() __attribute__((section(".init8"))) __attribute__((naked));
 void init_io() {
 
