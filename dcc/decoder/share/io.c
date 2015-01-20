@@ -182,11 +182,6 @@ inline void tick() {
   static uint8_t button = 1; 
 #endif
 
-  //    sei(); // allow other interrupts to happen. Does this make sense?
-	   // What happens if we ourselves are called again? Shall we
-	   // disable and enable ourselves? At least interrupts with
-	   // higher prioriy should be enabled...  
-
   const uint8_t button_new = get_progbutton(); 
 
   if(button_new && !button) { // ie the button has just been released.

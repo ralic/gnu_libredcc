@@ -59,7 +59,6 @@ void init_io() {
      16384 us = 16.4ms
     */
   TCCR0B = _BV(CS02) | _BV(CS00); 
-  // \todo is this the maximum prescaler? 
 }
 
 // The below has to be adapted manual with the IO ports and pins of the outputs.

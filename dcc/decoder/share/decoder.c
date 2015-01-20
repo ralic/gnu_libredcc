@@ -75,7 +75,6 @@ inline static void handle_ba_opmode() {
       return; // this precludes having two outputs programmed to the same address
     }
   }
-
   INFO("BA Packet not for us" EOLSTR);
 }
 

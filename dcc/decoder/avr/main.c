@@ -23,7 +23,6 @@
  * \todo check whether to merge with the PIC code now.
  */
 
-
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
 #include <avr/power.h>
@@ -66,12 +65,18 @@ int main(void) {
   INFO("Starting Decoder");
   //! @todo loop can be make more efficient by sending to sleep as currently done in exit.
   while(1) {
-    while(!has_next_bit()); // wait for next bit.
-    compose_packet(next_bit());
-#define NUM_BITS 3
+#define NUM_BITS 2
     if(bit_pointer > (1 << (NUM_BITS))) {
       INFO("More than 3\n");
     }
-  }
-}
+
+    if(has_next_bit()) {
+      compose_packet(next_bit());
+    }
+    /* the below can lead to starvation */
+    if((io_ticks > 0) /* && bitqueue is halfempty */)  {
+      // we could this really better with calculated interruts?
+      tick();
+    };
+ }
 
