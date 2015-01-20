@@ -114,7 +114,10 @@ static inline void tick_outputs() {
     // if activate_outputs has been called in the mean time, 
     // then nothing is lost, as the correct number of ticks is ticked down.
     else {
-      reset_output(i);
+      /* \todo This is a workaround for avoind that signal (ie permamnet) outputs are set to zero -- as long as we do have a more elegant global implementation */
+      if(output_ontime[i] != 0) {
+	reset_output(i);
+      }
     }
   }
 }
