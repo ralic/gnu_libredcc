@@ -63,6 +63,7 @@ inline static void handle_ba_opmode() {
       // bei vorherigem button progmode muessen wir noch ein wenig
       // warten bevor wir das naechste Packet annehmen?  
       activate_output((i << 2) + packet.pp.ba.gate); // \todo and deactive the other one?
+      // \todo objective would start here with output[i].on()
       INFO("BA");
     }
   }

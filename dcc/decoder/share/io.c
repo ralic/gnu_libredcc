@@ -45,8 +45,8 @@
 #include <io_hw.h>
 
 #ifdef NO_LOCAL_STATICS
-static uint8_t button = 1;  // and should these not rather be in an #if block??
-5static uint8_t count = 0;
+static uint8_t button = 1;  
+static uint8_t count = 0;
 #endif
 
 /**
@@ -186,14 +186,9 @@ inline void tick() {
   static uint8_t button = 1; 
 #endif
 
-  //    sei(); // allow other interrupts to happen. Does this make sense?
-	   // What happens if we ourselves are called again? Shall we
-	   // disable and enable ourselves? At least interrupts with
-	   // higher prioriy should be enabled...  
-
   const uint8_t button_new = get_progbutton(); 
 
-#warning WHY NEVER CAÖÖED IS IZ STARVIMG
+#warning WHY NEVER CALLED IS IT STARVING?
 
 
 

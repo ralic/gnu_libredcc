@@ -1,5 +1,5 @@
 /* 
- *  Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -52,7 +52,7 @@ void init_io() {
 
   // start timer with prescaler 1:1024.
   TCCR0B = _BV(CS02) | _BV(CS00); 
-  // that is 
+  // that is we have a timer tick every 1024 / 16 us = 64us
 }
 
 const uint8_t output_mask[2*PORTS] = { _BV(2), _BV(1) }; // RC1 and RC2 on PIC // PB1 and PB2 on AVR
