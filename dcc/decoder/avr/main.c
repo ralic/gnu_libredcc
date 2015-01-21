@@ -22,7 +22,6 @@
  * \todo move io from interrupt to main thread
  */
 
-
 #include <avr/interrupt.h>
 #include <avr/sleep.h>
 #include <avr/power.h>

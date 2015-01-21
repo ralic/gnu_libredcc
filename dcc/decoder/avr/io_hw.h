@@ -24,7 +24,7 @@
 extern const uint8_t output_mask[];
 
 /**
- the pseudo fucntions that returns the state of the programming button.
+ the pseudo fucntion that returns the state of the programming button.
 */
 #define get_progbutton() (PIND & _BV(PD3))
 #define set_output(_output) do { PORTB |= output_mask[_output]; } while (0)

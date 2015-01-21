@@ -16,13 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include "io_hw.h"
 #include "../share/io.h"
 
 #include<avr/power.h>
 #include<avr/interrupt.h>
 
-// outputs are entirly driven in the an isr
+// outputs are entirly driven in an isr
 ISR(TIMER0_OVF_vect) {
   tick();
 }
