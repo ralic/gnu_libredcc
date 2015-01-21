@@ -15,9 +15,11 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
+
  */
 
-/** \file */
+/** \file 
+ */
 
 //! \todo Some centrals might send activate packets continuously (LEnz), so only the first should be reacted to... (so we need to store our state...) -- what is the source of this? 
 //! @todo: change attributes to near, pure, const
