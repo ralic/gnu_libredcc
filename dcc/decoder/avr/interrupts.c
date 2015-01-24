@@ -107,9 +107,8 @@ ISR(INT0_vect) {
  * packet.
  */
 ISR(TIMER2_COMPA_vect) {
-  // bit = 0 if PIND2 is high and bit = 1 if PIND2 is low 87us after a
-  // positive edge detected via INT0.
-  const uint8_t bit = (PIND & _BV(PD2)) ? 0 : 1;  // I think I should swap this around \todo or make this !(PIND & _BV(PD2))
+  // bit = 1 if PIND2 is high and bit = 0 if PIND2 is still low 87us after a falling edge.
+  const uint8_t bit = (PIND & _BV(PD2));  
 
   // stop timer
   TCCR2B = 0; //~(_BV(CS20) | _BV(CS21) | _BV(CS20));
@@ -141,8 +140,8 @@ void init_dcc_receiver() {
   // enable timer2:
   power_timer2_enable();
 
-  // enable INT0 on positive edge:
-  EICRA |= _BV(ISC01) | _BV(ISC00); // \todo change this to negative edge (becazse tgat might save an instruction later when converting port readings to read bits.
+  // enable INT0 on falling edge -- this is often clearer than the rising edge of the signal. (Also a machine instruction might be saved later on when converting the read potential to the DCC bit).
+  EICRA |= _BV(ISC01);  
   EIMSK |= _BV(INT0);
 
   // set timer2 to normal mode, no outputs needed:

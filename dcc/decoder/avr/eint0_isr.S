@@ -24,7 +24,7 @@
 	.section .text
 	.global __vector_1 	; gcc uses this symbol for the INT0 isr.
 
-;;; ISR that starts up timer2 when there is a positive edge at PINT0 (PD2):
+;;; ISR that starts up timer2 when there is a falling edge at PINT0 (PD2):
 __vector_1:
 	;;  none of the below changes SREG:
 	push r24
