@@ -23,20 +23,8 @@
  * same time (eg by programming them to the same address). 
  * @todo how to protect outputs that belong to the same port from
  * being activated at the same time_?
- * @todo also how to prevent (thread-safty and interrupt-wise) that
- * outputs are activated for longer than specifies (eg by changing
- * output_timer concurrently?) -- volatile is not neccessary when we
- * just can be sure that methods are executed sequentially. In fact
- * pushing/popping register could be done without if only one
- * interrupt is running at any one time...
- * @todo deactive when activating, and add an onset delay -- so that
- * always only one input is active...
  *
- * \todo Rewrite so that we have a command queue for the outputs -- so that
- * outputs are only switched on sequentially??? (at least if
- * activation times are short! -- or a separete queue for each port --
- * but so that if a switch on is requested twice in a row one command
- * is ignored! (at least optionally!)
+ * \todo Rewrite so that we have a command queue for the outputs.
  */
 
 #include "io.h"
@@ -64,13 +52,11 @@ typedef struct {
 */
 
 static volatile uint8_t output_timer[OUTPUTS]; // and what is volatile here?
-					// All of it? Check that, and kann it be initialised? either staticaslly or via a timer?
-// can sdcc init this one? Yes!
 
 #if PORTS != 2
 #error Change the below manualy re number of ports
 #endif
-static const uint8_t output_ontime[OUTPUTS] = { 5, 5, 5, 5}; // x 16ms. 1sec -- much too? (currently it is 32ms wotj tje pic) {32s seems to work for the LGB motore
+static const uint8_t output_ontime[OUTPUTS] = { 5, 5, 0, 0}; // x 16ms. 1sec -- much too? (currently it is 32ms wotj tje pic) {32s seems to work for the LGB motore
 
 
 /**
@@ -199,7 +185,6 @@ inline void tick() {
 			       // haben...
                                // (und wieso ist die in decoder)
       button_count = 0;
-      #warning "It would be enough to increment btton_count here, and then reset it in decoder.c -- but will that be thread safe?"
     }
   }
   button = button_new;
@@ -306,5 +291,11 @@ void init_ports() {
   uint8_t i;
   for(i = 0; i < OUTPUTS; i++) {
     output_timer[i] = 0;
+  }
+  //! the below does not work as expected on the AVR -- is init run before variables are initialised? No
+  for(i = 0; i < OUTPUTS; i++) {
+    if(output_ontime[i] == 0) {
+      activate_output(i);
+    }
   }
 }
