@@ -31,10 +31,8 @@
  * interrupt is running at any one time...
  * @todo deactive when activating, and add an onset delay -- so that
  * always only one input is active...
- * Improve doxygen
- * Check GNU licence...
  *
- * Rewrite so that we have a command queue for the outputs -- so that
+ * \todo Rewrite so that we have a command queue for the outputs -- so that
  * outputs are only switched on sequentially??? (at least if
  * activation times are short! -- or a separete queue for each port --
  * but so that if a switch on is requested twice in a row one command
@@ -45,13 +43,14 @@
 #include <io_hw.h>
 
 #ifdef NO_LOCAL_STATICS
-static uint8_t button = 1;  // and should these not rather be in an #if block??
-5static uint8_t count = 0;
+static uint8_t button = 1;  
+static uint8_t count = 0;
 #endif
 
 /**
  * A port consists of two consecutively numbered outputs, ie a port is
  * a pair of outputs  
+ * \todo this is perhaps not always so...
  */
 #define OUTPUTS (2 * PORTS)
 
@@ -68,15 +67,14 @@ static volatile uint8_t output_timer[OUTPUTS]; // and what is volatile here?
 					// All of it? Check that, and kann it be initialised? either staticaslly or via a timer?
 // can sdcc init this one? Yes!
 
-
-static const uint8_t output_ontime[OUTPUTS] = { 5, 5 }; // x 16ms. 1sec -- much too? (currently it is 32ms wotj tje pic) {32s seems to work for the LGB motore
-
-
-
+#if PORTS != 2
+#error Change the below manualy re number of ports
+#endif
+static const uint8_t output_ontime[OUTPUTS] = { 5, 5, 5, 5}; // x 16ms. 1sec -- much too? (currently it is 32ms wotj tje pic) {32s seems to work for the LGB motore
 
 
 /**
- * core parts need to me made thread safe... as activate output will
+ * core parts need to be made thread safe... as activate output will
  * be running on a different thread
  * 
  * This runs on a low priorty interruptable interrupt or on the main
@@ -123,8 +121,6 @@ static inline void tick_outputs() {
     }
   }
 }
-
-
 
 /**
  * This function is called repeatedly (eg from ...).
@@ -195,10 +191,6 @@ inline void tick() {
 	   // higher prioriy should be enabled...  
 
   const uint8_t button_new = get_progbutton(); 
-
-#warning WHY NEVER CAÖÖED IS IZ STARVIMG
-
-
 
   if(button_new && !button) { // ie the button has just been released.
     button_count++;

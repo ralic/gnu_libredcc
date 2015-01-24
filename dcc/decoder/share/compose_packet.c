@@ -1,4 +1,5 @@
-/* 
+/*
+ * Copyright 2006 Wolfgang Kufer <kufer@gmx.de>
  * Copyright 2014 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
@@ -20,24 +21,25 @@
 /**
  * \file
  *
+ * The code in this file is based on code initially published under
+ * the GNU general public license 2 by Wolfgang Kufer as part of
+ * OpenDCC project (see http://www.opendcc.de) in 2006. I (Andre) owe him
+ * a lot for my understanding of how to decode DCC signals reliably.
+ *  
+ * Major changes 
+ *   - removed (now unnessary) optimisations.
+ *   - introduced other (unnecessary) optimisations.
+ *   - restructured in what I think (incorrectly) to be a nicer
+ *     structure making it easier to adapt it to other uC (eg PIC)
+ *   - separated (hard-independent) DCC part from hardware dependent-part.
+ *   - (too) verbose commenting
+ *
  * Basic code to decode signal bits from the DCC signal and compose bits into a DCC packet.
  * The DCC packet itself to be parsed elsewhere, in \code handle_packet
  */
 
-/** @todo:       
-   - eleminate all unnecessary code to save memory space and then see
-   whether we can fit all into one bank 
-   - then check whether after the initialise we ever use another bank
-   than bank 0 (ie for the special function registers -- if not we can
-   write a script to delete all BANKSEL and PAGESEL commands... except
-   from init code) 
-   - // sdcc current version does not handle inline correctly
-   - xor and packet_len should rather be initialised in START_BIT
-*/
-
 #include "compose_packet.h"
 #include <error.h>
-
 
 #ifdef DEBUG
 #include <avr/io.h>
@@ -57,7 +59,7 @@ typedef enum {START_BIT = 0, BYTE = 1, STOP_BIT = 2} DCC_SIGNAL_STATE;
 static struct {
   uint8_t state; 
   uint8_t xor;
-  uint8_t bits;  // rename
+  uint8_t bits;
 } local_statics; 
 
 #define state local_statics.state
@@ -66,59 +68,50 @@ static struct {
 
 #endif
 
-/** This function gets fed bits from the dcc stream and composes them 
+/** This function gets fed bits from the DCC stream and composes them 
  *  into a dcc packet, compare [NMRA].  
  *
- *  This function may be run on the (interruptable) main thread (as
- *  for PIC) or on an (interruptable or not) interrupt (as for ATmega)
- *  
- *  It then calls the external function handle_packet which needs to be provided elsewhere. 
- *  It is declared external to allow different efficient implementations for different 
- *  types of decoders.
+ * It then calls the external function handle_packet which needs to be provided elsewhere. 
+ * It is declared external to allow different efficient implementations for different 
+ * types of decoders.
  * 
- * When handle_packet is called, a valid packet is in the global variable packet. 
+ * At the point handle_packet is called, a valid packet is in the global variable packet. 
  * handle_packet should return quickly if compose_packet is executed during an ISR. 
  * It is assumed that packet can be overwritten once handle_packet
- * returns. So handle_packet would have to make its own copy of it.
+ * returns. 
  *
- * @param bit the current bit of the dcc stream -- if it is an integer
- * it must be either 0 or 1 -- other values will lead to unexpected
- * behaviour  
+ * @param bit the current bit of the dcc stream
  */
 
-//! @todo should I make this a bit type? and make it inline again...
-//static inline 
 void compose_packet(const uint8_t bit) {
 
 /* We optimised compose_packet with the PIC in mind -- but these
-     changes should also lead to efficient code on other uC 
-     1. switch(state) statement replace with series of if-else (this
-     is ugly)
-     2. dec/inc to move to next state instead of assinging state directly.
-     3. state of dcc signal and count of preamble bits are contracted
-        in the same variable, negative values mean we are still in the
-        preamlbe and counting up towards state == 0 
+   changes should also lead to efficient code on other uC 
+   1. switch(state) statement replaced with series of if-else (this
+      is ugly)
+   2. dec/inc to move to next state instead of assinging state directly.
+   3. state of DCC signal and count of preamble bits are contracted
+      in the same variable, negative values mean we are still in the
+      preamlbe and counting up towards state == 0 
 */
 
   // reflects the different states the bit stream can be in, compare [NMRA]:
-  // enum {PREAMBLE = 0, START_BIT = 1, BYTE = 2, STOP_BIT = 3};
   typedef enum {START_BIT = 0, BYTE = 1, STOP_BIT = 2} DCC_SIGNAL_STATE;
 
 #ifndef NO_LOCAL_STATICS
-  static uint8_t state = -DECODER_PREAMBLE_MIN_LEN; //! @todo integrate this into the enum.
+  static uint8_t state = -DECODER_PREAMBLE_MIN_LEN;
   static uint8_t xor = 0;
 #endif
 
-  //INFO(bit ? "1" : "0"); // for debugging to test whether 0 and 1 arrive.
-
+  //  INFO(bit ? "1" : "0"); // for debugging to test whether 0 and 1 arrive.
   //  UDR0 = bit ? '1' : '0';
   //  return;
 
+
   if( (int8_t) state < 0) {
-    state++; // inc state, but only
+    state++;   // inc state, but only
     if(!bit) { // in case we really got a 1 bit
-      state = -DECODER_PREAMBLE_MIN_LEN; // reset preamble in case of
-					 // a zero bit
+      state = -DECODER_PREAMBLE_MIN_LEN; // reset preamble in case of a zero bit
       ERROR(preamble_too_short);
     }
   } 
@@ -133,8 +126,6 @@ void compose_packet(const uint8_t bit) {
 #ifndef NO_LOCAL_STATICS
     static uint8_t bits = 0; 
 #endif
-
-    //    INFO("BYTE\n");
 
     bitpattern <<= 1;
     if(bit) bitpattern++;
@@ -158,8 +149,8 @@ void compose_packet(const uint8_t bit) {
 	ERROR(packet_too_long);
       }
     }
-    else { // bit is 1, packet is complete.
-      if(!xor)  // no checksum error
+    else { // if bit is 1 packet is complete.
+      if(!xor)  
 	handle_packet(); // handles packet in global var "packet"
       else { 
 	ERROR(checksum_nonzero);

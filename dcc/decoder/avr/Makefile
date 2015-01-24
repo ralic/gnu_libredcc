@@ -6,12 +6,11 @@ ifndef $(PRG)
 PRG = decoder
 endif
 
-OBJ = main.o interrupts.o ../share/compose_packet.o eint0_isr.o ../share/$(PRG).o error_hw.o ../share/bitqueue.o eeprom_hw.o # eeprom_hw could also be removed from here
+OBJ = main.o interrupts.o ../share/compose_packet.o eint0_isr.o ../share/$(PRG).o error_hw.o ../share/bitqueue.o eeprom_hw.o # \todo eeprom_hw could also be removed from here, but there is a problem with avrdude when we remove this for sniffer.
 
 ifeq ($(PRG), decoder)
 OBJ += ../share/io.o io_hw.o 
 endif	
-
 
 INCLUDE_DIR = -I . -I .. -I ../../include -I ../../../include
 LIB_DIR = -L ../../lib/$(ARCH) -L ../../../lib/$(ARCH)
