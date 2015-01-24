@@ -65,10 +65,9 @@ int main(void) {
   INFO("Starting Decoder");
   //! @todo loop can be make more efficient by sending to sleep as currently done in exit.
   while(1) {
-
-#define NUM_BITS 2
+#define NUM_BITS 3
     if(bit_pointer > (1 << (NUM_BITS))) {
-      INFO("More than 2\n");
+      INFO("More than 3\n");
     }
 
     if(has_next_bit()) {
