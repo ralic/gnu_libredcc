@@ -20,7 +20,6 @@
 #define IOIO_H
 
 #include<stdint.h>
-
 //! number of ports that the decoder has -- the number of physical
 //! outputs is twice this number. 
 #define PORTS 2
@@ -33,13 +32,19 @@ extern volatile uint8_t button_count;
 //! activates an output
 void activate_output(const uint8_t output); 
 
-
+//! to be periodically executed for io timings -- currently every 16ms
 inline void tick();
 
+//! Cyclically increment variable var up to _lastval (inclusive) and then set to 0
+#define INCR(_var, _lastval) do {		\
+  (_var)++;					\
+  if( (_var) > (_lastval)) {			\
+    (_var) = 0;					\
+  }						\
+  } while(0)
 
 #ifdef HAS_NO_INIT
 inline void init_ports(); 
 #endif
-
 
 #endif

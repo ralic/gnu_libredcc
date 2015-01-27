@@ -23,9 +23,19 @@
 #include<avr/power.h>
 #include<avr/interrupt.h>
 
-// outputs are entirly driven in an isr
+volatile uint8_t io_ticks = 0;
+
+/*! The timer is setup so that it overfl.o-ws every 16ms
+    Like on the PIC we could perhaps just poll the corresponding overflow flag?
+    If we wanted the IO to run on the ISR itself, we would call tick() in the ISR.
+
+ * If we are running with F_CPU = 16MHz, and a prescaler 1:1024, then
+ * there is a timer0 overflow every 15.625 times in a ms, that is one
+ * tick is 0.064ms. If we count an bit timer byte up, then ports are updated
+ * about every 16ms. 16ms is also enough for debouncing of the button.
+ */
 ISR(TIMER0_OVF_vect) {
-  tick();
+  io_ticks++; 
 }
 
 void init_io() __attribute__((section(".init8"))) __attribute__((naked));
