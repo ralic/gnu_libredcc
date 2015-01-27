@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 Wolfgang Kufer <kufer@gmx.de>
- * Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014,2015 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *

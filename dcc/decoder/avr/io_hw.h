@@ -19,7 +19,11 @@
 #ifndef IOHW_H
 #define IOHW_H 1
 
-#include<avr/io.h>
+#include<share/io.h>
+
+extern volatile uint8_t io_ticks;
+#define io_tick() io_ticks
+#define acknowledge_io_tick() io_ticks--
 
 extern const uint8_t output_mask[];
 
@@ -29,9 +33,5 @@ extern const uint8_t output_mask[];
 #define get_progbutton() (PIND & _BV(PD3))
 #define set_output(_output) do { PORTB |= output_mask[_output]; } while (0)
 #define reset_output(_output) do { PORTB &= ~(output_mask[_output]); } while(0)
-
-
-
-
 
 #endif
