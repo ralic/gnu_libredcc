@@ -56,7 +56,7 @@ static volatile uint8_t output_timer[OUTPUTS]; // and what is volatile here?
 #if PORTS != 2
 #error Change the below manualy re number of ports
 #endif
-static const uint8_t output_ontime[OUTPUTS] = { 5, 5, 0, 0}; // x 16ms. 1sec -- much too? (currently it is 32ms wotj tje pic) {32s seems to work for the LGB motore
+static const uint8_t output_ontime[OUTPUTS] = { 5, 5, 5, 5}; // x 16ms. 1sec -- much too? (currently it is 32ms wotj tje pic) {32s seems to work for the LGB motore
 
 
 /**
