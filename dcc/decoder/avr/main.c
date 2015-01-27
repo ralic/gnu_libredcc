@@ -20,6 +20,7 @@
 /** \file
  * \todo watchdog timer
  * \todo move io from interrupt to main thread
+ * \todo check whether to merge with the PIC code now.
  */
 
 #include <avr/interrupt.h>
