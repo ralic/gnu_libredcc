@@ -12,6 +12,13 @@ ifeq ($(PRG), decoder)
 OBJ += ../share/io.o io_hw.o 
 endif	
 
+# \todo this is not strictly necessary -- just a workaround -- remove these from sniffer, and make main so that it also works with sniffer
+ifeq ($(PRG), sniffer)
+OBJ += ../share/io.o io_hw.o 
+endif	
+
+
+
 INCLUDE_DIR = -I . -I .. -I ../../include -I ../../../include
 LIB_DIR = -L ../../lib/$(ARCH) -L ../../../lib/$(ARCH)
 LIBS1 = dcc uart
