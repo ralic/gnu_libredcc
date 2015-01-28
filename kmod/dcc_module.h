@@ -1,0 +1,1 @@
+#define DEFAULT_DCC_GPIO 1
