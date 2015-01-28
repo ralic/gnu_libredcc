@@ -17,6 +17,12 @@
  * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/** @file
+    @todo in the makefile get rid of main.c as it is not needed, but it introduced symbols that sniffer does not need.
+    - eg put main method in sniffer.c and in decoder.c 
+ */
+
+
 #include <share/compose_packet.h>
 
 #include<stdint.h>
@@ -37,7 +43,13 @@
 #error "Architecture not implemented"
 #endif
 
+
+
+
 /** pretty prints the current packet to the uart */
+
+
+
 void handle_packet() {
 
   uint8_t i;
