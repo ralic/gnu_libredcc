@@ -32,6 +32,8 @@ MODULE_PARM_DESC(major, "Major device number used for dcc device.");
 
 static int irq; // irq used for pin
 
+// how far did the init go successfully?
+static enum {level_nothing, level_gpio, level_irq, level_device} init_level = level_nothing; 
 
 
 // file operations:
@@ -45,10 +47,17 @@ static int irq; // irq used for pin
 
 static struct file_operations fops = {
   //	.read = dcc_read,
-  //	.write = dcc_write,
-  //	.open = dcc_open,
-  //	.release = dcc_release
+//	.write = dcc_write,
+// 	.open = dcc_open,
+// 	.release = dcc_release
 };
+
+
+//static int dcc_open(struct inode *, struct file *) {
+// return -EINVAL;
+//}
+//static int dcc_release(struct inode *, struct file *);
+//static ssize_t dcc_read(struct file *, char *, size_t, loff_t *);
 
 
 // the beginning and the end:
@@ -64,8 +73,10 @@ int __init dcc_init(void)
 	if(ret < 0) {
 	  printk(KERN_ALERT "Requesting GPIO %d failed with %d.\n", gpio, ret);
 	  return ret;
+	} 
+	else {
+	  printk(KERN_INFO "Successfully requested GPIO %d.\n", gpio);
 	}
-	printk(KERN_INFO "Successfully requested GPIO %d.\n", gpio);
 
 	ret = gpio_cansleep(gpio);
 	if(ret) {
@@ -75,14 +86,27 @@ int __init dcc_init(void)
 
 	ret = gpio_direction_input(gpio);
 	if(ret < 0) {
-	  printk(KERN_ALERT "Setting up GPIO %d as input failed with %d\n", gpio, ret);
+	  printk(KERN_ALERT "Setting up GPIO %d as input failed with %d.\n", gpio, ret);
+	  return ret;
 	}
 
-	irq = gpio_to_irq(gpio);
+	ret = gpio_get_value(gpio);
 	if(ret < 0) {
-	  printk(KERN_ALERT "Getting interrupt no for GPIO %d failed with %d\n", gpio, ret);
+	  printk(KERN_ALERT "Reading GPIO %d failed with %d.\n", gpio, ret);
+	  return ret;
 	}
-
+	else {
+	  printk(KERN_INFO "Read GPIO %d as %d.\n", gpio, ret);
+	}	  
+	  
+	irq = gpio_to_irq(gpio);
+	if(irq < 0) {
+	  printk(KERN_ALERT "Getting interrupt no for GPIO %d failed with %d\n", gpio, irq);
+	  return irq;
+	} else {
+	  printk(KERN_INFO "Got IRQ %d for GPIO %d.\n", irq, gpio);
+	}
+	
 	//request_irq(irq);
 
 
@@ -92,12 +116,9 @@ int __init dcc_init(void)
 	// \todo What's the pinctrl subsystem? And does it leave on the raspi? Read Documentation/pinctrl.txt
 
 	/*
-- gpio_request(gpio_num, gpio_label)
 - gpio_direction_output(gpio_num, true);
 - gpio_direction_input(gpio_num);
 - gpio_set_value(gpio_num, value);
-- gpio_to_irq(gpio_num);
-- request_irq(...)
 - etc....
 	*/
 
