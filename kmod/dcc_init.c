@@ -1,11 +1,14 @@
 /* \file
- A kernel module to generate and/decode DCC signal using GPIO pins and on-board timers for the Raspberry Pi
-*/
+ A kernel module to generate/decode DCC signals using GPIO pins and
+ on-board timers for the Raspberry Pi.
+*/ 
 
 /*
  * Copyright (C) 2015 Andre Gruning 
  *
- * Credits go to Peter Jay Salzman, Michael Burian, Ori Pomerantz for their The Linux Kernel Module Programming Guide availble at http://www.tldp.org/LDP/lkmpg/2.6/html/index.html
+ * Credits go to Peter Jay Salzman, Michael Burian, Ori Pomerantz for
+ * their The Linux Kernel Module Programming Guide availble at
+ * http://www.tldp.org/LDP/lkmpg/2.6/html/index.html 
 */
 
 #include <linux/module.h>
@@ -14,6 +17,7 @@
 #include <linux/init.h>
 #include <linux/fs.h>
 #include <linux/gpio.h>
+#include <mach/irqs.h>
 
 #include "dcc_module.h"
 
@@ -61,6 +65,7 @@ int __init dcc_init(void)
 	  printk(KERN_ALERT "Requesting GPIO %d failed with %d.\n", gpio, ret);
 	  return ret;
 	}
+	printk(KERN_INFO "Successfully requested GPIO %d.\n", gpio);
 
 	ret = gpio_cansleep(gpio);
 	if(ret) {
@@ -105,8 +110,6 @@ int __init dcc_init(void)
 	  return major;
 	}
 	printk(KERN_INFO "DCC service has major device number %d.\n", major);
-
-
 
 	return 0;
 }
