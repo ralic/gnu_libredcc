@@ -64,11 +64,18 @@ static struct file_operations fops = {
 
 // IRQ handlers
 
+// \todo why did the message below appear multiple times although I just have oneshot?
 static irqreturn_t my_gpio_handler(int irq, void* dev_id) {
-  // should not do this:
-  printk(KERN_ERR "GPIO INT");
-  return IRQ_HANDLED;
+// should not do this:
+printk(KERN_ERR "GPIO INT");
+return IRQ_HANDLED;
 }
+
+static irqreturn_t my_timer_handler(int irg, void* dev_id) {
+printk(KERN_ERR "TIMER INT");
+return IRQ_HANDLED;
+}
+
 
 
 
@@ -123,7 +130,7 @@ int __init dcc_init(void)
 	} else {
 	  printk(KERN_INFO "Got IRQ %d for GPIO %d.\n", irq, gpio);
 	}
-	
+
 	ret = request_irq(irq, my_gpio_handler, IRQF_TRIGGER_FALLING | IRQF_ONESHOT, "dcc handler", NULL);
 	if(ret < 0) {
 	  printk(KERN_ALERT "Reqesting interrupt  %d for GPIO %d failed with %d\n", irq, gpio, ret);
@@ -132,6 +139,14 @@ int __init dcc_init(void)
 	  printk(KERN_INFO "Interrupt handler for IRQ %d set.\n", irq);
 	}
 
+
+	ret = request_irq(irq, my_timer_handler, IRQF_ONESHOT, "timer handler", NULL);
+	if(ret < 0) {
+	  printk(KERN_ALERT "Reqesting timer interrupt  %d for GPIO %d failed with %d\n", irq, gpio, ret);
+	  return ret;
+	} else {
+	  printk(KERN_INFO "Interrupt handler for IRQ %d set.\n", irq);
+	}
 
 
 
@@ -161,7 +176,10 @@ int __init dcc_init(void)
 void __exit dcc_exit(void)
 {
 
-  //free_irq(irq);
+free_irq(irq,NULL); // gpio interrupt.
+
+free_irq(IRQ_TIMER0,NULL);
+
 
   gpio_free(gpio);
 
