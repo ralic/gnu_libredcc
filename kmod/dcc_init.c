@@ -17,7 +17,9 @@
 #include <linux/init.h>
 #include <linux/fs.h>
 #include <linux/gpio.h>
-#include <mach/irqs.h>
+#include <linux/interrupt.h>
+//#include <mach/irqs.h>
+
 
 #include "dcc_module.h"
 
@@ -60,6 +62,17 @@ static struct file_operations fops = {
 //static ssize_t dcc_read(struct file *, char *, size_t, loff_t *);
 
 
+// IRQ handlers
+
+static irqreturn_t my_gpio_handler(int irq, void* dev_id) {
+  // should not do this:
+  printk(KERN_ERR "GPIO INT");
+  return IRQ_HANDLED;
+}
+
+
+
+
 // the beginning and the end:
 
 int __init dcc_init(void)
@@ -76,7 +89,11 @@ int __init dcc_init(void)
 	} 
 	else {
 	  printk(KERN_INFO "Successfully requested GPIO %d.\n", gpio);
+
 	}
+
+	init_level = level_gpio;
+	
 
 	ret = gpio_cansleep(gpio);
 	if(ret) {
@@ -107,7 +124,13 @@ int __init dcc_init(void)
 	  printk(KERN_INFO "Got IRQ %d for GPIO %d.\n", irq, gpio);
 	}
 	
-	//request_irq(irq);
+	ret = request_irq(irq, my_gpio_handler, IRQF_TRIGGER_FALLING | IRQF_ONESHOT, "dcc handler", NULL);
+	if(ret < 0) {
+	  printk(KERN_ALERT "Reqesting interrupt  %d for GPIO %d failed with %d\n", irq, gpio, ret);
+	  return ret;
+	} else {
+	  printk(KERN_INFO "Interrupt handler for IRQ %d set.\n", irq);
+	}
 
 
 
