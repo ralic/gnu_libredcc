@@ -34,8 +34,8 @@ MODULE_PARM_DESC(major, "Major device number used for dcc device.");
 
 static int irq; // irq used for pin
 
-// how far did the init go successfully?
-static enum {level_nothing, level_gpio, level_irq, level_device} init_level = level_nothing; 
+// \todo how far did the init go successfully?
+static enum {level_nothing, level_gpio, level_irq_gpio, level_irq_timer, level_device} init_level = level_nothing; 
 
 
 // file operations:
@@ -92,6 +92,7 @@ int __init dcc_init(void)
 	ret = gpio_request(gpio, "DCC Pin");
 	if(ret < 0) {
 	  printk(KERN_ALERT "Requesting GPIO %d failed with %d.\n", gpio, ret);
+
 	  return ret;
 	} 
 	else {
@@ -139,10 +140,13 @@ int __init dcc_init(void)
 	  printk(KERN_INFO "Interrupt handler for IRQ %d set.\n", irq);
 	}
 
+#ifndef IRQ_TIMER0 
+#define IRQ_TIMER0 -1
+#endif
 
-	ret = request_irq(irq, my_timer_handler, IRQF_ONESHOT, "timer handler", NULL);
+	ret = request_irq(IRQ_TIMER0, my_timer_handler, IRQF_ONESHOT, "timer handler", NULL);
 	if(ret < 0) {
-	  printk(KERN_ALERT "Reqesting timer interrupt  %d for GPIO %d failed with %d\n", irq, gpio, ret);
+	  printk(KERN_ALERT "Requesting timer interrupt  %d for GPIO %d failed with %d\n", IRQ_TIMER0, gpio, ret);
 	  return ret;
 	} else {
 	  printk(KERN_INFO "Interrupt handler for IRQ %d set.\n", irq);
