@@ -18,8 +18,8 @@
 #include <linux/fs.h>
 #include <linux/gpio.h>
 #include <linux/interrupt.h>
-//#include <mach/irqs.h>
-
+//#include <mach/irqs.h> /// @todo remove.
+#include <mach/hardware.h>
 
 #include "dcc_module.h"
 
@@ -28,9 +28,11 @@ static int dcc_in = DEFAULT_DCC_IN_GPIO;
 module_param(dcc_in, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
 MODULE_PARM_DESC(dcc_in, "GPIO pin used for the input of the dcc signal.");
 
+/*
 static int dcc_out = DEFAULT_DCC_OUT_GPIO;
 module_param(dcc_out, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
 MODULE_PARM_DESC(dcc_out, "GPIO pin used for the output of the dcc signal.");
+*/
 
 static int major = DEVICE_MAJOR; // major device number
 module_param(major, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
@@ -67,21 +69,35 @@ static struct file_operations fops = {
 
 // IRQ handlers
 
-// \todo why did the message below appear multiple times although I just have oneshot?
+// \todo why did the message below appear multiple times although I just have one shot?
 static irqreturn_t my_gpio_handler(int irq, void* dev_id) {
-// should not do this:
+
+  // dont to this
 printk(KERN_ERR "GPIO INT");
 return IRQ_HANDLED;
 }
 
+// \todo should I have the TIMER flag??
 static irqreturn_t my_timer_handler(int irg, void* dev_id) {
-printk(KERN_ERR "TIMER INT");
-return IRQ_HANDLED;
+  static int toggle = 0;
+  
+  // read free running system timer
+  uint_32 clo = readl(__io_address(ST_BASE + 0x04));
+
+  // acknowledge System Timer Match 0:
+  writel(1 << 0, __io_address(ST_BASE + 0x0));
+  
+  gpio_set_value(dcc_in, toggle & 0x1);
+  toggle++;
+
+#define DCC_CYCLES 100 // 100us
+  // @todo check STC_FREQ_HZ == 1000000 (1 million).
+
+  // set next System Timer Match 0:
+  writel(clo + DCC_CYCLES, __io_address(ST_BASE + 0xC));
+
+  return IRQ_HANDLED;
 }
-
-
-
-
 
 // the beginning and the end:
 
@@ -114,9 +130,19 @@ int __init dcc_init(void)
 	  return ret;
 	}
 
+	/*
 	ret = gpio_direction_input(dcc_in);
 	if(ret < 0) {
 	  printk(KERN_ALERT "Setting up GPIO %d as input failed with %d.\n", dcc_in, ret);
+	  unwind_setup(init_level);
+	  return ret;
+	}
+	*/
+
+	// \todo do I have to switch off the pull-down?
+	ret = gpio_direction_output(dcc_in, GPIOF_INIT_HIGH);
+	if(ret < 0) {
+	  printk(KERN_ALERT "Setting up GPIO %d as output failed with %d.\n", dcc_in, ret);
 	  unwind_setup(init_level);
 	  return ret;
 	}
@@ -138,7 +164,6 @@ int __init dcc_init(void)
 	} 
 	printk(KERN_INFO "Got IRQ number %d for GPIO %d.\n", dcc_in_irq, dcc_in);
 	
-
 	ret = request_irq(dcc_in_irq, my_gpio_handler, IRQF_TRIGGER_FALLING | IRQF_ONESHOT, "dcc handler", NULL);
 	if(ret < 0) {
 	  printk(KERN_ALERT "Reqesting interrupt  %d for GPIO %d failed with %d\n", dcc_in_irq, dcc_in, ret);
