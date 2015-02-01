@@ -20,6 +20,7 @@
 #include <linux/interrupt.h>
 //#include <mach/irqs.h> /// @todo remove.
 #include <mach/hardware.h>
+#include <asm/io.h>
 
 #include "dcc_module.h"
 
@@ -82,7 +83,7 @@ static irqreturn_t my_timer_handler(int irg, void* dev_id) {
   static int toggle = 0;
   
   // read free running system timer
-  uint_32 clo = readl(__io_address(ST_BASE + 0x04));
+  uint32_t clo = readl(__io_address(ST_BASE + 0x04));
 
   // acknowledge System Timer Match 0:
   writel(1 << 0, __io_address(ST_BASE + 0x0));
