@@ -24,18 +24,21 @@
 #include "dcc_module.h"
 
 // module parameters:
-static int gpio = DEFAULT_DCC_GPIO;
-module_param(gpio, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
-MODULE_PARM_DESC(gpio, "GPIO pin used for the [input|output] of the dcc signal.");
+static int dcc_in = DEFAULT_DCC_IN_GPIO;
+module_param(dcc_in, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+MODULE_PARM_DESC(dcc_in, "GPIO pin used for the input of the dcc signal.");
+
+static int dcc_out = DEFAULT_DCC_OUT_GPIO;
+module_param(dcc_out, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+MODULE_PARM_DESC(dcc_out, "GPIO pin used for the output of the dcc signal.");
 
 static int major = DEVICE_MAJOR; // major device number
 module_param(major, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
 MODULE_PARM_DESC(major, "Major device number used for dcc device.");
 
-static int irq; // irq used for pin
+static int dcc_in_irq; // irq used for pin
 
 // \todo how far did the init go successfully?
-static enum {level_nothing, level_gpio, level_irq_gpio, level_irq_timer, level_device} init_level = level_nothing; 
 
 
 // file operations:
@@ -82,113 +85,129 @@ return IRQ_HANDLED;
 
 // the beginning and the end:
 
+typedef enum {level_nothing, level_dcc_in, level_irq_in, level_irq_timer, level_device} init_level_enum;
+static init_level_enum init_level = level_nothing; 
+static void unwind_setup(init_level_enum level);
+
+
+
 int __init dcc_init(void)
 {
-  
   int ret;
-
+  
 	printk(KERN_INFO "DCC service starting.\n");
 
-	ret = gpio_request(gpio, "DCC Pin");
+	ret = gpio_request(dcc_in, "DCC Pin");
 	if(ret < 0) {
-	  printk(KERN_ALERT "Requesting GPIO %d failed with %d.\n", gpio, ret);
-
+	  printk(KERN_ALERT "Requesting GPIO %d failed with %d.\n", dcc_in, ret);
+	  unwind_setup(init_level);
 	  return ret;
 	} 
-	else {
-	  printk(KERN_INFO "Successfully requested GPIO %d.\n", gpio);
+	printk(KERN_INFO "Successfully requested GPIO %d.\n", dcc_in);
 
+	init_level = level_dcc_in;
+	
+	ret = gpio_cansleep(dcc_in);
+	if(ret) {
+	  printk(KERN_ALERT "Aborting because selected GPIO %d can sleep.\n", dcc_in);
+	  unwind_setup(init_level);
+	  return ret;
 	}
 
-	init_level = level_gpio;
+	ret = gpio_direction_input(dcc_in);
+	if(ret < 0) {
+	  printk(KERN_ALERT "Setting up GPIO %d as input failed with %d.\n", dcc_in, ret);
+	  unwind_setup(init_level);
+	  return ret;
+	}
+
+	ret = gpio_get_value(dcc_in);
+	if(ret < 0) {
+	  printk(KERN_ALERT "Reading GPIO %d failed with %d.\n", dcc_in, ret);
+	  unwind_setup(init_level);
+	  return ret;
+	}
+	printk(KERN_INFO "Read GPIO %d as %d.\n", dcc_in, ret);
+		  
+	  
+	dcc_in_irq = gpio_to_irq(dcc_in);
+	if(dcc_in_irq < 0) {
+	  printk(KERN_ALERT "Getting interrupt no for GPIO %d failed with %d\n", dcc_in, dcc_in_irq);
+	  unwind_setup(init_level);
+	  return dcc_in_irq;
+	} 
+	printk(KERN_INFO "Got IRQ number %d for GPIO %d.\n", dcc_in_irq, dcc_in);
 	
 
-	ret = gpio_cansleep(gpio);
-	if(ret) {
-	  printk(KERN_ALERT "Aborting because selected GPIO %d can sleep.\n", gpio);
-	  return ret;
-	}
-
-	ret = gpio_direction_input(gpio);
+	ret = request_irq(dcc_in_irq, my_gpio_handler, IRQF_TRIGGER_FALLING | IRQF_ONESHOT, "dcc handler", NULL);
 	if(ret < 0) {
-	  printk(KERN_ALERT "Setting up GPIO %d as input failed with %d.\n", gpio, ret);
+	  printk(KERN_ALERT "Reqesting interrupt  %d for GPIO %d failed with %d\n", dcc_in_irq, dcc_in, ret);
+	  unwind_setup(init_level);
 	  return ret;
 	}
-
-	ret = gpio_get_value(gpio);
-	if(ret < 0) {
-	  printk(KERN_ALERT "Reading GPIO %d failed with %d.\n", gpio, ret);
-	  return ret;
-	}
-	else {
-	  printk(KERN_INFO "Read GPIO %d as %d.\n", gpio, ret);
-	}	  
 	  
-	irq = gpio_to_irq(gpio);
-	if(irq < 0) {
-	  printk(KERN_ALERT "Getting interrupt no for GPIO %d failed with %d\n", gpio, irq);
-	  return irq;
-	} else {
-	  printk(KERN_INFO "Got IRQ %d for GPIO %d.\n", irq, gpio);
-	}
-
-	ret = request_irq(irq, my_gpio_handler, IRQF_TRIGGER_FALLING | IRQF_ONESHOT, "dcc handler", NULL);
-	if(ret < 0) {
-	  printk(KERN_ALERT "Reqesting interrupt  %d for GPIO %d failed with %d\n", irq, gpio, ret);
-	  return ret;
-	} else {
-	  printk(KERN_INFO "Interrupt handler for IRQ %d set.\n", irq);
-	}
+	printk(KERN_INFO "Interrupt handler set for IRQ %d.\n", dcc_in_irq);
+	init_level = level_irq_in;
 
 #ifndef IRQ_TIMER0 
 #define IRQ_TIMER0 -1
+#warning "Using fake IRQ_TIMER0"
 #endif
 
 	ret = request_irq(IRQ_TIMER0, my_timer_handler, IRQF_ONESHOT, "timer handler", NULL);
 	if(ret < 0) {
-	  printk(KERN_ALERT "Requesting timer interrupt  %d for GPIO %d failed with %d\n", IRQ_TIMER0, gpio, ret);
+	  printk(KERN_ALERT "Requesting timer interrupt  %d for GPIO %d failed with %d\n", IRQ_TIMER0, dcc_in, ret);
+	  unwind_setup(init_level);
 	  return ret;
-	} else {
-	  printk(KERN_INFO "Interrupt handler for IRQ %d set.\n", irq);
-	}
+	} 
+	printk(KERN_INFO "Interrupt handler for IRQ %d set.\n", IRQ_TIMER0);
+
+	init_level = level_irq_timer;
 
 
+	//- gpio_direction_output(gpio_num, true);
+	// - gpio_direction_input(gpio_num);
+	//- gpio_set_value(gpio_num, value);
 
-	// setup hardware
-	// \todo What's the pinctrl subsystem? And does it leave on the raspi? Read Documentation/pinctrl.txt
-
-	/*
-- gpio_direction_output(gpio_num, true);
-- gpio_direction_input(gpio_num);
-- gpio_set_value(gpio_num, value);
-- etc....
-	*/
-
-
-		// setup chardev 	
+	// setup chardev 	
 	major = register_chrdev(DEVICE_MAJOR, DEVICE_NAME, &fops);
-
 	if (major < 0) {
 	  printk(KERN_ALERT "Registering device " DEVICE_NAME " failed with %d\n", major);
+	  unwind_setup(init_level);
 	  return major;
 	}
 	printk(KERN_INFO "DCC service has major device number %d.\n", major);
 
+	init_level = level_device;
+
 	return 0;
+}
+
+
+static void unwind_setup(init_level_enum level) {
+
+  printk(KERN_INFO "Unwinding from init level %d.\n", level);
+
+  switch(level) {
+  default:
+  case level_device:
+      unregister_chrdev(major, DEVICE_NAME); 
+  case level_irq_timer:
+    free_irq(IRQ_TIMER0, NULL);
+  case level_irq_in:
+    free_irq(dcc_in_irq, NULL);
+  case level_dcc_in:
+    gpio_free(dcc_in);
+  case level_nothing: 
+    // nothing to unwind
+    break;
+  }
 }
 
 void __exit dcc_exit(void)
 {
 
-free_irq(irq,NULL); // gpio interrupt.
-
-free_irq(IRQ_TIMER0,NULL);
-
-
-  gpio_free(gpio);
-
-  unregister_chrdev(major, DEVICE_NAME); 
-
+  unwind_setup(init_level);
   printk(KERN_INFO "DCC service ending.\n");
 }
 
