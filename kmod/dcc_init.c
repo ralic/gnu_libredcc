@@ -74,7 +74,7 @@ static struct file_operations fops = {
 static irqreturn_t my_gpio_handler(int irq, void* dev_id) {
 
   // dont to this
-printk(KERN_ERR "GPIO INT");
+  //printk(KERN_ERR "GPIO INT");
 return IRQ_HANDLED;
 }
 
@@ -91,7 +91,7 @@ static irqreturn_t my_timer_handler(int irg, void* dev_id) {
   gpio_set_value(dcc_in, toggle & 0x1);
   toggle++;
 
-#define DCC_CYCLES 100 // 100us
+#define DCC_CYCLES 100000
   // @todo check STC_FREQ_HZ == 1000000 (1 million).
 
   // set next System Timer Match 0:
@@ -141,7 +141,7 @@ int __init dcc_init(void)
 	*/
 
 	// \todo do I have to switch off the pull-down?
-	ret = gpio_direction_output(dcc_in, GPIOF_INIT_HIGH);
+	ret = gpio_direction_output(dcc_in, GPIOF_INIT_LOW);
 	if(ret < 0) {
 	  printk(KERN_ALERT "Setting up GPIO %d as output failed with %d.\n", dcc_in, ret);
 	  unwind_setup(init_level);
@@ -177,10 +177,11 @@ int __init dcc_init(void)
 
 #ifndef IRQ_TIMER0 
 #define IRQ_TIMER0 -1
-#warning "Using fake IRQ_TIMER0"
+#deinfe FIQ_TIMER0 -1
+#warning "Using fake IRQ_TIMER0 and FIQ_TIMER0"
 #endif
 
-	ret = request_irq(IRQ_TIMER0, my_timer_handler, IRQF_ONESHOT, "timer handler", NULL);
+	ret = request_irq(IRQ_TIMER0, my_timer_handler, IRQF_TIMER, "timer handler", NULL);
 	if(ret < 0) {
 	  printk(KERN_ALERT "Requesting timer interrupt  %d for GPIO %d failed with %d\n", IRQ_TIMER0, dcc_in, ret);
 	  unwind_setup(init_level);
