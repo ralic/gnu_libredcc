@@ -22,6 +22,8 @@
 #include <asm/io.h>
 
 #include "dcc_module.h"
+#include "rt_insert_irq.h"
+
 
 // module parameters:
 static int dcc_in = DEFAULT_DCC_IN_GPIO;
@@ -206,6 +208,7 @@ int __init dcc_init(void)
 
 	init_level = level_device;
 
+	is_branch_opcode(NULL);
 	return 0;
 }
 
