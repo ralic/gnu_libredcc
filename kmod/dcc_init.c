@@ -18,7 +18,6 @@
 #include <linux/fs.h>
 #include <linux/gpio.h>
 #include <linux/interrupt.h>
-//#include <mach/irqs.h> /// @todo remove.
 #include <mach/hardware.h>
 #include <asm/io.h>
 
