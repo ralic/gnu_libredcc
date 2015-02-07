@@ -51,11 +51,16 @@ void init_io() {
 	    
   // configure outputs:
 
-  #if PORTS != 2 
-  #error This has to be adjusted manually for number of ports
-  #endif
+#if PORTS == 2 
   PORTB &= ~(_BV(PB2) | _BV(PB1) | _BV(PB4) | _BV(PB3)); // this switches off the ports and the pull-ups.
   DDRB |= _BV(PB2) | _BV(PB1) | _BV(PB4) | _BV(PB3); // this makes the port an output
+#elif PORTS == 3
+  PORTB &= ~(_BV(PB2) | _BV(PB1) | _BV(PB4) | _BV(PB3) | _BV(PB0) | _BV(PB5)); // this switches off the ports and the pull-ups.
+  DDRB |= _BV(PB2) | _BV(PB1) | _BV(PB4) | _BV(PB3) | _BV(PB0) | _BV(PB5); // this makes the port an output
+  #else
+  #error The above has to be adjusted manually for number of ports
+  #endif
+
 
   // enable overflow interrupt
   TIMSK0 = _BV(TOIE0); 
@@ -71,9 +76,12 @@ void init_io() {
   TCCR0B = _BV(CS02) | _BV(CS00); 
 }
 
-// The below has to be adapted manual with the IO ports and pins of the outputs.
-#if PORTS != 2
-#error Adjust here for number of Ports
-#endif
+// The below has to be adapted manually with the IO ports and pins of the outputs.
+#if PORTS == 2
 // \todo where is output mask used?
 const uint8_t output_mask[2*PORTS] = { _BV(2), _BV(1), _BV(4), _BV(3)}; // RC1 and RC2 on PIC // PB1 and PB2 on AVR
+#elif PORTS == 3
+const uint8_t output_mask[2*PORTS] = { _BV(2), _BV(1), _BV(4), _BV(3), _BV(0), _BV(5)}; // RC1 and RC2 on PIC // PB1 and PB2 on AVR
+#else 
+#error Adjust here for number of Ports
+#endif
