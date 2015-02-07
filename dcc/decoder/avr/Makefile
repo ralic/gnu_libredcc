@@ -106,9 +106,9 @@ ehex: $(PRG)_eeprom.hex
 
 # Rules for Uploading to the Arduino board:
 upload: all
-	avrdude -p m328p -c arduino -P /dev/ttyACM0 -Ueeprom:w:$(PRG)_eeprom.hex
+#	avrdude -p m328p -c arduino -P /dev/ttyACM0 -Ueeprom:w:$(PRG)_eeprom.hex
 	avrdude -p m328p -c arduino -P /dev/ttyACM0 -Uflash:w:$(PRG).hex
 
 upload1: all
-	avrdude -p m328p -c arduino -P /dev/ttyACM1 -Ueeprom:w:$(PRG)_eeprom.hex
+#	avrdude -p m328p -c arduino -P /dev/ttyACM1 -Ueeprom:w:$(PRG)_eeprom.hex
 	avrdude -p m328p -c arduino -P /dev/ttyACM1 -Uflash:w:$(PRG).hex
