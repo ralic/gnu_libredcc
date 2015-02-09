@@ -79,6 +79,9 @@ static irqreturn_t my_gpio_handler(int irq, void* dev_id) {
 return IRQ_HANDLED;
 }
 
+
+static int hard = 0;
+
 // \todo should I have the TIMER flag??
 static irqreturn_t my_timer_handler(int irg, void* dev_id) {
   static int toggle = 0;
@@ -92,11 +95,13 @@ static irqreturn_t my_timer_handler(int irg, void* dev_id) {
   gpio_set_value(dcc_in, toggle & 0x1);
   toggle++;
 
-#define DCC_CYCLES 100000
+#define DCC_CYCLES 10000
   // @todo check STC_FREQ_HZ == 1000000 (1 million).
 
   // set next System Timer Match 0:
   writel(clo + DCC_CYCLES, __io_address(ST_BASE + 0xC));
+
+  hard = in_irq();
 
   return IRQ_HANDLED;
 }
@@ -166,7 +171,7 @@ int __init dcc_init(void)
 	} 
 	printk(KERN_INFO "Got IRQ number %d for GPIO %d.\n", dcc_in_irq, dcc_in);
 	
-	ret = request_irq(dcc_in_irq, my_gpio_handler, IRQF_TRIGGER_FALLING | IRQF_ONESHOT, "dcc handler", NULL);
+	ret = request_irq(dcc_in_irq, my_gpio_handler, IRQF_TRIGGER_FALLING, "dcc handler", NULL);
 	if(ret < 0) {
 	  printk(KERN_ALERT "Reqesting interrupt  %d for GPIO %d failed with %d\n", dcc_in_irq, dcc_in, ret);
 	  unwind_setup(init_level);
@@ -182,7 +187,7 @@ int __init dcc_init(void)
 #warning "Using fake IRQ_TIMER0 and FIQ_TIMER0"
 #endif
 
-	ret = request_irq(IRQ_TIMER0, my_timer_handler, IRQF_TIMER, "timer handler", NULL);
+	ret = request_irq(IRQ_TIMER0, my_timer_handler, 0 /*Flags */ , "timer handler", NULL);
 	if(ret < 0) {
 	  printk(KERN_ALERT "Requesting timer interrupt  %d for GPIO %d failed with %d\n", IRQ_TIMER0, dcc_in, ret);
 	  unwind_setup(init_level);
@@ -237,6 +242,9 @@ void __exit dcc_exit(void)
 {
 
   unwind_setup(init_level);
+
+  printk(KERN_INFO "IRQ was hard %s\n", hard ? "yes" : "no");
+
   printk(KERN_INFO "DCC service ending.\n");
 }
 

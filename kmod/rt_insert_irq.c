@@ -1,5 +1,6 @@
 #include <linux/kernel.h>
 //#include <linux/module.h> // do I need this here?
+#include <asm/io.h>
 
 #include "rt_insert_irq.h"
 
@@ -61,12 +62,13 @@ void rt_handler() {
 
 */
 
-bool is_branch_op_code(void* address) {
+bool is_branch_opcode(void* address) {
 
-  unsigned* irq_vector_high = (unsigned*) VECTORS_START_HIGH + IRQ_VECTOR_OFFSET;
-  unsigned* irq_vector_low = (unsigned*) VECTORS_START_LOW + IRQ_VECTOR_OFFSET;
-  printk(KERN_INFO "Opcode for IRQ vector high is %u.\n", *irq_vector_high);
-  printk(KERN_INFO "Opcode for IRQ vector low is %u.\n", *irq_vector_low);
+  unsigned* irq_vector_high = (unsigned*)  VECTORS_START_HIGH + IRQ_VECTOR_OFFSET;
+  unsigned opcode = readl( VECTORS_START_HIGH + IRQ_VECTOR_OFFSET);
+  //  unsigned* irq_vector_low = (unsigned*) VECTORS_START_LOW + IRQ_VECTOR_OFFSET;
+  printk(KERN_INFO "Opcode for IRQ vector high is %x or %x.\n", *irq_vector_high, opcode);
+  printk(KERN_INFO "Own address %x.\n", (unsigned) is_branch_opcode);
 
   return false;
 
