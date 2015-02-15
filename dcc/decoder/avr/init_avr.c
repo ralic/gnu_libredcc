@@ -23,15 +23,17 @@
  * \todo check whether to merge with the PIC code now.
  */
 
-#include <avr/interrupt.h>
+#include <avr/io.h>
 #include <avr/sleep.h>
 #include <avr/power.h>
 
-#include <error.h>
-#include <share/bitqueue.h>
-#include <share/compose_packet.h>
-#include <avr/io_hw.h>
-#include <share/io.h>
+FUSES = {
+  .low = LFUSE_DEFAULT,
+  .high = HFUSE_DEFAULT,
+  .extended = EFUSE_DEFAULT
+  #error before setting the fuses, read them from the ARDUINO
+};
+
 
 #if 0
 /*! When all is setup, processing occurs only on interrupts for avr,
@@ -59,28 +61,5 @@ void init_avr() {
   // interrupt:  
   EECR &= ~(_BV(EERIE));
   power_all_disable(); // to save as much power as possible.
-}
-
-int main(void) __attribute__((noreturn));
-int main(void) {
-
-  sei();
-  INFO("Starting Decoder");
-  //! @todo loop can be made more efficient by sending to sleep as currently done in exit.
-  while(1) {
-#if DEBUG
-    if(bit_pointer > (1 << (3))) {
-      INFO("More than 3\n");
-    }
-#endif
-    if(has_next_bit()) {
-      compose_packet(next_bit());
-    }
-    /* \todo the below can lead to starvation, so introduce a watchdog? */
-    if(io_tick()) /* && bitqueue is halfempty */  {
-      acknowledge_io_tick();
-      tick();
-    }
-  }
 }
 
