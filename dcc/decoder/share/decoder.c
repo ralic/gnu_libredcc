@@ -30,19 +30,22 @@
    3. and perhals cannot well initialise structs
 */
 
-#include <share/defs.h>
+#include <avr/wdt.h>
 
+#include<share/defs.h>
 #include<stdint.h>
 
-#include "decoder.h"
 #include<dcc.h>
 
 #include <eeprom_hw.h>
 #include <error.h>
 
-#include <dcc.h>
-
+#include "decoder.h"
 #include "io.h"
+#include <share/bitqueue.h>
+#include <io_hw.h>
+
+#include <reset.h>
 
 static uint16_t port_id[PORTS];
 
@@ -96,9 +99,10 @@ inline static void handle_ba_progmode(const uint8_t port) {
      */
 #ifdef __AVR
     cli();
+    wdt_disable();
     _delay_ms(500); // ms
+    wdt_enable(WDTO_120MS);
     sei();
-#warning \todo check this does not import the floating point libraries.
 #endif
 
 #ifdef DEBUG
@@ -217,3 +221,44 @@ void init_decoder() {
     port_id[i] = eeprom_read_word(&(port_id_eeprom[i]));
   }
 }
+
+int main(void) __attribute__((noreturn));
+int main(void) {
+
+
+  sei();
+  INFO("Starting " __FILE__ "\n");
+
+  if(MCUSR_copy & _BV(PORF))
+    INFO("Power On Reset\n");
+  if(MCUSR_copy & _BV(EXTRF))
+    INFO("External Reset\n");
+  if(MCUSR_copy & _BV(BORF))
+    INFO("Brown Out Reset\n");
+  if(MCUSR_copy & _BV(WDRF))
+    INFO("Watchdog Timeout Reset\n");
+        
+  //! @todo loop can be made more power efficient by sending to sleep as currently done in exit.
+
+
+  wdt_enable(WDTO_120MS);
+  wdt_reset();
+
+  while(1) {
+#if DEBUG
+    if(bit_pointer > (1 << (3))) {
+      INFO("More than 3\n");
+    }
+#endif
+    if(has_next_bit()) {
+      compose_packet(next_bit());
+    }
+    /* \todo the below can lead to starvation, so introduce a watchdog? */
+    if(io_tick()) /* && bitqueue is halfempty */  {
+      acknowledge_io_tick();
+      tick();
+    }
+    wdt_reset();
+  }
+}
+
