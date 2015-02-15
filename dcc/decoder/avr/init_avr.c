@@ -27,13 +27,16 @@
 #include <avr/sleep.h>
 #include <avr/power.h>
 
+#if 0
 FUSES = {
   .low = LFUSE_DEFAULT,
   .high = HFUSE_DEFAULT,
   .extended = EFUSE_DEFAULT
   #error before setting the fuses, read them from the ARDUINO
 };
-
+#else
+#warning no fuses being programmed
+#endif
 
 #if 0
 /*! When all is setup, processing occurs only on interrupts for avr,
