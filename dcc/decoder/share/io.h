@@ -22,7 +22,7 @@
 #include<stdint.h>
 //! number of ports that the decoder has -- the number of physical
 //! outputs is twice this number. 
-#define PORTS 2
+#define PORTS 3
 
 /**
  * counts the number of button presses of programme button 
