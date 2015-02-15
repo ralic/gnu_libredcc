@@ -238,6 +238,8 @@ int main(void) {
     INFO("Brown Out Reset\n");
   if(MCUSR_copy & _BV(WDRF))
     INFO("Watchdog Timeout Reset\n");
+  if(MCUSR == 0) 
+    ERROR(no_reset_source);
         
   //! @todo loop can be made more power efficient by sending to sleep as currently done in exit.
 

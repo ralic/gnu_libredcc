@@ -6,15 +6,15 @@ ifndef $(PRG)
 PRG = decoder
 endif
 
-OBJ = init_avr.o reset.o interrupts.o ../share/compose_packet.o eint0_isr.o ../share/$(PRG).o error_hw.o ../share/bitqueue.o eeprom_hw.o # \todo eeprom_hw could also be removed from here, but there is a problem with avrdude when we remove this for sniffer.
+OBJ = init_avr.o reset.o interrupts.o ../share/compose_packet.o eint0_isr.o ../share/$(PRG).o error_hw.o ../share/bitqueue.o
 
 ifeq ($(PRG), decoder)
-OBJ += ../share/io.o io_hw.o 
+OBJ += ../share/io.o io_hw.o eeprom_hw.o
 endif	
 
 # \todo this is not strictly necessary -- just a workaround -- remove these from sniffer, and make main so that it also works with sniffer
 ifeq ($(PRG), sniffer)
-OBJ += ../share/io.o io_hw.o 
+#OBJ += ../share/io.o io_hw.o 
 endif	
 
 
@@ -106,9 +106,9 @@ ehex: $(PRG)_eeprom.hex
 
 # Rules for Uploading to the Arduino board:
 upload: all
-	avrdude -p m328p -c arduino -P /dev/ttyACM0 -Ueeprom:w:$(PRG)_eeprom.hex
+#	avrdude -p m328p -c arduino -P /dev/ttyACM0 -Ueeprom:w:$(PRG)_eeprom.hex
 	avrdude -p m328p -c arduino -P /dev/ttyACM0 -Uflash:w:$(PRG).hex
 
 upload1: all
-	avrdude -p m328p -c arduino -P /dev/ttyACM1 -Ueeprom:w:$(PRG)_eeprom.hex
+#	avrdude -p m328p -c arduino -P /dev/ttyACM1 -Ueeprom:w:$(PRG)_eeprom.hex
 	avrdude -p m328p -c arduino -P /dev/ttyACM1 -Uflash:w:$(PRG).hex
