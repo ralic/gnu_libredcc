@@ -11,6 +11,7 @@ char* error_msg[NUM_ERRORS] = {
   [checksum_nonzero] = "Checksum error" EOLSTR,
   [size_error] = "Size Errors" EOLSTR,
   [lost_bit] = "Lost bit" EOLSTR,
+  [no_reset_source] = "No reset source" EOLSTR,
 };
 
 #endif
