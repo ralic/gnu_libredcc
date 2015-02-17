@@ -91,14 +91,18 @@ int rt_handler(void) {
   uint32_t pending = readl(__io_address(ARM_BASE + 0x200));
   uint32_t match = readl(__io_address(ST_BASE + 0x0));
   // is it the system timer interrupt? 
-  if  (!(pending & 0x1))
-    return IRQ_NONE; // no? return
+
+  //gpio_set_value(dcc_in, 1);
+  //return IRQ_NONE;
+
+  //if  (!(pending & 0x1))
+  //  return IRQ_NONE; // no? return
   
 
   if  (!(match & 0x1))
     return IRQ_NONE; // can´t have been timer0
 			 
-  // it the timer, and timer 0, so handle it:
+  // it´s the timer, and timer 0, so handle it:
   do_handle();
 
   // acknowledge System Timer Match 0 (and clear interrupt at the same time?)
@@ -107,6 +111,7 @@ int rt_handler(void) {
   // clear timer interrupt flag? (or is this cleared automatically by the previous?)
   //writel(pending & ~(0x1), __io_address(ARM_BASE + 0x200));
 
+  return IRQ_HANDLED;
 }
 
 
@@ -117,9 +122,11 @@ static void do_handle(void) {
     uint32_t clo = readl(__io_address(ST_BASE + 0x04));
 
     gpio_set_value(dcc_in, toggle & 0x1);
+    //    gpio_set_value(dcc_in, 1);
+
     toggle++;
 
-#define DCC_CYCLES 100000
+#define DCC_CYCLES 1000
     // @todo check STC_FREQ_HZ == 1000000 (1 million).
 
     // set next System Timer Match 0:
@@ -135,16 +142,20 @@ static irqreturn_t my_timer_handler(int irq, void* dev_id) {
   // read free running system timer
   uint32_t clo = readl(__io_address(ST_BASE + 0x04));
 
+#warning cutting short here
+  return IRQ_HANDLED;
+
+
   // acknowledge System Timer Match 0:
   writel(1 << 0, __io_address(ST_BASE + 0x0));
   
   gpio_set_value(dcc_in, toggle & 0x1);
   toggle++;
 
-#define DCC_CYCLES 10000
+#define DCC_CYCLES 1000
   // @todo check STC_FREQ_HZ == 1000000 (1 million).
 
-  // set next System Timer Match 0:
+  // seta next System Timer Match 0:
   writel(clo + DCC_CYCLES, __io_address(ST_BASE + 0xC));
 
   hard = in_irq();
@@ -265,6 +276,12 @@ int __init dcc_init(void)
 	
 	rt_handle_IRQ = &rt_handler;
 
+	// set first time out
+	{
+	uint32_t clo = readl(__io_address(ST_BASE + 0x04));
+	writel(clo + DCC_CYCLES, __io_address(ST_BASE + 0xC));
+	}
+
 	enable_irq(0);
 	return 0;
 }
@@ -273,6 +290,11 @@ int __init dcc_init(void)
 static void unwind_setup(init_level_enum level) {
 
   printk(KERN_INFO "Unwinding from init level %d.\n", level);
+
+
+  disable_irq(0);
+  rt_handle_IRQ = NULL;
+  enable_irq(0);
 
   switch(level) {
   default:
