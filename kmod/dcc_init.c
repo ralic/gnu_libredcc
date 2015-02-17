@@ -84,17 +84,18 @@ static int hard = 0;
 
 extern int (*rt_handle_IRQ)(void);
 
-void do_handle(void);
+static void do_handle(void);
 
 int rt_handler(void) {
 
   uint32_t pending = readl(__io_address(ARM_BASE + 0x200));
+  uint32_t match = readl(__io_address(ST_BASE + 0x0));
   // is it the system timer interrupt? 
-  if !(pending & 0x1) 
+  if  (!(pending & 0x1))
     return IRQ_NONE; // no? return
   
-  uint32_t match = readl(__io_address(ST_BASE + 0x0));
-  if !(match & 0x1)
+
+  if  (!(match & 0x1))
     return IRQ_NONE; // can´t have been timer0
 			 
   // it the timer, and timer 0, so handle it:
@@ -260,9 +261,11 @@ int __init dcc_init(void)
 
 	//is_branch_opcode(NULL);
 
-	disable_irq();
+	disable_irq(0); // I hope this is on the hardware level
 	
-	rt_handle_irq = &rt_handler;
+	rt_handle_IRQ = &rt_handler;
+
+	enable_irq(0);
 	return 0;
 }
 
