@@ -82,8 +82,53 @@ return IRQ_HANDLED;
 
 static int hard = 0;
 
+extern int (*rt_handle_IRQ)(void);
+
+void do_handle(void);
+
+int rt_handler(void) {
+
+  uint32_t pending = readl(__io_address(ARM_BASE + 0x200));
+  // is it the system timer interrupt? 
+  if !(pending & 0x1) 
+    return IRQ_NONE; // no? return
+  
+  uint32_t match = readl(__io_address(ST_BASE + 0x0));
+  if !(match & 0x1)
+    return IRQ_NONE; // can´t have been timer0
+			 
+  // it the timer, and timer 0, so handle it:
+  do_handle();
+
+  // acknowledge System Timer Match 0 (and clear interrupt at the same time?)
+  writel(1 << 0, __io_address(ST_BASE + 0x0));
+
+  // clear timer interrupt flag? (or is this cleared automatically by the previous?)
+  //writel(pending & ~(0x1), __io_address(ARM_BASE + 0x200));
+
+}
+
+
+static void do_handle(void) {
+  static int toggle = 0;
+  
+    // read free running system timer
+    uint32_t clo = readl(__io_address(ST_BASE + 0x04));
+
+    gpio_set_value(dcc_in, toggle & 0x1);
+    toggle++;
+
+#define DCC_CYCLES 100000
+    // @todo check STC_FREQ_HZ == 1000000 (1 million).
+
+    // set next System Timer Match 0:
+    writel(clo + DCC_CYCLES, __io_address(ST_BASE + 0xC));
+    
+}
+
+
 // \todo should I have the TIMER flag??
-static irqreturn_t my_timer_handler(int irg, void* dev_id) {
+static irqreturn_t my_timer_handler(int irq, void* dev_id) {
   static int toggle = 0;
   
   // read free running system timer
@@ -213,7 +258,11 @@ int __init dcc_init(void)
 
 	init_level = level_device;
 
-	is_branch_opcode(NULL);
+	//is_branch_opcode(NULL);
+
+	disable_irq();
+	
+	rt_handle_irq = &rt_handler;
 	return 0;
 }
 
