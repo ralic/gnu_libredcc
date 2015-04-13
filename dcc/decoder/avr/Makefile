@@ -25,7 +25,7 @@ LIBS1 = dcc uart
 # could I get those automatically?
 LIBS = -ldcc -luart
 #LIBS = -l$(LIBS1)
-SYMBOLS = -D F_CPU=16000000 -D DEBUG=5 
+SYMBOLS = -D F_CPU=16000000 #-D DEBUG=5 
 
 MCU_TARGET = atmega328p
 #MCU_TARGET = attiny22
