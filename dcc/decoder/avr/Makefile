@@ -1,10 +1,14 @@
 # Version: $Id: Makefile 1265 2013-05-04 21:45:24Z ag0015 $
 
-ARCH = avr
+#MCU_TARGET = attiny25
 
-ifndef $(PRG)
-PRG = decoder
-endif
+# default settings:
+ARCH ?= avr
+MCU_TARGET ?= atmega328p
+
+
+
+PRG ?= decoder
 
 OBJ = init_avr.o reset.o interrupts.o ../share/compose_packet.o eint0_isr.o ../share/$(PRG).o error_hw.o ../share/bitqueue.o
 
@@ -20,15 +24,12 @@ endif
 
 
 INCLUDE_DIR = -I . -I .. -I ../../include -I ../../../include
-LIB_DIR = -L ../../lib/$(ARCH) -L ../../../lib/$(ARCH)
-LIBS1 = dcc uart
+LIB_DIR = -L ../../lib/$(ARCH)/$(MCU_TARGET) -L ../../../lib/$(ARCH)/$(MCU_TARGET)
 # could I get those automatically?
-LIBS = -ldcc -luart
-#LIBS = -l$(LIBS1)
+#LIBS = -ldcc -luart
 SYMBOLS = -D F_CPU=16000000 #-D DEBUG=5 
 
-MCU_TARGET = atmega328p
-#MCU_TARGET = attiny22
+
 OPTIMIZE = -O3
 #OPTIMIZE = -O0        -fsee        -fsection-anchors        -mno-long-calls        -mno-longcall
 
@@ -39,8 +40,14 @@ CC = avr-gcc
 AS = avr-gcc
 
 CFLAGS = -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) $(DEFS) $(INCLUDE_DIR) $(SYMBOLS) # -fno-jump-tables -
-LDFLAGS = -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) -u uart_init $(LIBS) $(LIB_DIR) #$(LIBS) # -nostdlib $(DEFS) # -fnojum
 AFLAGS = -g -Wall -mmcu=$(MCU_TARGET) $(DEFS) $(SYMBOLS) -c
+
+
+LDFLAGS = -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) -ldcc  $(LIB_DIR) #$(LIBS) # -nostdlib $(DEFS) # -fnojum
+
+ifeq ($(MCU_TARGET), atmega328p) 
+LDFLAGS += -u uart_init -luart
+endif
 
 
 OBJCOPY = avr-objcopy

@@ -96,7 +96,7 @@ void compose_packet(const uint8_t bit) {
 */
 
   // reflects the different states the bit stream can be in, compare [NMRA]:
-  typedef enum {START_BIT = 0, BYTE = 1, STOP_BIT = 2} DCC_SIGNAL_STATE;
+  enum {START_BIT = 0, BYTE = 1, STOP_BIT = 2}; 
 
 #ifndef NO_LOCAL_STATICS
   static uint8_t state = -DECODER_PREAMBLE_MIN_LEN;

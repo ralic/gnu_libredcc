@@ -28,8 +28,10 @@
  */
 
 #include <share/io.h>
+#include <avr/chip.h>
 #include <avr/io_hw.h>
 #include <avr/io.h>
+
 
 #ifdef NO_LOCAL_STATICS
 static uint8_t button = 1;  

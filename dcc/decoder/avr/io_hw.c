@@ -19,6 +19,7 @@
 
 #include "io_hw.h"
 #include "../share/io.h"
+#include <avr/chip.h>
 
 #include<avr/power.h>
 #include<avr/interrupt.h>
@@ -31,10 +32,10 @@ volatile uint8_t io_ticks = 0;
 
  * If we are running with F_CPU = 16MHz, and a prescaler 1:1024, then
  * there is a timer0 overflow every 15.625 times in a ms, that is one
- * tick is 0.064ms. If we count an bit timer byte up, then ports are updated
+ * tick is 0.064ms. If we count an 8bit timer byte up, then ports are updated
  * about every 16ms. 16ms is also enough for debouncing of the button.
  */
-ISR(TIMER0_OVF_vect) {
+ISR(TIMERx_OVF_vect(IOTIMER)) {
   io_ticks++; 
 }
 
@@ -42,38 +43,41 @@ void init_io() __attribute__((section(".init8"))) __attribute__((naked));
 void init_io() {
 
   // enable timer0
-  power_timer0_enable();
+  power_timer_enable(IOTIMER);
 
   // configure input for progbutton:
-  DDRD &= ~(_BV(PD3)); 
+  // DDRD &= ~(_BV(PD3)); // is input by default.
   // switch on pull up:
-  PORTD |= _BV(PD3);
+  PORTx(PROGPORT) |= _BV(PROGPIN);
 	    
   // configure outputs:
 
 #if PORTS == 2 
-  PORTB &= ~(_BV(PB2) | _BV(PB1) | _BV(PB4) | _BV(PB3)); // this switches off the ports and the pull-ups.
-  DDRB |= _BV(PB2) | _BV(PB1) | _BV(PB4) | _BV(PB3); // this makes the port an output
+  PORTx(IOPORT) &= ~(_BV(PB2) | _BV(PB1) | _BV(PB4) | _BV(PB3)); // this switches off the ports and the pull-ups.
+  DDRx(IOPORT) |= _BV(PB2) | _BV(PB1) | _BV(PB4) | _BV(PB3); // this makes the port an output
 #elif PORTS == 3
-  PORTB &= ~(_BV(PB2) | _BV(PB1) | _BV(PB4) | _BV(PB3) | _BV(PB0) | _BV(PB5)); // this switches off the ports and the pull-ups.
-  DDRB |= _BV(PB2) | _BV(PB1) | _BV(PB4) | _BV(PB3) | _BV(PB0) | _BV(PB5); // this makes the port an output
+  PORTx(IOPORT) &= ~(_BV(PB2) | _BV(PB1) | _BV(PB4) | _BV(PB3) | _BV(PB0) | _BV(PB5)); // this switches off the ports and the pull-ups.
+  DDRx(IOPORT) |= _BV(PB2) | _BV(PB1) | _BV(PB4) | _BV(PB3) | _BV(PB0) | _BV(PB5); // this makes the port an output
+  #warning this needs to rectivied.
   #else
   #error The above has to be adjusted manually for number of ports
   #endif
 
 
   // enable overflow interrupt
-  TIMSK0 = _BV(TOIE0); 
-  TCNT0 = 0;    
+  TIMSKx(IOTIMER) = _BV(TOIEx(IOTIMER)); 
+  TCNTx(IOTIMER) = 0;    
+
+  #warning We must not use timer 0 for IO also.
 	
   // timer normal mode, no outputs needed.
-  TCCR0A = 0; 
+  TCCRxA(IOTIMER) = 0; 
 
   /* start timer with prescaler 1:1024 -- at 16 MHz, this means a tick
      every 1024/16 us = 64us, and hence a timer overflow 256/16*1024 =
      16384 us = 16.4ms
     */
-  TCCR0B = _BV(CS02) | _BV(CS00); 
+  TCCRxB(IOTIMER) = PRESCALER_1024(IOTIMER);
 }
 
 // The below has to be adapted manually with the IO ports and pins of the outputs.

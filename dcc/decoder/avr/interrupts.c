@@ -18,8 +18,9 @@
  */
 // $Id$
 
+#include <avr/io_hw.h>
 #include "error.h"
-
+#include <avr/chip.h>
 
 // AVR
 
@@ -100,31 +101,36 @@ ISR(INT0_vect) {
   EIFR |= _BV(INTF0); // clear any spurios interrupt that might have occoured -- is this neccessary
 } */
 
+
+
+
 /**
  * Interrupt service routine to sample the signal when timer2 has
  * gone SAMPLE_TICKS. It converts the signal into a bit. It then calls
  * the function compose_packet which composed the bits into a DCC
  * packet.
  */
-ISR(TIMER2_COMPA_vect) {
+
+
+ISR(TIMERx_COMPA_vect(DCCTIMER)) {
   // bit = 1 if PIND2 is high and bit = 0 if PIND2 is still low 87us after a falling edge.
-  const uint8_t bit = (PIND & _BV(PD2));  
+  const uint8_t bit = sample_dccpin(); 
 
   // stop timer
-  TCCR2B = 0; //~(_BV(CS20) | _BV(CS21) | _BV(CS20));
+  TCCRxB(DCCTIMER) = 0; 
 
   // reset timer
-  TCNT2 = 0;
+  TCNTx(DCCTIMER) = 0;
 
 
   queue_bit(bit); // from here onwards it is no longer hardware dependent.
 
-  /* clear interrupt flag in case there was a positive edge in the
+  /* clear interrupt flag in case there was a falling edge in the
    * mean time, in order to ignore any pending interrupts that might
    * have occured while we where processing the bit. Compare eg 
    * 13.2.3 of [328].
    */
-  EIFR = _BV(INTF0);  
+  EIFR |= _BV(INTF0);  
   EIMSK |= _BV(INT0); // reenable interrupt INT0.
 
 }
@@ -138,22 +144,23 @@ void init_dcc_receiver() __attribute__((section(".init8"))); // to be executed b
 void init_dcc_receiver() {
 
   // enable timer2:
-  power_timer2_enable();
+  power_timer_enable(DCCTIMER);
 
   // enable INT0 on falling edge -- this is often clearer than the rising edge of the signal. (Also a machine instruction might be saved later on when converting the read potential to the DCC bit).
   EICRA |= _BV(ISC01);  
   EIMSK |= _BV(INT0);
 
   // set timer2 to normal mode, no outputs needed:
-  TCCR2A = 0; 
+  TCCRxA(DCCTIMER) = 0; 
 
   // set output compare register:
-  OCR2A =   SAMPLE_TICKS; // 87us
+  OCRxA(DCCTIMER) =   SAMPLE_TICKS; // 87us // whatever came out up sample ticks
+#warning Adatabe SAMPLE_TICKS and also the PRESCALER that is set in the assembler interrupt routine.
 
   // enable compare match interrupt
-  TIMSK2 = _BV(OCIE2A);
+  TIMSKx(DCCTIMER) = _BV(OCIExA(DCCTIMER));
   
-  // switch on pull-up for PD2/PINT0 (as optocoupler only goes to mass) --
-  DDRD &= ~(_BV(PD2)); // make pin 2 of portD input
-  PORTD |= _BV(PD2); // switch on pull-up
+  // switch on pull-up for PD2/PINT0 (as optocoupler only goes to mass, or diode) --
+  // DDRD &= ~(_BV(PD2)); // make pin 2 of portD input
+  pullup_dccpin(); // switch on pull-up
 }
