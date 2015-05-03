@@ -42,6 +42,16 @@ ISR(TIMERx_OVF_vect(IOTIMER)) {
 void init_io() __attribute__((section(".init8"))) __attribute__((naked));
 void init_io() {
 
+  // to allow entering progmode at power on if we have few pins and do not want to sacrifies the reset pin:
+#ifdef HELPERPIN
+  PORTx(IOPORT) |= _BV(HELPERPIN);
+  if (!(PINx(IOPORT) & _BV(HELPERPIN))) {
+    INCR(button_count, PORTS);
+  }
+  PORTx(IOPORT) &= ~_BV(HELPERPIN);
+  #warning NO USING THE RESET BUTTON
+#endif
+
   // enable timer0
   power_timer_enable(IOTIMER);
 
@@ -53,8 +63,8 @@ void init_io() {
   // configure outputs:
 
 #if PORTS == 2 
-  PORTx(IOPORT) &= ~(_BV(PB2) | _BV(PB1) | _BV(PB4) | _BV(PB3)); // this switches off the ports and the pull-ups.
-  DDRx(IOPORT) |= _BV(PB2) | _BV(PB1) | _BV(PB4) | _BV(PB3); // this makes the port an output
+  PORTx(IOPORT) &= ~(_BV(PB0) | _BV(PB1) | _BV(PB3) | _BV(PB4)); // this switches off the ports and the pull-ups.
+  DDRx(IOPORT) |= _BV(PB0) | _BV(PB1) | _BV(PB4) | _BV(PB3); // this makes the port an output
 #elif PORTS == 3
   PORTx(IOPORT) &= ~(_BV(PB2) | _BV(PB1) | _BV(PB4) | _BV(PB3) | _BV(PB0) | _BV(PB5)); // this switches off the ports and the pull-ups.
   DDRx(IOPORT) |= _BV(PB2) | _BV(PB1) | _BV(PB4) | _BV(PB3) | _BV(PB0) | _BV(PB5); // this makes the port an output
@@ -65,13 +75,11 @@ void init_io() {
 
 
   // enable overflow interrupt
-  TIMSKx(IOTIMER) = _BV(TOIEx(IOTIMER)); 
+  TIMSKx(IOTIMER) |= _BV(TOIEx(IOTIMER)); 
   TCNTx(IOTIMER) = 0;    
 
-  #warning We must not use timer 0 for IO also.
-	
   // timer normal mode, no outputs needed.
-  TCCRxA(IOTIMER) = 0; 
+  //TCCRxA(IOTIMER) = 0; // should be the normal mode after a reset
 
   /* start timer with prescaler 1:1024 -- at 16 MHz, this means a tick
      every 1024/16 us = 64us, and hence a timer overflow 256/16*1024 =
@@ -83,7 +91,7 @@ void init_io() {
 // The below has to be adapted manually with the IO ports and pins of the outputs.
 #if PORTS == 2
 // \todo where is output mask used?
-const uint8_t output_mask[2*PORTS] = { _BV(2), _BV(1), _BV(4), _BV(3)}; // RC1 and RC2 on PIC // PB1 and PB2 on AVR
+const uint8_t output_mask[2*PORTS] = { _BV(0), _BV(1), _BV(3), _BV(4)}; // RC1 and RC2 on PIC // PB1 and PB2 on AVR
 #elif PORTS == 3
 const uint8_t output_mask[2*PORTS] = { _BV(2), _BV(1), _BV(4), _BV(3), _BV(0), _BV(5)}; // RC1 and RC2 on PIC // PB1 and PB2 on AVR
 #else 

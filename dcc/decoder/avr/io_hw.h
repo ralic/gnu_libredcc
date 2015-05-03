@@ -45,39 +45,6 @@ extern const uint8_t output_mask[];
 
 
 /**
-   The INT0 pin is the DCCPIN:
- */
-#if  defined (__AVR_ATmega328P__) || defined (__AVR_ATmega328__)
-#define DCCPORT D
-#define DCCPIN PD2
-#define PROGPORT DCCPORT
-#define PROGPIN PD3
-
-#elif defined (__AVR_ATtiny25__)
-#define DCCPORT B
-#define DCCPIN PB2
-#define PROGPORT DCCPORT
-#define PROGPIN PB5
-
-#else
-#error Pins not yet defined for this AVR chip
-#endif
-
-#define PINx(__x) __PINx(__x)
-#define PORTx(__x) __PORTx(__x)
-#define DDRx(__x) __DDRx(__x)
-
-#define __PINx(__x) PIN ## __x
-#define __PORTx(__x) PORT ## __x
-#define __DDRx(__x) DDR ## __x
-
-
-
-
-
-
-
-/**
    pseudo function that samples (reads) the input with the DCC signal.
  */
 #define sample_dccpin() (PINx(DCCPORT) & _BV(DCCPIN))

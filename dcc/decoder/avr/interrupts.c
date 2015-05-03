@@ -151,14 +151,13 @@ void init_dcc_receiver() {
   EIMSK |= _BV(INT0);
 
   // set timer2 to normal mode, no outputs needed:
-  TCCRxA(DCCTIMER) = 0; 
+  //TCCRxA(DCCTIMER) = 0;  // should be the setting after an interrupt
 
   // set output compare register:
   OCRxA(DCCTIMER) =   SAMPLE_TICKS; // 87us // whatever came out up sample ticks
-#warning Adatabe SAMPLE_TICKS and also the PRESCALER that is set in the assembler interrupt routine.
 
   // enable compare match interrupt
-  TIMSKx(DCCTIMER) = _BV(OCIExA(DCCTIMER));
+  TIMSKx(DCCTIMER) |= _BV(OCIExA(DCCTIMER));
   
   // switch on pull-up for PD2/PINT0 (as optocoupler only goes to mass, or diode) --
   // DDRD &= ~(_BV(PD2)); // make pin 2 of portD input

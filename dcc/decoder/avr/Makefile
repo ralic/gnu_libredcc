@@ -1,11 +1,18 @@
 # Version: $Id: Makefile 1265 2013-05-04 21:45:24Z ag0015 $
 
-#MCU_TARGET = attiny25
+ MCU_TARGET = attiny25
+ DEVICE = /dev/ttyUSB0
+ PROGRAMMER = buspirate
+ F_CPU = 8000000
+ CHIP = t25
 
 # default settings:
 ARCH ?= avr
 MCU_TARGET ?= atmega328p
-
+PROGRAMMER ?= arduino
+F_CPU ?= 16000000
+DEVICE ?=/dev/ttyACM0
+CHIP ?= m328p
 
 
 PRG ?= decoder
@@ -27,7 +34,7 @@ INCLUDE_DIR = -I . -I .. -I ../../include -I ../../../include
 LIB_DIR = -L ../../lib/$(ARCH)/$(MCU_TARGET) -L ../../../lib/$(ARCH)/$(MCU_TARGET)
 # could I get those automatically?
 #LIBS = -ldcc -luart
-SYMBOLS = -D F_CPU=16000000 #-D DEBUG=5 
+SYMBOLS = -D F_CPU=$(F_CPU) #-D DEBUG=5 
 
 
 OPTIMIZE = -O3
@@ -53,7 +60,8 @@ endif
 OBJCOPY = avr-objcopy
 OBJDUMP = avr-objdump
 
-all: hex ehex
+#all: hex ehex
+all: $(PRG).elf
 
 # compiling is done by an implicit rule.
 
@@ -93,29 +101,29 @@ lst: $(PRG).lst
 # Rules for building the .text rom images
 hex: $(PRG).hex
 
-%.hex: %.elf
+#%.hex: %.elf
 #	$(OBJCOPY) -j .text -O ihex $< $@
-	$(OBJCOPY) -j .text -j .data -O ihex $< $@
-
-
-bin: $(PRG).bin
-
-%.bin: %.elf
-	$(OBJCOPY) -j .text -O bin $< $@
 #	$(OBJCOPY) -j .text -j .data -O ihex $< $@
 
 
-# Rules for building the .eeprom rom images
-ehex: $(PRG)_eeprom.hex
+# bin: $(PRG).bin
 
-%_eeprom.hex: %.elf
-	$(OBJCOPY) -j .eeprom --change-section-lma .eeprom=0 -O ihex $< $@ || { echo empty $@ not generated; exit 0; }
+# %.bin: %.elf
+	$(OBJCOPY) -j .text -O bin $< $@
+# #	$(OBJCOPY) -j .text -j .data -O ihex $< $@
+
+
+# Rules for building the .eeprom rom images
+# ehex: $(PRG)_eeprom.hex
+
+# %_eeprom.hex: %.elf
+#	$(OBJCOPY) -j .eeprom --change-section-lma .eeprom=0 -O ihex $< $@ || { echo empty $@ not generated; exit 0; }
 
 # Rules for Uploading to the Arduino board:
 upload: all
-#	avrdude -p m328p -c arduino -P /dev/ttyACM0 -Ueeprom:w:$(PRG)_eeprom.hex
-	avrdude -p m328p -c arduino -P /dev/ttyACM0 -Uflash:w:$(PRG).hex
+#	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Ueeprom:w:$(PRG)_eeprom.hex
+	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Uflash:w:$(PRG).elf  -Uflash:w:$(PRG).elf 
 
 upload1: all
-#	avrdude -p m328p -c arduino -P /dev/ttyACM1 -Ueeprom:w:$(PRG)_eeprom.hex
-	avrdude -p m328p -c arduino -P /dev/ttyACM1 -Uflash:w:$(PRG).hex
+#	avrdude -p m328p -c $(PROGRAMMER) -P /dev/ttyACM1 -Ueeprom:w:$(PRG)_eeprom.hex
+	avrdude -p $(CHIP) -c $(PROGRAMMER) -P /dev/ttyACM1 -Uflash:w:$(PRG).elf  -Ueeprom:w:$(PRG).elf

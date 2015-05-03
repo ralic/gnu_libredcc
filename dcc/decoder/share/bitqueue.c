@@ -31,8 +31,6 @@ void queue_bit(bit_t bit) {
   bit_buffer = bit;
 }
 #else
-#warning This is the right bit_queue.
-
 
 inline bit_t next_bit() {
   cli(); // is this necessary to disable global interrutpts? (On which architetures?)

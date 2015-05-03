@@ -27,6 +27,8 @@
 #include <avr/sleep.h>
 #include <avr/power.h>
 
+#include "chip.h"
+
 #if 0
 FUSES = {
   .low = LFUSE_DEFAULT,
@@ -34,6 +36,25 @@ FUSES = {
   .extended = EFUSE_DEFAULT
   #error before setting the fuses, read them from the ARDUINO
 };
+#elif defined __AVR_ATtiny25__
+
+FUSES = {
+  .low = LFUSE_DEFAULT | ~(FUSE_CKDIV8), // make F_CPU 8 MHz from inbuilt RC oscillator
+  // make RESET pin normal gpio pin, avoid erasing EEPROM, and enable BOD at about 2.8Volst 
+  //  .high = HFUSE_DEFAULT & FUSE_RSTDISBL & FUSE_EESAVE & FUSE_BODLEVEL1, 
+  .high = HFUSE_DEFAULT, //& FUSE_EESAVE & FUSE_BODLEVEL1,  // take out
+							 // RSTDISBL
+							 // as it
+							 // seems I
+							 // can't then
+							 // low
+							 // voltage
+							 // programme
+							 // :-( 
+  .extended = EFUSE_DEFAULT
+};
+
+
 #else
 #warning no fuses being programmed
 #endif

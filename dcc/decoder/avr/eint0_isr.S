@@ -19,7 +19,19 @@
 
 #include <avr/io.h>
 #include "chip.h"
-    
+
+//#define _SFR_IO_REG_P(sfr) ((sfr) < 0x20 + __SFR_OFFSET)
+
+
+	
+;; #if __SFR_OFFSET == 0x20
+;; #warning Offset is 0x20
+;; #elif __SFR_OFFSET == 0x0
+;; #warning Offset is 0x00
+;; #else
+;; #error no offset at all
+;; #endif
+	
 ;;; $Id$
 	
 	.section .text
@@ -29,25 +41,33 @@
 __vector_1:
 	;;  none of the below changes SREG:
 	push r24
+	#warning also set prescale factor centrally!
 	ldi r24, PRESCALER_8(DCCTIMER) 			; start timer2 with prescaler 8.
 	sts _SFR_MEM_ADDR(TCCRxB(DCCTIMER)), r24		; start timer2,
 				; could I not use the bit set or bit
 				; copy command?
-#if EIMSK < 32 
+#if _SFR_IO_ADDR(EIMSK) < 0x20 			
 	cbi _SFR_IO_ADDR(EIMSK), INT0		; disable this interrupt.
 #else
-        lds r24,_SFR_MEM_ADDR(EIMSK) 	  ; disable this interrupt.
+ 	in r24, _SFR_IO_ADDR(SREG)
+	push r24
+        in r24,_SFR_IO_ADDR(EIMSK) 	  ; disable this interrupt.
         andi r24, ~_BV(INT0)     
-	sts _SFR_MEM_ADDR(EIMSK), r24
+	out _SFR_IO_ADDR(EIMSK), r24
+	pop r24
+	out _SFR_IO_ADDR(SREG), r24
+	#warning EIMSK is not a5 IO reg
 #endif
 
-#if EIFR < 32
+#if _SFR_IO_ADDR(EIFR) < 0x20
         sbi _SFR_IO_ADDR(EIFR), INTF0		; clear any pending
 				; interrupts to ourselves (writing a
 				; one) why am I doing this?
 #else
 	ldi r24,_BV(INTF0)
-	sts _SFR_MEM_ADDR(EIFR), r24
+	out _SFR_IO_ADDR(EIFR), r24
+	#warning EIFR is not a5 IO REG
+
 #endif
 	pop r24
 	reti

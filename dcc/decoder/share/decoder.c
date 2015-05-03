@@ -226,6 +226,15 @@ int main(void) __attribute__((noreturn));
 int main(void) {
 
 
+#if 0
+  DDRB = _BV(0) | _BV(1) | _BV(3) | _BV(4);
+  PORTB = _BV(0) | _BV(1) | _BV(3) | _BV(4);
+  while(1) {
+    PORTB ^= _BV(0) | _BV(1) | _BV(3) | _BV(4);
+  }
+#endif
+
+
   sei();
   INFO("Starting " __FILE__ "\n");
 
