@@ -44,11 +44,13 @@ void init_io() {
 
   // to allow entering progmode at power on if we have few pins and do not want to sacrifies the reset pin:
 #ifdef HELPERPIN
-  PORTx(IOPORT) |= _BV(HELPERPIN);
-  if (!(PINx(IOPORT) & _BV(HELPERPIN))) {
+  PORTx(IOPORT) |= _BV(HELPERPIN); // pull up on
+  nop(); // what one clock cycle for effect of output manipulation to propagate to input latch.
+  nop();
+  if (!(PINx(IOPORT) & _BV(HELPERPIN))) { // if low then button is depressed
     INCR(button_count, PORTS);
   }
-  PORTx(IOPORT) &= ~_BV(HELPERPIN);
+  PORTx(IOPORT) &= ~_BV(HELPERPIN); // pull up off
   #warning NO USING THE RESET BUTTON
 #endif
 
@@ -63,10 +65,10 @@ void init_io() {
   // configure outputs:
 
 #if PORTS == 2 
-  PORTx(IOPORT) &= ~(_BV(PB0) | _BV(PB1) | _BV(PB3) | _BV(PB4)); // this switches off the ports and the pull-ups.
+  //  PORTx(IOPORT) &= ~(_BV(PB0) | _BV(PB1) | _BV(PB3) | _BV(PB4)); // this switches off the ports and the pull-ups (not really neccesary as this should be the reset configuation)
   DDRx(IOPORT) |= _BV(PB0) | _BV(PB1) | _BV(PB4) | _BV(PB3); // this makes the port an output
 #elif PORTS == 3
-  PORTx(IOPORT) &= ~(_BV(PB2) | _BV(PB1) | _BV(PB4) | _BV(PB3) | _BV(PB0) | _BV(PB5)); // this switches off the ports and the pull-ups.
+  //  PORTx(IOPORT) &= ~(_BV(PB2) | _BV(PB1) | _BV(PB4) | _BV(PB3) | _BV(PB0) | _BV(PB5)); // this switches off the ports and the pull-ups.
   DDRx(IOPORT) |= _BV(PB2) | _BV(PB1) | _BV(PB4) | _BV(PB3) | _BV(PB0) | _BV(PB5); // this makes the port an output
   #warning this needs to rectivied.
   #else
