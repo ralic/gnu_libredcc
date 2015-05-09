@@ -15,13 +15,15 @@
 #include <linux/moduleparam.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
-//#include <linux/fs.h>
+#include <linux/fs.h>
 #include <linux/gpio.h>
 #include <linux/interrupt.h>
-//#include <mach/hardware.h>
+#include <mach/hardware.h>
 #include <asm/io.h>
 
 #include "dcc_module.h"
+#include "rt_insert_irq.h"
+
 
 // module parameters:
 static int dcc_in = DEFAULT_DCC_IN_GPIO;
@@ -36,22 +38,55 @@ static int period = DEFAULT_PERIOD;
 module_param(period, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
 MODULE_PARM_DESC(period, "(Half)period of signal to produce");
 
-static int latency = 0;    
-module_param(latency, int, S_IRUSR | S_IRGRP);
-MODULE_PARM_DESC(latency, "Maximal latency");
+/*
+static int dcc_out = DEFAULT_DCC_OUT_GPIO;
+module_param(dcc_out, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+MODULE_PARM_DESC(dcc_out, "GPIO pin used for the output of the dcc signal.");
+*/
+
+static int major = DEVICE_MAJOR; // major device number
+module_param(major, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+MODULE_PARM_DESC(major, "Major device number used for dcc device.");
+
+static int dcc_in_irq; // irq used for pin
+
+// file operations:
+//static int dcc_open(struct inode *, struct file *);
+//static int dcc_release(struct inode *, struct file *);
+//static ssize_t dcc_read(struct file *, char *, size_t, loff_t *);
+//static ssize_t dcc_write(struct file *, const char *, size_t, loff_t *);
+////////static int opened = 0; // has the device been opened?
+
+static struct file_operations fops = {
+  //	.read = dcc_read,
+//	.write = dcc_write,
+// 	.open = dcc_open,
+// 	.release = dcc_release
+};
 
 
-
-
+//static int dcc_open(struct inode *, struct file *) {
+// return -EINVAL;
+//}
+//static int dcc_release(struct inode *, struct file *);
+//static ssize_t dcc_read(struct file *, char *, size_t, loff_t *);
 
 
 // IRQ handlers
+
+// \todo why did the message below appear multiple times although I just have one shot?
+static irqreturn_t my_gpio_handler(int irq, void* dev_id) {
+
+  // dont do this
+  //printk(KERN_ERR "GPIO INT");
+return IRQ_HANDLED;
+}
 
 extern int (*rt_handle_IRQ)(unsigned int);
 
 static void do_handle(void);
 
-static int rt_handler(unsigned int irq) {
+int rt_handler(unsigned int irq) {
 
   if(irq != IRQ_TIMER(timer)) 
     return IRQ_NONE;
@@ -61,43 +96,49 @@ static int rt_handler(unsigned int irq) {
 
   do_handle();
 
-  //acknowledge System Timer Match and clear interrupt at the same time
+  // acknowledge System Timer Match and clear interrupt at the same time
   writel(Mn(timer), __io_address(ST_BASE + CS));
 
   return IRQ_HANDLED;
 }
 
-
 static void do_handle(void) {
   static int toggle = 0;
-  static uint32_t next = 0; 
-  static uint32_t settling = 10000; // number of calls for settling before we get serious with recording lateness
-
   
     // read free running system timer
     uint32_t clo = readl(__io_address(ST_BASE + CLO));
+
     gpio_set_value(dcc_in, toggle & 0x1);
     toggle++;
 
-    if((!settling) && (next)) {
-      if(clo-next > latency) {
-	latency = clo-next;
-      }
-    } else {settling--;}
-
-    next = clo+period;
-
     // set next System Timer Match :
-    writel(next, __io_address(ST_BASE + Cn(timer)));
+    writel(clo + period, __io_address(ST_BASE + Cn(timer)));
  
 }
 
-static int has_run = false;
 
+// \todo should I have the TIMER flag??
 static irqreturn_t my_timer_handler(int irq, void* dev_id) {
-  has_run = true;
-  // acknowledge System Timer Match and clear interrupt at the same time
+  static int toggle = 0;
+  
+  // read free running system timer
+  uint32_t clo = readl(__io_address(ST_BASE + CLO));
+
+#warning cutting short here
+  return IRQ_HANDLED;
+
+
+  // acknowledge System Timer Match 0:
   writel(Mn(timer), __io_address(ST_BASE + CS));
+  
+  gpio_set_value(dcc_in, toggle & 0x1);
+  toggle++;
+
+  // @todo check STC_FREQ_HZ == 1000000 (1 million).
+
+  // seta next System Timer Match 0:
+  writel(clo + period, __io_address(ST_BASE + Cn(timer)));
+
   return IRQ_HANDLED;
 }
 // */
@@ -108,10 +149,12 @@ typedef enum {level_nothing, level_dcc_in, level_irq_in, level_irq_timer, level_
 static init_level_enum init_level = level_nothing; 
 static void unwind_setup(init_level_enum level);
 
+
+
 int __init dcc_init(void)
 {
   int ret;
-
+  
 	printk(KERN_INFO "DCC service starting.\n");
 
 	ret = gpio_request(dcc_in, "DCC Pin");
@@ -131,6 +174,15 @@ int __init dcc_init(void)
 	  return ret;
 	}
 
+	/*
+	ret = gpio_direction_input(dcc_in);
+	if(ret < 0) {
+	  printk(KERN_ALERT "Setting up GPIO %d as input failed with %d.\n", dcc_in, ret);
+	  unwind_setup(init_level);
+	  return ret;
+	}
+	*/
+
 	// \todo do I have to switch off the pull-down?
 	ret = gpio_direction_output(dcc_in, GPIOF_INIT_LOW);
 	if(ret < 0) {
@@ -146,9 +198,30 @@ int __init dcc_init(void)
 	  return ret;
 	}
 	printk(KERN_INFO "Read GPIO %d as %d.\n", dcc_in, ret);
+		  
+	  
+	dcc_in_irq = gpio_to_irq(dcc_in);
+	if(dcc_in_irq < 0) {
+	  printk(KERN_ALERT "Getting interrupt no for GPIO %d failed with %d\n", dcc_in, dcc_in_irq);
+	  unwind_setup(init_level);
+	  return dcc_in_irq;
+	} 
+	printk(KERN_INFO "Got IRQ number %d for GPIO %d.\n", dcc_in_irq, dcc_in);
 	
-	ret = request_irq(IRQ_TIMER(timer), my_timer_handler, 0 /*Flags */ , "timer handler", NULL);
-	disable_irq(IRQ_TIMER(timer));
+	ret = request_irq(dcc_in_irq, my_gpio_handler, IRQF_TRIGGER_FALLING, "dcc handler", NULL);
+	if(ret < 0) {
+	  printk(KERN_ALERT "Reqesting interrupt  %d for GPIO %d failed with %d\n", dcc_in_irq, dcc_in, ret);
+	  unwind_setup(init_level);
+	  return ret;
+	}
+	  
+	printk(KERN_INFO "Interrupt handler set for IRQ %d.\n", dcc_in_irq);
+	init_level = level_irq_in;
+
+
+
+	//	ret = request_irq(IRQ_TIMER(timer), my_timer_handler, 0 /*Flags */ , "timer handler", NULL);
+	//free_irq(IRQ_TIMER(timer),NULL); // we just want to see whether the uinterrupt is free. // should actually reserve it
 	if(ret < 0) {
 	  printk(KERN_ALERT "Requesting timer interrupt  %d for GPIO %d failed with %d\n", IRQ_TIMER(timer), dcc_in, ret);
 	  unwind_setup(init_level);
@@ -158,29 +231,48 @@ int __init dcc_init(void)
 
 	init_level = level_irq_timer;
 
-	int i;
-	for(i = 0; i < 4; i++) {
-	  int val = readl(__io_address(ST_BASE + Cn(i)));
-	  printk(KERN_INFO "Timer Match %i is %x.\n", i, val);
+
+	//- gpio_direction_output(gpio_num, true);
+	// - gpio_direction_input(gpio_num);
+	//- gpio_set_value(gpio_num, value);
+
+	// setup chardev 	
+	/*	major = register_chrdev(DEVICE_MAJOR, DEVICE_NAME, &fops);
+	if (major < 0) {
+	  printk(KERN_ALERT "Registering device " DEVICE_NAME " failed with %d\n", major);
+	  unwind_setup(init_level);
+	  return major;
 	}
-	
+	printk(KERN_INFO "DCC service has major device number %d.\n", major);
+
+	init_level = level_device; */
+
+	//is_branch_opcode(NULL);
+
+	//disable_irq(0); // I hope this is on the hardware level
+
+
 	unsigned long flags;
 	local_irq_save(flags);
 	rt_handle_IRQ = &rt_handler;
 	local_irq_restore(flags);
 
+	enable_irq(IRQ_TIMER(timer));
 	uint32_t clo = readl(__io_address(ST_BASE + CLO));
 	writel(clo + period, __io_address(ST_BASE + Cn(timer)));
-	enable_irq(IRQ_TIMER(timer));
 
-	printk(KERN_INFO "Module initialised");
 	return 0;
 }
+
 
 static void unwind_setup(init_level_enum level) {
 
   printk(KERN_INFO "Unwinding from init level %d.\n", level);
-  printk(KERN_INFO "Maximal Lateness: %d.\n", latency);
+
+  unsigned long flags;
+  local_irq_save(flags);
+  rt_handle_IRQ = NULL;
+  local_irq_restore(flags);
 
   switch(level) {
   default:
@@ -188,16 +280,8 @@ static void unwind_setup(init_level_enum level) {
     //      unregister_chrdev(major, DEVICE_NAME); 
   case level_irq_timer:
     disable_irq(IRQ_TIMER(timer));
-    free_irq(IRQ_TIMER(timer), NULL);
-    unsigned long flags;
-    local_irq_save(flags);
-    rt_handle_IRQ = NULL;
-    //acknowledge spurious System Timer Match and clear interrupt at the same time
-    writel(Mn(timer), __io_address(ST_BASE + CS));
-    local_irq_restore(flags);
-
   case level_irq_in:
-    //    free_irq(dcc_in_irq, NULL);
+    free_irq(dcc_in_irq, NULL);
   case level_dcc_in:
     gpio_free(dcc_in);
   case level_nothing: 
@@ -210,6 +294,7 @@ void __exit dcc_exit(void)
 {
 
   unwind_setup(init_level);
+
   printk(KERN_INFO "DCC service ending.\n");
 }
 
