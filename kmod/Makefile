@@ -14,8 +14,8 @@ CROSS_COMPILE=arm-linux-gnueabi-
 #DEPMOD		= /sbin/depmod
 
 #obj-m += dcc.o pwm-bcm2835.o pwm_init.o
-obj-m += dcc.o pwm_init.o
-dcc-objs += dcc_init.o rt_insert_irq.o
+obj-m += pwmdcc.o
+pwmdcc-objs += pwm_init.o gpio_init.o dma_init.o buffer.o init.o 
 
 all:
 #	make -C ~//lib/modules/$(shell uname -r)/build M=$(PWD) modules
