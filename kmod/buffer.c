@@ -2,6 +2,7 @@
 #include "buffer.h"
 #include <linux/dma-mapping.h>
 
+static dma_cookie_t cookie;
 
 static struct scatterlist sgl[1];
 //static dma_cookie_t cookie;
@@ -53,6 +54,8 @@ struct scatterlist* map_dma_buffer(void* data, size_t size) {
  return sgl; // when and where do I unmap the sgl?
 }
 
+
+
 // now fill the dma_buffer with data -- do I need to synchronise memoery?
 
 dma_cookie_t submit_one_dma_buffer(struct scatterlist* sgl) {
@@ -70,13 +73,13 @@ if(dma_desc == NULL) {
 // add a callback to the descriptor: mark used buffer as available
 // add an idle value if no new real packet is availale
 // callback is allowed to prepare and submit a new tranaction
-dma_cookie_t cookie = dmaengine_submit(dma_desc);
+cookie = dmaengine_submit(dma_desc);
 if(cookie < 0) {
 	printk(KERN_INFO "Submitting transaction resulted in error %u.\n", cookie);
 	return cookie;
 }
 
-dma_async_issue_pending(pwm_dma); // no return value. // this should perhaps be called elsewhere? And I guess it is enough to be called once!
+dma_async_issue_pending(pwm_dma); // no return value. // this should perhaps be called elsewhere? And I guess it is enough to be called once or everytime?
 
 int status = dma_async_is_tx_complete(pwm_dma, cookie, NULL, NULL);
 printk(KERN_INFO "Status of submitted tx is: %u.\n", status);
@@ -88,4 +91,9 @@ printk(KERN_INFO "Status of submitted tx is: %u.\n", status);
 // I must sync for the device afterchanging the buffer content (but probably only in one direction -- for device)
 
 return cookie;
+}
+
+void buffer_unwind(void) {
+  int status = dma_async_is_tx_complete(pwm_dma, cookie, NULL, NULL);
+  printk(KERN_INFO "Status of submitted tx is: %u.\n", status);
 }

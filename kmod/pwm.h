@@ -6,7 +6,7 @@
 #define MODE1 1 << 1 // 0 is PWM mode, 1 is serial mode
 #define RPTL1 1 << 2 // repeate last word in FIFO mode
 #define SBIT1 1 << 3 // state of pwm output with no tranmission
-#define POLA1 0 << 4// inversion of polariy?
+#define POLA1 1 << 4// inversion of polariy?
 #define USEF1 1 << 5// use fifo?
 #define CLRF1 1 << 6 // clear fifo?
 #define MSEN1 1 << 7 // do not use sophisticatted PWM algo

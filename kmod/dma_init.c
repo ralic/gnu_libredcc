@@ -51,9 +51,9 @@ int __init dma_init(void) {
   // what to do with the return value? error value?
   int ret = dmaengine_slave_config(pwm_dma, &slave_config);
   if(ret) {
-  printk(KERN_INFO "Could not set up slave with error %d\n", ret);
-  dma_unwind();
-  return ret;
+    printk(KERN_INFO "Could not set up slave with error %d\n", ret);
+    dma_unwind();
+    return ret;
 }
 
   printk(KERN_INFO "Acquired DMA channel %p and set up as slave for PWM peripherial\n", pwm_dma);
@@ -64,10 +64,10 @@ void dma_unwind(void) {
   
   switch(dma_level) {
   default:
-  case dma_got_channel: 
-    //int status = dma_async_is_tx_complete(dma, cookie, NULL, NULL);
-    //printk(KERN_INFO "Status of submitted tx is: %u.\n", status);
-    dma_release_channel(pwm_dma);
+  case dma_got_channel: {
+    //    int status = dma_async_is_tx_complete(pwm_dma, cookie, NULL, NULL);
+    // printk(KERN_INFO "Status of submitted tx is: %u.\n", status);
+    dma_release_channel(pwm_dma); }
   case dma_nothing: {
     // nothing to do
   }

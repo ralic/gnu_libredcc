@@ -40,17 +40,22 @@ static void unwind(void);
 
 int __init init(void) {
   
-int ret = gpio_init();
-if(ret) {
-return ret;
-}
+  int ret = gpio_init();
+  if(ret) {
+    return ret;
+  }
+  printk(KERN_INFO "Inited GPIO");
 init_level = init_gpio;
+
 
 ret = dma_init();
 if(ret) {
 unwind();
 return ret;
 }
+
+
+printk(KERN_INFO "Inited DMA");
       
 init_level = init_dma;
 
@@ -60,6 +65,7 @@ unwind();
 return ret;
 }
 init_level = init_pwm;
+printk(KERN_INFO "Inited PWM");
 
 printk(KERN_INFO "DCC PWM service starting.\n");
 
@@ -89,6 +95,7 @@ static void unwind() {
 	switch(init_level) {
 	default:
 	case init_pwm: 
+	  buffer_unwind();
 	  pwm_unwind();
 	  //	pwm_free(pd); pwm_disable();
 	case init_dma:
@@ -102,7 +109,7 @@ static void unwind() {
 	}
 }
 
-void __exit exit(void)
+void __exit exit_mod(void)
 {
 /*	unwind_gpio();
 	printk(KERN_INFO "GPIO service ending for DCC.\n");
@@ -114,7 +121,7 @@ void __exit exit(void)
 }
 
 module_init(init);
-module_exit(exit);
+module_exit(exit_mod);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Andre Gruning");	
