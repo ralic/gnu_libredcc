@@ -44,14 +44,15 @@ void init_io() {
 
   // to allow entering progmode at power on if we have few pins and do not want to sacrifies the reset pin:
 #ifdef HELPERPIN
-  PORTx(IOPORT) |= _BV(HELPERPIN); // pull up on
-  nop(); // what one clock cycle for effect of output manipulation to propagate to input latch.
-  nop();
-  if (!(PINx(IOPORT) & _BV(HELPERPIN))) { // if low then button is depressed
+  //PORTx(IOPORT) |= _BV(HELPERPIN); // pull up on
+  //nop(); // what one clock cycle for effect of output manipulation to propagate to input latch.
+  //nop();
+  if (PINx(IOPORT) & _BV(HELPERPIN)) { // if high then button is depressed (because the booster pulls it down)
     INCR(button_count, PORTS);
+    while (PINx(IOPORT) & _BV(HELPERPIN)) {} // wait for button release
   }
-  PORTx(IOPORT) &= ~_BV(HELPERPIN); // pull up off
-  #warning NO USING THE RESET BUTTON
+  //PORTx(IOPORT) &= ~_BV(HELPERPIN); // pull up off
+  #warning NOT USING THE RESET BUTTON
 #endif
 
   // enable timer0
