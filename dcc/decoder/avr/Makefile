@@ -1,10 +1,10 @@
 # Version: $Id: Makefile 1265 2013-05-04 21:45:24Z ag0015 $
 
- MCU_TARGET = attiny25
- DEVICE = /dev/ttyUSB0
- PROGRAMMER = buspirate
- F_CPU = 8000000
- CHIP = t25
+ # # MCU_TARGET = attiny25
+ # # DEVICE = /dev/ttyUSB0
+ # # PROGRAMMER = buspirate
+ # # F_CPU = 8000000
+ # # CHIP = t25
 
 # default settings:
 ARCH ?= avr

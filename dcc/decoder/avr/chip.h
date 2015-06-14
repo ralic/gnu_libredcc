@@ -1,15 +1,9 @@
 #ifndef CHIP_H
 #define CHIP_H 1
 
+
 #include <avr/io.h>
-//#include <avr/fuses.h>
-// how to test that timer 1 does not have 16bit? (or any other timer for that matter!)
-//#define IOTIMER 1 
-//#define IOPORT B
-
-
-
-
+// \todo how to test that timer 1 does not have 16bit? Well, check whether there is TCNTxH?
 
 /**
    The INT0 pin is the DCCPIN:
@@ -44,8 +38,6 @@
 //! number of ports that the decoder has -- the number of physical
 //! outputs is twice this number. 
 #define PORTS 2
-
-
 
 #else
 #error Pins not yet defined for this AVR chip
