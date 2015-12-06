@@ -1,5 +1,5 @@
 /* 
- *  Copyright 2014 André Grüning <libredcc@email.de>
+ *  Copyright 2014, 2015 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -25,11 +25,13 @@
 extern "C" {
 #endif
 
-char* r_fgets(char* str, const uint8_t size, FILE* const stream);
+  #include<inttypes.h>
+
+  char* r_fgets(char* str, const uint8_t size, FILE* const stream);
   //uint8_t r_fputs(const char* str, FILE* const stream);
 
 
-#warning EOL is currently \r
+#warning "EOL is currently \\r"
 #define EOLSTR "\r"
 #define EOLCHAR '\r'
 

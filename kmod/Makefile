@@ -15,7 +15,7 @@ CROSS_COMPILE=arm-linux-gnueabi-
 
 #obj-m += dcc.o pwm-bcm2835.o pwm_init.o
 obj-m += pwmdcc.o
-pwmdcc-objs += pwm_init.o gpio_init.o dma_init.o buffer.o init.o #fops.c
+pwmdcc-objs += pwm_init.o gpio_init.o dma_init.o buffer.o init.o fops.c
 
 all:
 #	make -C ~//lib/modules/$(shell uname -r)/build M=$(PWD) modules

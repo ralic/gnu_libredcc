@@ -8,15 +8,13 @@ MODULE_PARM_DESC(major, "Major device number used for dcc device.");
 static bool opened;
 static int open (struct inode *, struct file *) {
   if(opened) return -EBUSY;
-  
-  // we could do part of the initialisation here instead of in init (eg switching outputs)
 
+  // we could do part of the initialisation here instead of in init (eg switching outputs)
   opened = true;
   return 0;
 }
 
 static int release (struct inode *, struct file *) {
-
   opened = false;
   return 0;
 }
@@ -26,11 +24,15 @@ static ssize_t read (struct file *, char __user *, size_t, loff_t *) {
 }
 
 static ssize_t write (struct file *, const char __user *, size_t, loff_t *) {
+  // xxx
+  // only read full lines? No, too error prone. But  perhaps it is a good start?
+  // parse into lines? Yes.
+  // store remainder of line? -- Or rather ignore them as clutter? Perhaps a good start?
 }
 
 
 static struct file_operations fops = {
-  //  	.read = dcc_read,
+  .read = read,
   .owner = THIS_MODULE,
   .write = dcc_write,
   .open = dcc_open,
@@ -39,6 +41,9 @@ static struct file_operations fops = {
 
 static enum fops_level {nothing, got_major} fops_level = nothing;
 
+/**
+   @todo: transfer to new device interface.
+*/
 int __init fops_init(void) {
 
   // setup chardev 	
