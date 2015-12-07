@@ -47,7 +47,6 @@ uint8_t next_bit() {
 	preamble_ones = 0;
 	state = START_BIT;
 	end_of_preamble_hook();
-	// @todo we need a hook here to indicate that we have no more bits to send
       }
       return 1; 
     }

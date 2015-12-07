@@ -1,5 +1,7 @@
 #include <dcc.h>
 #include "../share/dcc_encoder_core.h"
+#include "sprog2packet.h"
+#include <unistd.h>
 
 /** The function below will talk to the dcc module via the device or
     proc fs.
@@ -9,10 +11,12 @@ uint8_t is_dcc_on() {
 }
 
 void dcc_on() {
+  fputs("Switching DCC on", stderr);
   return;
 }
 
 void dcc_off() {
+  fputs("Swithcing DCC off", stderr);
   return;
 }
 
@@ -21,32 +25,37 @@ void dcc_off() {
    generic and move both into the "shared" folder.
 */
 void service_mode_on() {
+  fputs("Swithcing Service mode on\n", stderr);
   return;
 }
 void service_mode_off() {
+  fputs("Switching Service mode off\n", stderr);
   return;
 }
 
 /** in this implementation, this hook is not used hence it should always return true**/
-uint8_t is_new_packet_ready() {
+uint_fast8_t is_new_packet_ready() {
+  fprintf(stderr, __FUNCTION__);
   return 1;
 }
 
 /** handshaking with next_bit **/
 
-static int has_next_dccbit = 0;
+static int has_next_dccbit = 1;
 
 static inline int has_next() {
   return has_next_dccbit;
 }
 
 void end_of_preamble_hook() {
+  fprintf(stderr, __FUNCTION__);
   has_next_dccbit = 0;
   return;
 }
 
 /** hook not used */
 void done_with_packet() {
+  fprintf(stderr, __FUNCTION__);
   return;
 }
 
@@ -86,7 +95,7 @@ static unsigned signal[WORDS]; // = {0,0,0,0,0,0,0,0,0,0};
 static int bit_p = BITS_PER_WORD;
 //} dcc_data;
 
-static inline void generate_packet(const uint8_t bit) {
+static inline void generate_packet(const uint_fast8_t bit) {
 
   if(bit == 0) {
     bit_p-=2;
@@ -95,12 +104,15 @@ static inline void generate_packet(const uint8_t bit) {
   }
   else { // a one bit
     bit_p-=2;
-    signal[word_p] |= 0b01 << bit_p;
+    signal[word_p] |= 0b10 << bit_p;
   }
  
+  fprintf(stderr, "Word: %8x\n", signal[word_p]);
+
   if(bit_p <= 0) {
     word_p++;
     bit_p+= BITS_PER_WORD;
+    fprintf(stderr, "bit_p: %0x,\t word_p: %ox\n", bit_p, word_p);
   }
 }    
 
@@ -109,20 +121,19 @@ static inline void finalise_packet() {
   if(bit_p < BITS_PER_WORD) {
     do {  // fill with endocded 1 bits (ie make preamble longer)
       bit_p-=2;
-      signal[word_p] |= 0b01 << bit_p;
-      // I can shorting this by shifiting 0x55555555 left and fill with zero enough times
+      signal[word_p] |= 0b10 << bit_p;
+      // I can shorting this by shifiting 0xAAAAAAAA left and fill with zero enough times
     } while (bit_p > 0);
     word_p++;
     bit_p = BITS_PER_WORD;
   }
 
-  // the last word (which will be repeated if DMA queue runs empty:
-  if(signal[word_p-1] != 0x55555555) {
-    signal[word_p] = 0x55555555;
+  // the last word which will be repeated if DMA queue runs empty:
+  if(signal[word_p-1] != 0xAAAAAAAA) {
+    signal[word_p] = 0xAAAAAAAA;
     word_p++;
   }
 }
-
 
 static inline void send_packet(const unsigned signal[], const unsigned count) {
   
@@ -130,19 +141,29 @@ static inline void send_packet(const unsigned signal[], const unsigned count) {
   //for(int i = 0; i < count; i++) {
   // for(int bit = 30; bit >=0; bit-=2) {
     
-  send_it_to_dma();
-      
+  int written = write(fd_dcc, signal, sizeof(signal[0])*count);
+  if(written != count*sizeof(signal[0])) {
+    perror(": Not all bytes written");
+  }
+  
+  return;
+
 }
-
-
-
-
 
 void commit_packet(const dcc_packet* const new_packet) {
 #warning implement like avr and than adttional stuff -- ie we need to call next_bit and fill a data structure with bits and the final  
 
+
   packet = *new_packet; // it would in this case suffice to have a
 			// pointer and not to the full copying.
+
+  int j;
+  for(j = 0; j < packet.len; j++) {
+    fprintf(stderr, "%0x ", packet.pp.byte[j]);
+  }
+
+
+
 
   word_p = 0;
 
@@ -154,12 +175,23 @@ void commit_packet(const dcc_packet* const new_packet) {
   has_next_dccbit = 1;
 
   while(has_next()) {
-    generate_packet(next_bit());
+    const uint_fast8_t bit = next_bit();
+    fprintf(stderr, "Next bit: %s\n", bit ? "1" : "0");
+    generate_packet(bit);
   }
-  finalise_packet();
+  finalise_packet(); 
+  //  word_p++;
+
 
   send_packet(signal, word_p);
 
 }
 
-
+void encoder_init() {
+    // advance state of next_bit to bring it in the right state:
+  fputs("\nInitialising: \n", stderr);
+  while(has_next()) {
+    fputs(next_bit() ? "Init: 1\n" : "Init: 0\n", stderr);
+  }
+}
+  

@@ -51,7 +51,10 @@ char line[INPUT_LINE_LEN + 1]; // store maximally 64 chars plus the terminating 
 
 static inline void make_dcc_packet(uint8_t argc, char* argv[]) {
 
-  // \todo check that argc is at least 2, otherwise we might crash?
+  if(argc < MIN_PACKET_LEN) {
+    FPUTL("Supply between MIN_PACKET_LEN and MAX_ARG arguments to the O command.\n", stderr);
+    return;
+  }
 
   dcc_packet packet = {len: argc};
 
@@ -144,8 +147,11 @@ static inline uint16_t tokentonum(const char* str) {
 
 static inline void program_cv(const uint8_t argc, char* const argv[]) {
 
-  if(argc != 2) FPUTL("Give exactly two arguments: the CVs and the value to write. Reading not implemented", stdout);
-  
+  if(argc != 2) {
+    FPUTL("Give exactly two arguments: the CVs and the value to write. Reading not implemented", stdout);
+    return;
+  }
+   
   uint16_t cv = tokentonum(argv[0]);
   if(cv < CV_MIN || cv > CV_MAX) FPUTL("CV value must be between 1--1023", stdout); 
   // @todo is it really like above? I thought the real CV values go
@@ -173,6 +179,12 @@ static inline void program_cv(const uint8_t argc, char* const argv[]) {
   send_sm_dm_sequence(&packet);
   service_mode_off();
 };
+
+
+void sprog_init() {
+  encoder_init();
+}
+
 
 
 void sprog() {
@@ -260,6 +272,7 @@ void sprog() {
 	break;
       case 'C': 
 	if(is_dcc_on()) program_cv(argc, argv);
+	FPUTL(OK,stdout); // is this answer expected according to the sprog manual?
 	break;
       default:
 	FPUTL("Unknown Command.", stdout); // Command token too long or

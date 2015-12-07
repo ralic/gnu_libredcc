@@ -6,13 +6,13 @@ ARCH ?= unix
 PRG = sprog2packet
 OBJ = $(PRG).o dcc_encoder_hw.o ../share/r_io.o ../share/sprog.o ../share/service_mode.o ../share/dcc_encoder_core.o
 
-#LIBS = -ldcc
+LIBS = -ldcc
 
 OPTIMIZE = -O2
 
 #DEFS =  -D DEBUG=5
 INCLUDE_DIRS = -I ../../include -I ../../../include
-LIB_DIRS = -L ../../lib/$(ARCH)/$(MCU_TARGET) -L ../../../lib/$(ARCH) #/$(MCU) should also be with uar
+LIB_DIRS = -L ../../lib/$(ARCH)  -L ../../../lib/$(ARCH) #/$(MCU) should also be with uar
 
 #CXX = avr-g++
 #CC = avr-gcc
@@ -22,7 +22,7 @@ CFLAGS = -g -Wall $(OPTIMIZE) $(DEFS) $(INCLUDE_DIRS) # -fno-jump-tables - #-mmc
 #CXXFLAGS = $(CFLAGS) -fno-threadsafe-statics 
 #CXXFLAGS = $(CFLAGS) -fno-threadsafe-statics -fexceptions
 
-LDFLAGS = -g -Wall $(OPTIMIZE)  #-u lok $(LIB_DIRS) -mmcu=$(MCU_TARGET)
+LDFLAGS = -g -Wall $(OPTIMIZE)  $(LIB_DIRS) #-mmcu=$(MCU_TARGET)
 #LDFLAGS = -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) -lstdc++ -u uart_init -u lok -L $(LIB_DIR) 
 # AFLAGS = -g -Wall -mmcu=$(MCU_TARGET) $(DEFS) -c
 
