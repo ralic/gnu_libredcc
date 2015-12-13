@@ -14,8 +14,8 @@
 #DEPMOD		= /sbin/depmod
 
 #obj-m += dcc.o pwm-bcm2835.o pwm_init.o
-obj-m += ktest.o
-ktest-objs += test.o 
+obj-m += kdcc.o
+kdcc-objs += dcc.o 
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules

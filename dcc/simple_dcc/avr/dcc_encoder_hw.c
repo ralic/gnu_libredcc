@@ -340,7 +340,10 @@ void end_of_preamble_hook() {
   return;
 }
 
-
+void encoder_init() {
+  // noting to do as the init is done automatically
+  return;
+}
        
 
 
