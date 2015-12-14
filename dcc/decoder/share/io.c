@@ -32,7 +32,6 @@
 #include <avr/io_hw.h>
 #include <avr/io.h>
 
-
 #ifdef NO_LOCAL_STATICS
 static uint8_t button = 1;  
 static uint8_t count = 0;
@@ -58,9 +57,8 @@ typedef struct {
 
 #if PORTS == 2
 static uint8_t output_timer[OUTPUTS] = {0,0,0,0}; 
-static const uint8_t output_ontime[OUTPUTS] = { 0, 0, 5, 5}; // x 16ms. 
+static const uint8_t output_ontime[OUTPUTS] = { 5, 5, 5, 5}; // x 16ms. 
 #elif PORTS == 3
-static uint8_t output_timer[OUTPUTS] = {0,0,0,0,0,0}; 
 static const uint8_t output_ontime[OUTPUTS] = { 5, 5, 10, 10, 0, 0}; // x 16ms. 
 #else 
 #error Change the above manualy re number of ports

@@ -66,6 +66,7 @@ void init_io() {
   // configure outputs:
 
 #if PORTS == 2 
+<<<<<<< HEAD
   //  PORTx(IOPORT) &= ~(_BV(PB0) | _BV(PB1) | _BV(PB3) | _BV(PB4)); // this switches off the ports and the pull-ups (not really neccesary as this should be the reset configuation)
   DDRx(IOPORT) |= _BV(PB0) | _BV(PB1) | _BV(PB4) | _BV(PB3); // this makes the port an output
 #elif PORTS == 3

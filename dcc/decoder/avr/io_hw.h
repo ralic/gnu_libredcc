@@ -22,6 +22,13 @@
 #include<share/io.h>
 #include<avr/io.h>
 
+
+//! delete this?
+// extern volatile uint8_t io_ticks;
+// #define io_tick() io_ticks
+// #define acknowledge_io_tick() io_ticks--
+
+
 /**
    pseudo functions to deal with timing of io (port) updates:
    If io_tick() returns true, then we should if possible run the function that updates the outputs.
@@ -53,12 +60,8 @@ extern const uint8_t output_mask[];
     pseudo function that switches the pullup of the DCC pin on:
 */
 #define pullup_dccpin()  PORTx(DCCPORT) |= _BV(DCCPIN)
-
-
 #define power_timer_enable(__x) __power_timer_enable(__x)
 #define __power_timer_enable(__x) power_timer ## __x ## _enable()
-
-
 
 #endif
 

@@ -25,7 +25,7 @@ endif
 
 # \todo this is not strictly necessary -- just a workaround -- remove these from sniffer, and make main so that it also works with sniffer
 ifeq ($(PRG), sniffer)
-#OBJ += ../share/io.o io_hw.o 
+OBJ += ../share/io.o io_hw.o 
 endif	
 
 

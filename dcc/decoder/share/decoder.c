@@ -100,7 +100,7 @@ inline static void handle_ba_progmode(const uint8_t port) {
 #ifdef __AVR
     cli();
     wdt_disable();
-    _delay_ms(500); // ms
+    _delay_ms(500);
     wdt_enable(WDTO_120MS);
     sei();
 #endif
