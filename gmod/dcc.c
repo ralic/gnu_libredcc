@@ -1,11 +1,7 @@
-/* \file
-
-
-
-
- */ 
+/** \file  */ 
 
 /*
+
  * Copyright (C) 2015 Andre Gruning 
  *
  * Credits to 
@@ -46,12 +42,8 @@ static bool signal = false;
 
 
 
-
-static enum {level_nothing, level_chrdev, level_class, level_device, level_sysfs, level_running} init_level = level_nothing; 
-static void unwind(void);
-
-
-
+static enum {level_nothing, level_chrdev, level_class, level_device, level_sysfs, level_running} init_level = level_nothing;
+static void unwind(void); 
 
 
 /**** device fops ****/
