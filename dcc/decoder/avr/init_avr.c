@@ -26,7 +26,6 @@
 #include <avr/io.h>
 #include <avr/sleep.h>
 #include <avr/power.h>
-
 #include "chip.h"
 
 #if 0
@@ -100,7 +99,6 @@ void init_avr() {
   power_all_disable(); // to save as much power as possible.
 }
 
-
 // delete below
 /* int main(void) __attribute__((noreturn)); */
 /* int main(void) { */
@@ -124,3 +122,4 @@ void init_avr() {
 /*     } */
 /*   } */
 /* } */
+

@@ -100,7 +100,11 @@ inline static void handle_ba_progmode(const uint8_t port) {
 #ifdef __AVR
     cli();
     wdt_disable();
+<<<<<<< HEAD
     _delay_ms(500);
+=======
+    _delay_ms(500); // ms
+>>>>>>> watchdog
     wdt_enable(WDTO_120MS);
     sei();
 #endif
@@ -226,6 +230,7 @@ int main(void) __attribute__((noreturn));
 int main(void) {
 
 
+<<<<<<< HEAD
 #if 0
   DDRB = _BV(0) | _BV(1) | _BV(3) | _BV(4);
   PORTB = _BV(0) | _BV(1) | _BV(3) | _BV(4);
@@ -235,6 +240,8 @@ int main(void) {
 #endif
 
 
+=======
+>>>>>>> watchdog
   sei();
   INFO("Starting " __FILE__ "\n");
 

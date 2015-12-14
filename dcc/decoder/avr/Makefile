@@ -25,7 +25,7 @@ endif
 
 # \todo this is not strictly necessary -- just a workaround -- remove these from sniffer, and make main so that it also works with sniffer
 ifeq ($(PRG), sniffer)
-OBJ += ../share/io.o io_hw.o 
+#OBJ += ../share/io.o io_hw.o 
 endif	
 
 
@@ -35,8 +35,6 @@ LIB_DIR = -L ../../lib/$(ARCH)/$(MCU_TARGET) -L ../../../lib/$(ARCH)/$(MCU_TARGE
 # could I get those automatically?
 #LIBS = -ldcc -luart
 SYMBOLS = -D F_CPU=$(F_CPU) #-D DEBUG=5 
-
-
 OPTIMIZE = -O3
 #OPTIMIZE = -O0        -fsee        -fsection-anchors        -mno-long-calls        -mno-longcall
 
