@@ -31,6 +31,7 @@ enum {
   lost_bit,
   packet_too_long,
   size_error,
+  no_reset_source,
   NUM_ERRORS};  
 
 extern char* error_msg[];

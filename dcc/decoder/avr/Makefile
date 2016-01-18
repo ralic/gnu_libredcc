@@ -1,27 +1,40 @@
 # Version: $Id: Makefile 1265 2013-05-04 21:45:24Z ag0015 $
 
-ARCH = avr
+ # # MCU_TARGET = attiny25
+ # # DEVICE = /dev/ttyUSB0
+ # # PROGRAMMER = buspirate
+ # # F_CPU = 8000000
+ # # CHIP = t25
 
-ifndef $(PRG)
-PRG = decoder
-endif
+# default settings:
+ARCH ?= avr
+MCU_TARGET ?= atmega328p
+PROGRAMMER ?= arduino
+F_CPU ?= 16000000
+DEVICE ?=/dev/ttyACM0
+CHIP ?= m328p
 
-OBJ = main.o interrupts.o ../share/compose_packet.o eint0_isr.o ../share/$(PRG).o error_hw.o ../share/bitqueue.o eeprom_hw.o # \todo eeprom_hw could also be removed from here, but there is a problem with avrdude when we remove this for sniffer.
+
+PRG ?= decoder
+
+OBJ = init_avr.o reset.o interrupts.o ../share/compose_packet.o eint0_isr.o ../share/$(PRG).o error_hw.o ../share/bitqueue.o
 
 ifeq ($(PRG), decoder)
-OBJ += ../share/io.o io_hw.o 
+OBJ += ../share/io.o io_hw.o eeprom_hw.o
 endif	
 
-INCLUDE_DIR = -I . -I .. -I ../../include -I ../../../include
-LIB_DIR = -L ../../lib/$(ARCH) -L ../../../lib/$(ARCH)
-LIBS1 = dcc uart
-# could I get those automatically?
-LIBS = -ldcc -luart
-#LIBS = -l$(LIBS1)
-SYMBOLS = -D F_CPU=16000000 -D DEBUG=5 
+# \todo this is not strictly necessary -- just a workaround -- remove these from sniffer, and make main so that it also works with sniffer
+ifeq ($(PRG), sniffer)
+#OBJ += ../share/io.o io_hw.o 
+endif	
 
-MCU_TARGET = atmega328p
-#MCU_TARGET = attiny22
+
+
+INCLUDE_DIR = -I . -I .. -I ../../include -I ../../../include
+LIB_DIR = -L ../../lib/$(ARCH)/$(MCU_TARGET) -L ../../../lib/$(ARCH)/$(MCU_TARGET)
+# could I get those automatically?
+#LIBS = -ldcc -luart
+SYMBOLS = -D F_CPU=$(F_CPU) #-D DEBUG=5 
 OPTIMIZE = -O3
 #OPTIMIZE = -O0        -fsee        -fsection-anchors        -mno-long-calls        -mno-longcall
 
@@ -32,14 +45,21 @@ CC = avr-gcc
 AS = avr-gcc
 
 CFLAGS = -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) $(DEFS) $(INCLUDE_DIR) $(SYMBOLS) # -fno-jump-tables -
-LDFLAGS = -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) -u uart_init $(LIBS) $(LIB_DIR) #$(LIBS) # -nostdlib $(DEFS) # -fnojum
 AFLAGS = -g -Wall -mmcu=$(MCU_TARGET) $(DEFS) $(SYMBOLS) -c
+
+
+LDFLAGS = -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) -ldcc  $(LIB_DIR) #$(LIBS) # -nostdlib $(DEFS) # -fnojum
+
+ifeq ($(MCU_TARGET), atmega328p) 
+LDFLAGS += -u uart_init -luart
+endif
 
 
 OBJCOPY = avr-objcopy
 OBJDUMP = avr-objdump
 
-all: hex ehex
+#all: hex ehex
+all: $(PRG).elf
 
 # compiling is done by an implicit rule.
 
@@ -79,29 +99,29 @@ lst: $(PRG).lst
 # Rules for building the .text rom images
 hex: $(PRG).hex
 
-%.hex: %.elf
+#%.hex: %.elf
 #	$(OBJCOPY) -j .text -O ihex $< $@
-	$(OBJCOPY) -j .text -j .data -O ihex $< $@
-
-
-bin: $(PRG).bin
-
-%.bin: %.elf
-	$(OBJCOPY) -j .text -O bin $< $@
 #	$(OBJCOPY) -j .text -j .data -O ihex $< $@
 
 
-# Rules for building the .eeprom rom images
-ehex: $(PRG)_eeprom.hex
+# bin: $(PRG).bin
 
-%_eeprom.hex: %.elf
-	$(OBJCOPY) -j .eeprom --change-section-lma .eeprom=0 -O ihex $< $@ || { echo empty $@ not generated; exit 0; }
+# %.bin: %.elf
+	$(OBJCOPY) -j .text -O bin $< $@
+# #	$(OBJCOPY) -j .text -j .data -O ihex $< $@
+
+
+# Rules for building the .eeprom rom images
+# ehex: $(PRG)_eeprom.hex
+
+# %_eeprom.hex: %.elf
+#	$(OBJCOPY) -j .eeprom --change-section-lma .eeprom=0 -O ihex $< $@ || { echo empty $@ not generated; exit 0; }
 
 # Rules for Uploading to the Arduino board:
 upload: all
-	avrdude -p m328p -c arduino -P /dev/ttyACM0 -Ueeprom:w:$(PRG)_eeprom.hex
-	avrdude -p m328p -c arduino -P /dev/ttyACM0 -Uflash:w:$(PRG).hex
+#	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Ueeprom:w:$(PRG)_eeprom.hex
+	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Uflash:w:$(PRG).elf  -Uflash:w:$(PRG).elf 
 
 upload1: all
-	avrdude -p m328p -c arduino -P /dev/ttyACM1 -Ueeprom:w:$(PRG)_eeprom.hex
-	avrdude -p m328p -c arduino -P /dev/ttyACM1 -Uflash:w:$(PRG).hex
+#	avrdude -p m328p -c $(PROGRAMMER) -P /dev/ttyACM1 -Ueeprom:w:$(PRG)_eeprom.hex
+	avrdude -p $(CHIP) -c $(PROGRAMMER) -P /dev/ttyACM1 -Uflash:w:$(PRG).elf  -Ueeprom:w:$(PRG).elf

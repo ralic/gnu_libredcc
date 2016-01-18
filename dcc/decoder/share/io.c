@@ -28,6 +28,7 @@
  */
 
 #include <share/io.h>
+#include <avr/chip.h>
 #include <avr/io_hw.h>
 #include <avr/io.h>
 
@@ -54,11 +55,14 @@ typedef struct {
 
 
 
-#if PORTS != 2
-#error Change the below manualy re number of ports
-#else
+#if PORTS == 2
 static uint8_t output_timer[OUTPUTS] = {0,0,0,0}; 
 static const uint8_t output_ontime[OUTPUTS] = { 5, 5, 5, 5}; // x 16ms. 
+#elif PORTS == 3
+static uint8_t output_timer[OUTPUTS] = {0,0,0,0,0,0}; 
+static const uint8_t output_ontime[OUTPUTS] = { 5, 5, 10, 10, 0, 0}; // x 16ms. 
+#else 
+#error Change the above manualy re number of ports
 #endif
 
 #if SDCC_pic14

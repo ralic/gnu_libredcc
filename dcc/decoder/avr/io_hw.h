@@ -20,18 +20,49 @@
 #define IOHW_H 1
 
 #include<share/io.h>
+#include<avr/io.h>
 
+
+//! delete this?
+// extern volatile uint8_t io_ticks;
+// #define io_tick() io_ticks
+// #define acknowledge_io_tick() io_ticks--
+
+
+/**
+   pseudo functions to deal with timing of io (port) updates:
+   If io_tick() returns true, then we should if possible run the function that updates the outputs.
+   If the function to update the outputs is run, we acknowledge that we are running as early as possible.
+ */
 extern volatile uint8_t io_ticks;
 #define io_tick() io_ticks
 #define acknowledge_io_tick() io_ticks--
 
-extern const uint8_t output_mask[];
 
 /**
- the pseudo fucntion that returns the state of the programming button.
+ the pseudo function that returns the state of the programming button.
 */
-#define get_progbutton() (PIND & _BV(PD3))
-#define set_output(_output) do { PORTB |= output_mask[_output]; } while (0)
-#define reset_output(_output) do { PORTB &= ~(output_mask[_output]); } while(0)
+#define get_progbutton() (PINx(PROGPORT) & _BV(PROGPIN)) //! @todo should think switching this off if we only have a helper button.
+
+
+extern const uint8_t output_mask[];
+
+#define set_output(_output) do { PORTx(IOPORT) |= output_mask[_output]; } while (0)
+#define reset_output(_output) do { PORTx(IOPORT) &= ~(output_mask[_output]); } while(0)
+
+
+/**
+   pseudo function that samples (reads) the input with the DCC signal.
+ */
+#define sample_dccpin() (PINx(DCCPORT) & _BV(DCCPIN))
+
+/** 
+    pseudo function that switches the pullup of the DCC pin on:
+*/
+#define pullup_dccpin()  PORTx(DCCPORT) |= _BV(DCCPIN)
+#define power_timer_enable(__x) __power_timer_enable(__x)
+#define __power_timer_enable(__x) power_timer ## __x ## _enable()
 
 #endif
+
+
