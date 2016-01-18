@@ -1,3 +1,8 @@
+# comment this line out for real.
+ccflags-y += -D DUMMY
+
+
+
 #ARCH=arm
 #CROSS_COMPILE=arm-linux-gnueabi-
 
@@ -15,7 +20,9 @@
 
 #obj-m += dcc.o pwm-bcm2835.o pwm_init.o
 obj-m += kdcc.o
-kdcc-objs += dcc.o 
+kdcc-objs += dcc.o gpio.o pwm.o dma.o
+
+
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules

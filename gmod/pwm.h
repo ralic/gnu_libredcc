@@ -1,5 +1,12 @@
-// hardware definitions lacking from the kernel tree so far:
+#ifndef PWM_H
+#define PWM_H
 
+int pwm_init(void);
+void pwm_unwind(void);
+
+/** \file hardware definitions lacking from the kernel tree so far:
+    should go to some platform file
+*/
 #define PWM_CTL 0x0 // offset from PWM_BASE
 
 #define PWEN1 1 << 0  // enable
@@ -21,3 +28,5 @@
 #define PWM_RNG1 0x10 // duration of one cycle
 #define PWM_DAT1 0x14 // data for the cycle
 #define PWM_FIF1 0x18 // data via FIFO
+
+#endif
