@@ -19,8 +19,8 @@ static enum {dma_nothing, dma_got_channel} dma_level = dma_nothing;
 int __init dma_init(void) {
 
   // acquire DMA channel:
-  static dma_cap_mask_t caps; // does this need to be static, ie persistent, or can I give it as an function param direct??
-  //caps = DMA_SLAVE;
+  static dma_cap_mask_t caps; // does this need to be static, ie persistent, or can I give it as an function param direct?? -- not reentrant.
+  //caps = DMA_SLAVE; // but on the Raspi chip all channels can do slave.
   pwm_dma = dma_request_channel(caps, NULL, NULL); // BCM_LITE here? or slave -- where are the capabilities defined? 
   if(pwm_dma==NULL) {
     printk(KERN_INFO "Could not get a DMA channel\n");
@@ -33,7 +33,7 @@ int __init dma_init(void) {
 #define __to_bus1(x) (((x) & 0x00FFFFFF) | 0x7E000000) // applicatable to virt and phys addresses
 #define __to_bus2(x) ((x) - BCM2708_PERI_BASE + 0x7E000000) // applicatable to phys addresses only
 
-#define BCM2708_PWM_DREQ 5 // move to some platform file?
+#define BCM2708_PWM_DREQ 5 // \todo move to some platform file?
 
     //	  .src_addr = physaddr_xx, // not needed for MEM_TO_DEVICE
 #warning should not be a local var because that goes out of scope or can it go outof scope?

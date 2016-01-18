@@ -2,7 +2,16 @@
 
 #include <linux/module.h>
 #include <asm/io.h> // for readl / writel
+
+#ifdef DUMMY
+#warning "DUMMY is defined"
+#define __io_address(x) NULL
+#define CM_BASE NULL
+#define PWM_BASE NULL
+#else
 #include <mach/platform.h> // for __io_address
+#endif
+
 #include <linux/delay.h> // for udelay
 
 
@@ -125,8 +134,9 @@ int __init pwm_init(void) {
 
 void pwm_unwind(void) {
   /* doing nothing currently, but should
-     1. switch off pwm device, and probavbly free the clock
+     1. switch off pwm device, and probably free the clock
      2. do pwm_put or similar in case we are using the pwm module instead of going direct
+     3. and should be doing completely different stuff if I used the device tree stuff
   */
 }
 
