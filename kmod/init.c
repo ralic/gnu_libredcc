@@ -45,77 +45,77 @@ int __init init(void) {
     return ret;
   }
   printk(KERN_INFO "Inited GPIO");
-init_level = init_gpio;
+  init_level = init_gpio;
 
 
-ret = dma_init();
-if(ret) {
-unwind();
-return ret;
-}
+  ret = dma_init();
+  if(ret) {
+    unwind();
+    return ret;
+  }
 
 
-printk(KERN_INFO "Inited DMA");
+  printk(KERN_INFO "Inited DMA");
       
-init_level = init_dma;
+  init_level = init_dma;
 
-ret = pwm_init();
-if(ret) {
-unwind();
-return ret;
-}
-init_level = init_pwm;
-printk(KERN_INFO "Inited PWM");
+  ret = pwm_init();
+  if(ret) {
+    unwind();
+    return ret;
+  }
+  init_level = init_pwm;
+  printk(KERN_INFO "Inited PWM");
 
-printk(KERN_INFO "DCC PWM service starting.\n");
+  printk(KERN_INFO "DCC PWM service starting.\n");
 
-/* 
-send a dummy packet!
- */
+  /* 
+     send a dummy packet!
+  */
 
-unsigned *data = kmalloc(sizeof(*data), GFP_DMA); // make dev_kmalloc
-data[0] = 0x55555555; // test changing the order of this an the below line
-struct scatterlist* sgl = map_dma_buffer(data, sizeof(*data));
-//dma_cookie_t cookie = 
-submit_one_dma_buffer(sgl);
-return ret;
+  unsigned *data = kmalloc(sizeof(*data), GFP_DMA); // make dev_kmalloc
+  data[0] = 0x55555555; // test changing the order of this an the below line
+  struct scatterlist* sgl = map_dma_buffer(data, sizeof(*data));
+  //dma_cookie_t cookie = 
+  submit_one_dma_buffer(sgl);
+  return ret;
 
 }
 
 static void unwind() {
 
-//  int status = dma_async_is_tx_complete(dma, cookie, NULL, NULL);
-//  printk(KERN_INFO "Status of submitted tx is: %u.\n", status);
+  //  int status = dma_async_is_tx_complete(dma, cookie, NULL, NULL);
+  //  printk(KERN_INFO "Status of submitted tx is: %u.\n", status);
 
 
-	printk(KERN_INFO "Unwinding from init level %d.\n", init_level);
+  printk(KERN_INFO "Unwinding from init level %d.\n", init_level);
 
-	switch(init_level) {
-	default:
-	case init_pwm: 
-	  buffer_unwind();
-	  pwm_unwind();
-	  //	pwm_free(pd); pwm_disable();
-	case init_dma:
-	  dma_unwind();
-	  //		dma_unmap_sg(NULL, sgl, 1, DMA_MEM_TO_DEV);
-	case init_gpio:
-	  gpio_unwind();
-	case init_nothing:  {
-		// nothing to unwind 
-	}
-	}
+  switch(init_level) {
+  default:
+  case init_pwm: 
+    buffer_unwind();
+    pwm_unwind();
+    //	pwm_free(pd); pwm_disable();
+  case init_dma:
+    dma_unwind();
+    //		dma_unmap_sg(NULL, sgl, 1, DMA_MEM_TO_DEV);
+  case init_gpio:
+    gpio_unwind();
+  case init_nothing:  {
+    // nothing to unwind 
+  }
+  }
 }
 
 void __exit exit_mod(void)
 {
-/*	unwind_gpio();
+  /*	unwind_gpio();
 	printk(KERN_INFO "GPIO service ending for DCC.\n");
 	unwind_dma();
 	printk(KERN_INFO "DMA service ending for DCC.\n");
 	unwind_pwm();
 	printk(KERN_INFO "PWM service ending for DCC.\n"); */
-	unwind();
+  unwind();
 }
 
 module_init(init);

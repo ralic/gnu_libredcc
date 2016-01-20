@@ -17,31 +17,8 @@ struct scatterlist* map_dma_buffer(void* data, size_t size) {
 # warning always maps into the same static sgl!
 
   // get DMA-ready buffer
-
-
-  /*
-    = {
-    [0] = {
-    .page_link = virt_to_page(data), // meddle with the lower bits?
-    .offset = (unsigned long) data & ~PAGE_MASK, // is this the offset?
-    .length = 2*4 //sizeof(data), // size in byte??
-    }
-    }
-  */
-
-  //	sgl[0].page_link = virt_to_page(data); // meddle with the lower bits? warning maks int from pointer?
-  //	sgl[0].offset = (unsigned long) data & ~PAGE_MASK; // is this the offset?
-  //	sgl[0].length = 2*4; //sizeof(data), // size in byte??
-  
-  //	sg_set_page(sgl, virt_to_page(data), 2*4, offset_in_page(data));
   sg_set_buf(sgl, data, size); // length is in bytes
 	
-
-  //	sgl[0].page_link = virt_to_page(0xC0000000); // meddle with the lower bits? warning maks int from pointer?
-  //	sgl[0].offset = 0;
-  //	sgl[0].length = 8192; //sizeof(data), // size in byte??
-
-
   /** no specific dma device needed 
       \todo I could get it back from dma_channel struct for the sake of portabolity 
       \todo do I need to unmap as well? 
@@ -58,6 +35,17 @@ struct scatterlist* map_dma_buffer(void* data, size_t size) {
 }
 
 
+/**
+ \todo will this becalled in tasklet context? and what does this mean?
+ */ 
+void callback(void* parameters) {
+
+  // unmap dma? and free memory?
+  printk(KERN_INFO "done\n");
+
+}
+
+
 
 // now fill the dma_buffer with data -- do I need to synchronise memoery (this dma synchronise thingie?)
 //   if I change the data? Do I need to remap and everything?
@@ -65,7 +53,7 @@ dma_cookie_t submit_one_dma_buffer(struct scatterlist* sgl) {
 
   // replace below with dmaengine_prep_slave_signle as it is a bit simpler (although it does the same calls)
   struct dma_async_tx_descriptor * dma_desc =  
-    dmaengine_prep_slave_sg(pwm_dma, sgl, 1, DMA_MEM_TO_DEV, 0); // 1 entry in the sgl, which flags?
+    dmaengine_prep_slave_sg(pwm_dma, sgl, 1, DMA_MEM_TO_DEV, DMA_PREP_INTERRUPT | DMA_CTRL_ACK); // 1 entry in the sgl, which flags?
   //dmaengine_prep_dma_cyclic(dma, buf_addr, buf_len, period_len, DMA_MEM_TO_DEV);				// flags should be DMA_PREP_INTERRUPT to show that we want an interrupt (do we really want an interrupt? -- yes -- to free the memory! or does kfree block?
   // need to set callback by hand.
   if(dma_desc == NULL) {
@@ -73,7 +61,9 @@ dma_cookie_t submit_one_dma_buffer(struct scatterlist* sgl) {
     // do i need to unwind sth?
     return -1;
   }
+
   // add a callback to the descriptor: mark used buffer as available
+  dma_desc->callback = callback;
   // add an idle value if no new real packet is availale
   // callback is allowed to prepare and submit a new transaction
   cookie = dmaengine_submit(dma_desc);
