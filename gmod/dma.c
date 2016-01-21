@@ -18,21 +18,20 @@ struct dma_chan * pwm_dma;
 static enum {dma_nothing, dma_got_channel} dma_level = dma_nothing;
 
 
-//static dma_cookie_t cookie;
-
 int __init dma_init(void) {
 
-  // instead of with a slave, we probalby could also work with a cyclic buffer?
-
+  // \todo instead of with a slave, we probalby could also work with a cyclic buffer?
 
   // acquire DMA channel:
-  static dma_cap_mask_t caps; // does this need to be static, ie persistent, or can I give it as an function param direct?? -- not reentrant.
-  //caps = DMA_SLAVE; // but on the Raspi chip all channels can do slave.
-  pwm_dma = dma_request_channel(caps, NULL, NULL); // BCM_LITE here? or slave -- where are the capabilities defined?  DMA_SLAVE would be one capability to request here.
+  dma_cap_mask_t caps;
+  dma_cap_zero(caps);
+  dma_cap_set(DMA_SLAVE, caps); // \todo DMA_ITERRUOT, DMA_PRIVATE?
+
+  pwm_dma = dma_request_channel(caps, NULL, NULL); // BCM_LITE here? 
   if(pwm_dma==NULL) {
     printk(KERN_INFO "Could not get a DMA channel\n");
     dma_unwind();
-    return -ENOMEM;
+    return -EBUSY;
   }
   dma_level = dma_got_channel; 
 
@@ -42,15 +41,11 @@ int __init dma_init(void) {
 
 #define BCM2708_PWM_DREQ 5 // \todo move to some platform file?
 
-    //	  .src_addr = physaddr_xx, // not needed for MEM_TO_DEVICE
 #warning should not be a local var because that goes out of scope or can it go outof scope?
   static struct dma_slave_config slave_config = {
   .direction = DMA_MEM_TO_DEV,
     .dst_addr = __to_bus1(PWM_BASE + PWM_FIF1), //  bus address of the PWM_controler.
-    //	  .src_addr_width = 4,
     .dst_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES,
-    //	  .src_maxburst = 6_xx, // not used by BCM2708
-    //	  .dst_maxburst = 6_xx,
     .slave_id = BCM2708_PWM_DREQ,
     .device_fc = true, // ? what for? does not seem to be evalued by BCM2708
     };

@@ -85,3 +85,41 @@ void buffer_unwind(void) {
   //int status = dma_async_is_tx_complete(pwm_dma, cookie, NULL, NULL);
   //printk(KERN_INFO "Status of submitted tx is: %u.\n", status);
 }
+
+
+ dma_cookie_t submit_dma_single(dma_addr_t dma_addr, size_t size) {
+
+  // replace below with dmaengine_prep_slave_signle as it is a bit simpler (although it does the same calls)
+  struct dma_async_tx_descriptor * dma_desc =  
+    dmaengine_prep_slave_single(pwm_dma, dma_addr, size, DMA_MEM_TO_DEV, DMA_PREP_INTERRUPT | DMA_CTRL_ACK); // 1 entry in the sgl, which flags?
+  //dmaengine_prep_dma_cyclic(dma, buf_addr, buf_len, period_len, DMA_MEM_TO_DEV);				// flags should be DMA_PREP_INTERRUPT to show that we want an interrupt (do we really want an interrupt? -- yes -- to free the memory! or does kfree block?
+  // need to set callback by hand.
+  if(dma_desc == NULL) {
+    printk(KERN_INFO "Could not get a tx descriptor\n");
+    // do i need to unwind sth?
+    return -1;
+  }
+
+  // add a callback to the descriptor: mark used buffer as available
+  dma_desc->callback = callback;
+  // add an idle value if no new real packet is availale
+  // callback is allowed to prepare and submit a new transaction
+  cookie = dmaengine_submit(dma_desc);
+  if(cookie < 0) {
+    printk(KERN_INFO "Submitting transaction resulted in error %u.\n", cookie);
+    return cookie;
+  }
+
+  dma_async_issue_pending(pwm_dma); // no return value. // this should perhaps be called elsewhere? And I guess it is enough to be called once or everytime?
+
+  int status = dma_async_is_tx_complete(pwm_dma, cookie, NULL, NULL);
+  printk(KERN_INFO "Status of submitted tx is: %u.\n", status);
+  // I can DMA unmapas soon as the transaction is done##
+  // But when can I start overwriting the buffer?
+  // use dynamic_sync to recycle streaming buffers
+  // straming mapping ops can be called from interrupt context
+  // can unmap when tranaction is finished (or sync?)
+  // I must sync for the device after changing the buffer content (but probably only in one direction -- for device)
+
+  return cookie;
+}

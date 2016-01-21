@@ -6,20 +6,14 @@
  * 
  * @brief  
  * 
- * 
- *
  * Credits to 
  * - Peter Jay Salzman, Michael Burian, Ori Pomerantz for their The Linux Kernel Module Programming Guide 
  *   <http://www.tldp.org/LDP/lkmpg/2.6/html/index.html>.
  * - Pete Batard <pete@akeo.ie> for teaching me how to use sysfs
      <http://pete.akeo.ie/search/label/kfifo> 
  * \todo add the only book from O`Reilly
+ * \todo add the slide set from xilinx
  * \todo make my own device structure.
- * \todo can I assume all kernel functions are reentrant / thead-safe,
- * eg the one for allocating dma -- I think so.
-*/
-
-/**
    \todo run userspace programme with strace.
    \todo do we need to use volatile in the kernel?
    \todo should we allow asynchronous notification? For IAV?
@@ -37,6 +31,7 @@
 // #include <linux/interrupt.h>
 //#include <mach/hardware.h>
 //#include <asm/io.h>
+#include <linux/dma-mapping.h>
 
 
 #include "dcc.h"
@@ -146,6 +141,8 @@ static ssize_t read (struct file * f , char __user * u, size_t s, loff_t * l) {
 //#define ROUNDUP(_size, _width) ( ( ( (_size) + (_width) - 1) / (_width) ) * (_width) )
 
 static ssize_t write (struct file * f, const char __user * user, size_t size, loff_t * l ) {
+
+  if(size > PAGE_SIZE) size = PAGE_SIZE; // \todo this size is alright?
   
   u32 *data = kmalloc(size, GFP_DMA); // \todo
 
@@ -159,9 +156,13 @@ static ssize_t write (struct file * f, const char __user * user, size_t size, lo
 
   int written = size - copy_from_user(data,user,size); // \todo can copy_from_user return an error?
 
-  struct scatterlist* sgl = map_dma_buffer(data, size);
-  submit_one_dma_buffer(sgl);
+  dma_addr_t dma_handle = dma_map_single(NULL, data, written, DMA_MEM_TO_DEV);
 
+
+  //struct scatterlist* sgl = map_dma_buffer(data, written);
+  //submit_one_dma_buffer(sgl);
+
+  submit_dma_single(dma_handle,written);
   printk(KERN_INFO DEVICE_NAME "actually written %x bytes to DMA\n", written);
 
   return written;
