@@ -28,7 +28,8 @@
 
 #include <linux/module.h>
 #include <linux/moduleparam.h>
-//#include <linux/kernel.h>
+#include <linux/slab.h>
+//##include <linux/kernel.h>
 //#include <linux/init.h>
 #include <linux/fs.h>
 #include <asm/uaccess.h>
@@ -43,6 +44,7 @@
 #include "gpio.h"
 #include "pwm.h"
 #include "dma.h"
+#include "buffer.h"
 
 /**** module parameters ****/
 
@@ -124,19 +126,6 @@ static ssize_t read (struct file * f , char __user * u, size_t s, loff_t * l) {
   return -EINVAL;
 }
 
-/** buffer to store data that is written to use
-    \todo ought to be in DMA memory right from the start?
-    \todo global var is not reentrant.
-*/
-static uint32_t buffer[WORDS];
-//static unsigned buf_used = 0;
-
-/** witdh of DMA channel in bytes -- this only works if the basic int
-    size of this machine is the same as the DMA witdh of the PWM
-    device */
-#define DMA_WIDTH sizeof(buffer[0])
-
-
 /** 
     \todo we need to read all that the client can offer to use --
     especilly inclomplete bit strings -- otherwise the client hangs
@@ -151,26 +140,31 @@ static uint32_t buffer[WORDS];
     @todo perhaps just raise a warning if the data to be send is not a
     multiple of the dma channel width.
 */
+
+#define WIDTH sizeof(u32) // \todo get this value direct from the
+			       // DMA headers
+//#define ROUNDUP(_size, _width) ( ( ( (_size) + (_width) - 1) / (_width) ) * (_width) )
+
 static ssize_t write (struct file * f, const char __user * user, size_t size, loff_t * l ) {
-   
-  char* str_buf = (char*) buffer;
+  
+  u32 *data = kmalloc(size, GFP_DMA); // \todo
 
-  size = (size / DMA_WIDTH) * DMA_WIDTH; // \todo donot do this! round to the nearest 4
-					 // byte boundary 
-  if(size == 0) return -EAGAIN;
-  else {
-    if(size > sizeof(buffer)) size = sizeof(buffer);
+  if(data == NULL) {
+    printk(KERN_INFO "No DMA mappable memory.\n");
+    return -ENOMEM;
   }
-  printk(KERN_INFO DEVICE_NAME "attempt writing %x bytes to the buffer\n", size);
 
-  size-= copy_from_user(buffer,user,size); // \todo can copy_from_user return an error?
-  // alternatively could retrun -EFAULT if we could not copy all.
+  if(size / WIDTH) 
+    printk(KERN_INFO "Submitting a number of bytes not aligned with width of DMA channel"); 
 
-  printk(KERN_INFO DEVICE_NAME "actually written %x bytes to the buffer\n", size);
+  int written = size - copy_from_user(data,user,size); // \todo can copy_from_user return an error?
 
-  printk("%.*s\n", (int) size, str_buf);
+  struct scatterlist* sgl = map_dma_buffer(data, size);
+  submit_one_dma_buffer(sgl);
 
-  return size;
+  printk(KERN_INFO DEVICE_NAME "actually written %x bytes to DMA\n", written);
+
+  return written;
 
 }
 
@@ -283,9 +277,6 @@ int __init dcc_init(void) {
     return ret;
   }
   init_level = level_dma;
-
-
-  
 
 
   /** here goes the next step of init */

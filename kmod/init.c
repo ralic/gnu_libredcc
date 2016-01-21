@@ -72,14 +72,6 @@ int __init init(void) {
   /* 
      send a dummy packet!
   */
-
-  unsigned *data = kmalloc(sizeof(*data), GFP_DMA); // make dev_kmalloc
-  data[0] = 0x55555555; // test changing the order of this an the below line
-  struct scatterlist* sgl = map_dma_buffer(data, sizeof(*data));
-  //dma_cookie_t cookie = 
-  submit_one_dma_buffer(sgl);
-  return ret;
-
 }
 
 static void unwind() {

@@ -1,6 +1,7 @@
-#include "dma_init.h"
-#include "buffer.h"
 #include <linux/dma-mapping.h>
+#include "dma.h"
+#include "buffer.h"
+
 
 static dma_cookie_t cookie;
 

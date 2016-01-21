@@ -1,5 +1,5 @@
 # comment this line out for real.
-ccflags-y += -D DUMMY
+#ccflags-y += -D DUMMY
 
 
 
@@ -20,16 +20,16 @@ ccflags-y += -D DUMMY
 
 #obj-m += dcc.o pwm-bcm2835.o pwm_init.o
 obj-m += kdcc.o
-kdcc-objs += dcc.o gpio.o pwm.o dma.o
+kdcc-objs += dcc.o gpio.o pwm.o dma.o buffer.o
 
 
 
 all:
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
-#	make ARCH=arm CROSS_COMPILE=arm-linux-gnueabi- -C ~/build M=$(PWD) modules
+#	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+	make ARCH=arm CROSS_COMPILE=arm-linux-gnueabi- -C ~/build M=$(PWD) modules
 
 
 clean:
-	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
-#	make ARCH=arm -C ~/build M=$(PWD) clean
+#	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+	make ARCH=arm -C ~/build M=$(PWD) clean
 
