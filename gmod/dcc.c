@@ -11,6 +11,7 @@
  *   <http://www.tldp.org/LDP/lkmpg/2.6/html/index.html>.
  * - Pete Batard <pete@akeo.ie> for teaching me how to use sysfs
      <http://pete.akeo.ie/search/label/kfifo> 
+   - John Linn, "Linux DMA in Device Drivers"
  * \todo add the only book from O`Reilly
  * \todo add the slide set from xilinx
  * \todo make my own device structure.
@@ -23,18 +24,13 @@
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/slab.h>
-//##include <linux/kernel.h>
-//#include <linux/init.h>
 #include <linux/fs.h>
 #include <asm/uaccess.h>
 #include <linux/device.h>
-// #include <linux/interrupt.h>
-//#include <mach/hardware.h>
-//#include <asm/io.h>
 #include <linux/dma-mapping.h>
 
 
-#include "dcc.h"
+#include "dcc.h" \todo inc
 //#include "../dcc/simple_dcc/unix/dcc_encoder_hw.h" \todo use this include file.
 #include "gpio.h"
 #include "pwm.h"
@@ -47,7 +43,7 @@
 /// major device number
 static int major = DEVICE_MAJOR; 
 module_param(major, int, S_IRUSR | S_IRGRP);
-MODULE_PARM_DESC(major, "Major device number used for dcc device.");
+MODULE_PARM_DESC(major, "Major device number used for pwmdma device.");
 
 /**** module global variable -- \todo perhaps better in a device structure? */
 
@@ -57,14 +53,14 @@ static struct class* class = NULL;
 /// \todo shall I do my own device structure
 static struct device* device = NULL;
 
-/// true if we are currently producing an output signal, false
-/// otherwise. -- 
+/** true if we are currently producing an output signal, false
+    otherwise. */
 static bool signal = false;
 
 
 /** encodes the level of resource initialisation and allcation we have
-    successfully done. \todo for some of the resource there is
-    probably manage allocation. */
+    successfully done. 
+    \todo for some of the resource there is probably manage allocation. */
 static enum {level_nothing, level_chrdev, level_class, level_device, level_sysfs, 
 	     level_gpio, level_pwm, level_dma, 
 	     level_running} init_level = level_nothing;
@@ -83,23 +79,24 @@ static atomic_t available = ATOMIC_INIT(1);
 
     \todo deny  opening for writing
     \todo allow several openers because in the end all is reentrend up
-    to the point where we commit to DMA? -- make it reentrent.
+    \todo move all the initialise from init to open.
+    \todo up to the point where we commit to DMA? -- make it reentrent.
 */
 static int open (struct inode * i, struct file * f) {
 
-  // \todo is this really thread-safe, or do we need to wrap in a spinlock? -- check with [@bigbook]
   if( !atomic_dec_and_test(&available)) {
-    atomic_inc(&available); // why this statement?
+    atomic_inc(&available); 
     return -EBUSY; 
   }
 
-  nonseekable_open(i,f); // required? Why?
+  nonseekable_open(i,f); 
   printk(KERN_INFO DEVICE_NAME " opened.\n");
   return 0;
 }
 
 /**
    release fop
+   \todo do all the tyding up in here.
  */
 static int release (struct inode * i, struct file * f) {
 
@@ -111,7 +108,7 @@ static int release (struct inode * i, struct file * f) {
 
 /** @todo should block if no data available (from [bigbook]?)
     @todo just give back chuncks of data that are convenient (think of
-    IAV implemented)
+    IAV implementation)
     
     Currently does nothing as we do not intend to read much from here.
 */
@@ -122,47 +119,43 @@ static ssize_t read (struct file * f , char __user * u, size_t s, loff_t * l) {
 }
 
 /** 
-    \todo we need to read all that the client can offer to use --
-    especilly inclomplete bit strings -- otherwise the client hangs
-    because usually the library tries immediately to re-write without
-    adding more bytes.
     @todo
-    - must be reentrant due to copy_user!
+    - must be reentrant due to copy_user which can wait.
     - could I block? Yes, no problems with that?
     - If I accepted less bytes than count the caller will most
     probably retry immediately -- ie the driver will be stuck as it is
     expecting more bytes,  
     @todo perhaps just raise a warning if the data to be send is not a
     multiple of the dma channel width.
+    @todo was there a convention to first return 0 bytes and the an error?
 */
 
-#define WIDTH sizeof(u32) // \todo get this value direct from the
-			       // DMA headers
+#define WIDTH sizeof(u32) // \todo get this value direct from the DMA headers
 //#define ROUNDUP(_size, _width) ( ( ( (_size) + (_width) - 1) / (_width) ) * (_width) )
 
 static ssize_t write (struct file * f, const char __user * user, size_t size, loff_t * l ) {
 
-  if(size > PAGE_SIZE) size = PAGE_SIZE; // \todo this size is alright?
-  
-  u32 *data = kmalloc(size, GFP_DMA); // \todo
+  if(size > PAGE_SIZE) size = PAGE_SIZE; 
+  if(size / WIDTH) 
+    printk(KERN_INFO "Submitting a number of bytes not aligned with width of DMA channel"); 
 
+  u32 *data = kmalloc(size, GFP_DMA | GFP_KERNEL); // \todo replace with pool?
   if(data == NULL) {
     printk(KERN_INFO "No DMA mappable memory.\n");
     return -ENOMEM;
   }
 
-  if(size / WIDTH) 
-    printk(KERN_INFO "Submitting a number of bytes not aligned with width of DMA channel"); 
-
   int written = size - copy_from_user(data,user,size); // \todo can copy_from_user return an error?
 
-  dma_addr_t dma_handle = dma_map_single(NULL, data, written, DMA_MEM_TO_DEV);
+  dma_addr_t dma_handle = dma_map_single(NULL, data, written, DMA_MEM_TO_DEV); // add the device -- but which? PWM?
+  if (dma_mapping_error(NULL, dma_handle)) { // first argument is dev?
+    printk(KERN_INFO "Can't map to DMA address space.");
+    kfree(data);
+    return -ENOMEM;
+  } 
 
+  submit_dma_single(dma_handle, written, data);
 
-  //struct scatterlist* sgl = map_dma_buffer(data, written);
-  //submit_one_dma_buffer(sgl);
-
-  submit_dma_single(dma_handle,written);
   printk(KERN_INFO DEVICE_NAME "actually written %x bytes to DMA\n", written);
 
   return written;
@@ -171,7 +164,7 @@ static ssize_t write (struct file * f, const char __user * user, size_t size, lo
 
 /// file operations this module supports.
 static struct file_operations fops = {
-  .read = read, 
+  .read = NULL, 
   .owner = THIS_MODULE,
   .write = write,
   .open = open,
@@ -200,6 +193,7 @@ static DEVICE_ATTR(signal, S_IWUSR | S_IRUSR, show_signal, store_signal);
 
 /**** lifecycle functions of the module ****/
 
+/** \todo aquicre resource only in open **/
 int __init dcc_init(void) {
 
   int ret = 0;
@@ -214,7 +208,6 @@ int __init dcc_init(void) {
   }
   init_level = level_chrdev;
   printk(KERN_INFO "DCC service has major device number %d.\n", major);
-
 
   /** create virtual device class 
       @todo why required?

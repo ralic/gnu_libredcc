@@ -1,4 +1,3 @@
-//#include "init.h"
 #include <linux/module.h>
 
 
@@ -19,8 +18,8 @@ static int pwm_pin =   18; // possible are GPIOs 12 , 40, 18 (pwm0) and
 module_param(pwm_pin, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
 MODULE_PARM_DESC(pwm_pin, "GPIO pin used for the output of the pwm signal.");
 
-static char* const compatible_gpio_chips[] = {"bcm2708_gpio", "pinctrl-bcm2835"}; // init only?
-static const size_t NUM_COMP_GPIO_CHIPS = sizeof(compatible_gpio_chips) / sizeof(char*); // init only?
+static char* const __init compatible_gpio_chips[] = {"bcm2708_gpio", "pinctrl-bcm2835"}; // init only?
+static const size_t __init NUM_COMP_GPIO_CHIPS = sizeof(compatible_gpio_chips) / sizeof(char*); // init only?
 
 // helper function inspired by lirc_rpi.c
 inline static int __init is_compatible_gpio_chip(struct gpio_chip *chip, void *dummy) {
@@ -44,8 +43,6 @@ static enum {gpio_nothing, gpio_got_pin} gpio_init_level = gpio_nothing;
 int __init gpio_init(void) {
 
   int ret; 
-  printk(KERN_INFO "Starting to acquire GPIO pin for PWM.\n");
-
 
   // using pinctrl would be cleaner.
   ret = gpio_request(pwm_pin, "PWM Pin");
@@ -54,7 +51,7 @@ int __init gpio_init(void) {
     gpio_unwind();
     return ret;
   } 
-  printk(KERN_INFO "Successfully requested GPIO %d.\n", pwm_pin);
+  //printk(KERN_INFO "Successfully requested GPIO %d.\n", pwm_pin);
   gpio_init_level = gpio_got_pin;
 	
   // 	struct gpio_chip* gc = gpiochip_find("pinctrl-bcm2835", is_right_chip);

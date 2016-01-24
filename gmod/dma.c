@@ -1,8 +1,6 @@
 #include "pwm.h" // for PWM_FIF1
-//#include "init.h"
 #include "dma.h"
 
-//#include <linux/dma-mapping.h>
 #include <linux/dmaengine.h>
 #ifdef DUMMY
 #warning "Dummy is defined!"
@@ -10,7 +8,6 @@
 #else
 #include <mach/platform.h> // for PWM_BASE
 #endif
-//static void unwinda_dma(void);
 
 // static struct pwm_device *pd;
 
