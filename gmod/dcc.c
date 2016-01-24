@@ -144,7 +144,7 @@ static ssize_t write (struct file * f, const char __user * user, size_t size, lo
 
   if(size > PAGE_SIZE) size = PAGE_SIZE; // \todo this size is alright?
   
-  u32 *data = kmalloc(size, GFP_DMA); // \todo
+  u32 *data = kmalloc(size, GFP_KERNEL | GFP_DMA); // \todo or use a lookaside?
 
   if(data == NULL) {
     printk(KERN_INFO "No DMA mappable memory.\n");

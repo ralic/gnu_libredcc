@@ -54,7 +54,6 @@ int __init init(void) {
     return ret;
   }
 
-
   printk(KERN_INFO "Inited DMA");
       
   init_level = init_dma;
