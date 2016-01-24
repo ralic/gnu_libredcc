@@ -46,6 +46,12 @@ char* r_fgets(char* const str, const uint8_t size, FILE* const stream) {
     str[idx] = ch;
     idx++;
   }
+  // only return EOF if we actually haven't read anything.
+  if( (idx == 0) && (ch == EOF)) {
+    // set errno?
+    return NULL;
+  }
+
   str[idx] = '\0';
   return str;
   // */

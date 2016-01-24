@@ -33,8 +33,6 @@ void buffer_unwind(void) {
   // \todo what to do here?
 }
 
-
-
 // now fill the dma_buffer with data -- do I need to synchronise memoery (this dma synchronise thingie?)
 //   if I change the data? Do I need to remap and everything?
 dma_cookie_t submit_dma_single(dma_addr_t dma_addr, size_t size, void* buffer) {

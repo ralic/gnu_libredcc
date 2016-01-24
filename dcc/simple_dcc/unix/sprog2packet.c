@@ -55,22 +55,21 @@ char* dcc_device_name = DCC_DEVICE_NAME;
 
 int main(int argc, char** argv) {
 
-fprintf(stderr, "No of Args: %i\b", argc);
-if(argc >= 2) dcc_device_name = argv[1];
+  fprintf(stderr, "No of Args: %i\b", argc);
+  if(argc >= 2) dcc_device_name = argv[1];
 
   //   fd_dcc = open(DCC_DEVICE_NAME, O_WRONLY | O_DIRECT | O_SYNC); // these different flags needed?
-fd_dcc = open(dcc_device_name, O_WRONLY | O_CREAT | O_SYNC | O_TRUNC, S_IRUSR | S_IWUSR); // these different flags needed?
+  fd_dcc = open(dcc_device_name, O_WRONLY | O_CREAT | O_SYNC | O_TRUNC, S_IRUSR | S_IWUSR); // these different flags needed?
   if(fd_dcc < 0) {
-fputs(dcc_device_name, stderr);
-perror(": Could not open " );
+    fputs(dcc_device_name, stderr);
+    perror(": Could not open " );
     exit(errno);
   }
 
-sprog_init();
+  sprog_init();
 
-sprog();
+  sprog();
 
-return 0; 
-
+  return 0; 
 
 }

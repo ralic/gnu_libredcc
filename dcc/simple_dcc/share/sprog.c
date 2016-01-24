@@ -36,11 +36,14 @@
     - "M" -- direct mode programming (ie CVs are programmed direct) --
     to be implemented
 
+    - "Q" -- exit. \todo what does that mean for an embedded system?
+
 */
 
 #include "service_mode.h"
 #include "sprog.h"
 #include "dcc_encoder_core.h"
+#include "../unix/dcc_encoder_hw.h" // \todo change to sth unveristal so I do not have to change this line for AVR
 #include "r_io.h"
 
 #include <stdlib.h>
@@ -182,21 +185,15 @@ static inline void program_cv(const uint8_t argc, char* const argv[]) {
 
 
 void sprog_init() {
-  encoder_init();
+  encoder_init(); // \todo add this to the headers?
 }
-
-
 
 void sprog() {
   // say hello to the world -- not clear whether sprog does this as well.
   FPUTL("Start -- Version $Rev$", stdout);
 
 
-  while(1) {
-
-    r_fgets(line, INPUT_LINE_LEN + 1, stdin); // may block if no input
-    
-
+  while(NULL != r_fgets(line, INPUT_LINE_LEN + 1, stdin) /* may block if no input */) {
 
 #ifdef TEST
     fputs("Raw: ", stdout);
@@ -273,6 +270,9 @@ void sprog() {
       case 'C': 
 	if(is_dcc_on()) program_cv(argc, argv);
 	FPUTL(OK,stdout); // is this answer expected according to the sprog manual?
+	break;
+      case 'Q':
+	exit(0);
 	break;
       default:
 	FPUTL("Unknown Command.", stdout); // Command token too long or
