@@ -28,7 +28,7 @@ extern char line[];
 #define MAX_ARG MAX_PACKET_LEN 
 
 //! answer sent in response to successful commands.
-#define OK "OK"
+#define OK "OK" EOLSTR
 
 
 
