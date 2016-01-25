@@ -116,7 +116,7 @@ static inline void make_dcc_packet_old(uint8_t argc, const char* const argv[]) {
   for(i = 0; i < packet.len; i++) {
     fprintf(&uart, "%02x " , packet.pp.byte[i]);
   }
-  fputc(EOLCHAR, &uart);
+  fputc(EOLCHAR, stdout);
 #endif
 
 }
