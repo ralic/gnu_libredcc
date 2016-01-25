@@ -136,7 +136,7 @@ static ssize_t read (struct file * f , char __user * u, size_t s, loff_t * l) {
 static ssize_t write (struct file * f, const char __user * user, size_t size, loff_t * l ) {
 
   if(size > PAGE_SIZE) size = PAGE_SIZE; 
-  if(size / WIDTH) 
+  if(size % WIDTH) 
     printk(KERN_INFO "Submitting a number of bytes not aligned with width of DMA channel"); 
 
   u32 *data = kmalloc(size, GFP_DMA | GFP_KERNEL); // \todo replace with pool?

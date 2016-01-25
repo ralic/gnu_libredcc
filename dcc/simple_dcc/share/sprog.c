@@ -55,7 +55,7 @@ char line[INPUT_LINE_LEN + 1]; // store maximally 64 chars plus the terminating 
 static inline void make_dcc_packet(uint8_t argc, char* argv[]) {
 
   if(argc < MIN_PACKET_LEN) {
-    FPUTL("Supply between MIN_PACKET_LEN and MAX_ARG arguments to the O command.\n", stderr);
+    FPUTL("Supply between MIN_PACKET_LEN and MAX_ARG arguments to the O command.", stderr);
     return;
   }
 
@@ -87,7 +87,7 @@ static inline void make_dcc_packet_old(uint8_t argc, const char* const argv[]) {
   dcc_packet packet = {len: argc};
   
   if(argc < MIN_PACKET_LEN) {
-    FPUTL("DCC packet must have 3 or more bytes.", &uart);
+    FPUTL("DCC packet must have 3 or more bytes.", stdout);
     return;
   }
 
