@@ -4,6 +4,13 @@
 #include <unistd.h>
 #include "dcc_encoder_hw.h"
 
+// should go to a privade header perhaps:
+
+#define F_SYS_SIGNAL "/sys/class/virtual/dccc/signal"
+#define PWMDMA_NAME "dccc"
+
+#define PREAMBLE_WORD 0xAAAAAAAA
+
 
 /** The function below will talk to the dcc module via the device or
     proc fs.
@@ -12,22 +19,12 @@ uint8_t is_dcc_on() {
   return -1;
 }
 
-void dcc_on() {
-  fputs("Switching DCC on", stderr);
-  return;
-}
-
-void dcc_off() {
-  fputs("Swithcing DCC off", stderr);
-  return;
-}
-
 /**
    most likely I can take the implmeneration from avr -- it seems
    generic and move both into the "shared" folder.
 */
 void service_mode_on() {
-  fputs("Swithcing Service mode on\n", stderr);
+  fputs("Switching Service mode on\n", stderr);
   return;
 }
 void service_mode_off() {
@@ -122,8 +119,8 @@ static inline void finalise_packet() {
   }
 
   // the last word which will be repeated if DMA queue runs empty:
-  if(signal[word_p-1] != 0xAAAAAAAA) {
-    signal[word_p] = 0xAAAAAAAA;
+  if(signal[word_p-1] != PREAMBLE_WORD) {
+    signal[word_p] = PREAMBLE_WORD;
     word_p++;
   }
 }
@@ -136,13 +133,17 @@ static inline void send_packet(const unsigned signal[], const unsigned count) {
     
   int written = write(fd_dcc, signal, sizeof(signal[0])*count);
   if(written != count*sizeof(signal[0])) {
-    perror(": Not all bytes written");
+    perror(": Not all bytes written.");
   }
   
   return;
 
 }
 
+
+/**
+   \todo not reentrant.
+ */
 void commit_packet(const dcc_packet* const new_packet) {
 #warning implement like avr and than adttional stuff -- ie we need to call next_bit and fill a data structure with bits and the final  
 
@@ -188,3 +189,39 @@ void encoder_init() {
   }
 }
   
+
+void dcc_on() {
+
+  FILE* f_signal = fopen(F_SYS_SIGNAL, "w");
+  if(f_signal == NULL) {
+    perror(": Count not open" F_SYS_SIGNAL ". Check that " PWMDMA_NAME " is loaded and you have write access rights.");
+    return;
+  }
+  fputs("on\n", f_signal);
+  fclose(f_signal);
+
+  // send preamble to trigger signal generation.
+  const unsigned signal = PREAMBLE_WORD;
+  send_packet(&signal, 1);
+
+  fputs("DCC signal generation switched on.\n", stderr);
+  return;
+}
+
+void dcc_off() {
+
+  FILE* f_signal = fopen(F_SYS_SIGNAL, "r");
+  if(f_signal == NULL) {
+    perror(": Count not open" F_SYS_SIGNAL ". Check that " PWMDMA_NAME " is loaded and you have write access rights.");
+    return;
+  }
+  fputs("off\n", f_signal);
+  fclose(f_signal);
+
+
+  // nothing else do at this level??
+
+  fputs("DCC switched off.\n", stderr);
+  return;
+}
+

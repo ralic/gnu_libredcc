@@ -17,7 +17,7 @@ static enum {dma_nothing, dma_got_channel} dma_level = dma_nothing;
 
 int __init dma_init(void) {
 
-  // \todo instead of with a slave, we probalby could also work with a cyclic buffer?
+  // \todo instead of a slave, we could probalby use a cyclic buffer?
 
   // acquire DMA channel:
   dma_cap_mask_t caps;
@@ -38,7 +38,7 @@ int __init dma_init(void) {
 
 #define BCM2708_PWM_DREQ 5 // \todo move to some platform file?
 
-#warning should not be a local var because that goes out of scope or can it go outof scope?
+#warning should not be a local var because that goes out of scope or can it go out of scope?
   static struct dma_slave_config slave_config = {
   .direction = DMA_MEM_TO_DEV,
     .dst_addr = __to_bus1(PWM_BASE + PWM_FIF1), //  bus address of the PWM_controler.

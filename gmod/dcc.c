@@ -142,6 +142,7 @@ static ssize_t write (struct file * f, const char __user * user, size_t size, lo
   u32 *data = kmalloc(size, GFP_DMA | GFP_KERNEL); // \todo replace with pool?
   if(data == NULL) {
     printk(KERN_INFO "No DMA mappable memory.\n");
+    // block if no dma mappable memory -- most probably not necessary for DCC application
     return -ENOMEM;
   }
 
@@ -150,6 +151,7 @@ static ssize_t write (struct file * f, const char __user * user, size_t size, lo
   dma_addr_t dma_handle = dma_map_single(NULL, data, written, DMA_MEM_TO_DEV); // add the device -- but which? PWM?
   if (dma_mapping_error(NULL, dma_handle)) { // first argument is dev?
     printk(KERN_INFO "Can't map to DMA address space.");
+    // block if no mapping into DMA space?
     kfree(data);
     return -ENOMEM;
   } 

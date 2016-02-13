@@ -37,11 +37,9 @@ void buffer_unwind(void) {
 //   if I change the data? Do I need to remap and everything?
 dma_cookie_t submit_dma_single(dma_addr_t dma_addr, size_t size, void* buffer) {
 
-  // replace below with dmaengine_prep_slave_signle as it is a bit simpler (although it does the same calls)
   struct dma_async_tx_descriptor * dma_desc =  
-    dmaengine_prep_slave_single(pwm_dma, dma_addr, size, DMA_MEM_TO_DEV, DMA_PREP_INTERRUPT | DMA_CTRL_ACK); // 1 entry in the sgl, which flags?
-  //dmaengine_prep_dma_cyclic(dma, buf_addr, buf_len, period_len, DMA_MEM_TO_DEV);				// flags should be DMA_PREP_INTERRUPT to show that we want an interrupt (do we really want an interrupt? -- yes -- to free the memory! or does kfree block?
-  // need to set callback by hand.
+    dmaengine_prep_slave_single(pwm_dma, dma_addr, size, DMA_MEM_TO_DEV, DMA_PREP_INTERRUPT | DMA_CTRL_ACK); 
+
   if(dma_desc == NULL) {
     printk(KERN_INFO "Could not get a tx descriptor\n");
     // do i need to unwind sth?

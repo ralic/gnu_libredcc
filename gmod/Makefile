@@ -1,4 +1,4 @@
-# comment this line out for real.
+# comment the following line out for real.
 #ccflags-y += -D DUMMY
 
 
