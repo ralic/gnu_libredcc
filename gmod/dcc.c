@@ -29,6 +29,11 @@
 #include <linux/device.h>
 #include <linux/dma-mapping.h>
 
+#include <asm/io.h> // for readl / writel
+#include <mach/platform.h> // for __io_address
+#include "pwm.h"
+
+
 
 #include "dcc.h" \todo inc
 //#include "../dcc/simple_dcc/unix/dcc_encoder_hw.h" \todo use this include file.
@@ -55,7 +60,7 @@ static struct device* device = NULL;
 
 /** true if we are currently producing an output signal, false
     otherwise. */
-static bool signal = false;
+static bool signal = true;
 
 
 /** encodes the level of resource initialisation and allcation we have
@@ -153,7 +158,7 @@ static ssize_t write (struct file * f, const char __user * user, size_t size, lo
     printk(KERN_INFO "Can't map to DMA address space.");
     // block if no mapping into DMA space?
     kfree(data);
-    return -ENOMEM;
+    return -ENOMEM; // or return value of mapping error?
   } 
 
   submit_dma_single(dma_handle, written, data);
@@ -184,14 +189,27 @@ static ssize_t show_signal(struct device *dev, struct device_attribute *attr, ch
 
 static ssize_t store_signal(struct device *dev, struct device_attribute *attr, char *buf, size_t count) {
 
-  signal = (strncmp("on", buf, PAGE_SIZE) == 0) ? true : false;
+  // insert here dma_pause and dma_resume, or stop the pwm directly?
+
+  u32 pwm_ctl = readl(__io_address(PWM_BASE + PWM_CTL));
+
+
+  if (strncmp("on", buf, PAGE_SIZE) == 0) {
+    writel(pwm_ctl | PWEN1, __io_address(PWM_BASE + PWM_CTL)); 
+    signal = true;
+  }
+  else {
+    writel(pwm_ctl & ~(PWEN1), __io_address(PWM_BASE + PWM_CTL)); 
+    signal = false;
+  }
+
   printk(KERN_INFO DEVICE_NAME " signal generation switched %s.\n", signal ? "on" : "off");
 
   return count;
 }
 
 /// \todo get rid of the warning on this line.
-static DEVICE_ATTR(signal, S_IWUSR | S_IRUSR, show_signal, store_signal);
+static DEVICE_ATTR(signal, S_IWUSR | S_IRUSR | S_IWGRP | S_IROTH, show_signal, store_signal);
 
 /**** lifecycle functions of the module ****/
 

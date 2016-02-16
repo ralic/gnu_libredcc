@@ -26,6 +26,7 @@ struct cb_data {
 void callback(struct cb_data* cbd) {
   dma_unmap_single(NULL, cbd->dma_addr, cbd->size, DMA_MEM_TO_DEV);
   kfree(cbd->buffer);
+#warning I have to uncomment the below to also free the cdb data structure
   //kfree(cbd);
 }
 
@@ -42,7 +43,8 @@ dma_cookie_t submit_dma_single(dma_addr_t dma_addr, size_t size, void* buffer) {
 
   if(dma_desc == NULL) {
     printk(KERN_INFO "Could not get a tx descriptor\n");
-    // do i need to unwind sth?
+    dma_unmap_single(NULL, dma_addr, size, DMA_MEM_TO_DEV);
+    kfree(buffer);
     return -1;
   }
 
@@ -55,24 +57,17 @@ dma_cookie_t submit_dma_single(dma_addr_t dma_addr, size_t size, void* buffer) {
 
   dma_desc->callback = callback;
   dma_desc->callback_param = cbd;
-  // add an idle value if no new real packet is availale
   // callback is allowed to prepare and submit a new transaction
   cookie = dmaengine_submit(dma_desc);
   if(cookie < 0) {
     printk(KERN_INFO "Submitting transaction resulted in error %u.\n", cookie);
+    callback(cbd); // free all memory and dma mapping held via cdb
     return cookie;
   }
 
   dma_async_issue_pending(pwm_dma); // no return value. // this should perhaps be called elsewhere? And I guess it is enough to be called once or everytime?
 
-  int status = dma_async_is_tx_complete(pwm_dma, cookie, NULL, NULL);
-  printk(KERN_INFO "Status of submitted tx is: %u.\n", status);
-  // I can DMA unmapas soon as the transaction is done##
-  // But when can I start overwriting the buffer?
-  // use dynamic_sync to recycle streaming buffers
-  // straming mapping ops can be called from interrupt context
-  // can unmap when tranaction is finished (or sync?)
-  // I must sync for the device after changing the buffer content (but probably only in one direction -- for device)
-
+  //  int status = dma_async_is_tx_complete(pwm_dma, cookie, NULL, NULL);
+  // printk(KERN_INFO "Status of submitted tx is: %u.\n", status);
   return cookie;
 }
