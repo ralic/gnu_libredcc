@@ -8,7 +8,6 @@
 
 #define F_SYS_SIGNAL "/sys/devices/virtual/dccc/dccc_dcc/signal"
 #define PWMDMA_NAME "dccc"
-
 #define PREAMBLE_WORD 0xAAAAAAAA
 
 

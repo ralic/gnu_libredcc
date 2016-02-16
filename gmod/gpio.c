@@ -18,8 +18,8 @@ static int pwm_pin =   18; // possible are GPIOs 12 , 40, 18 (pwm0) and
 module_param(pwm_pin, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
 MODULE_PARM_DESC(pwm_pin, "GPIO pin used for the output of the pwm signal.");
 
-static char* const __init compatible_gpio_chips[] = {"bcm2708_gpio", "pinctrl-bcm2835"}; // init only?
-static const size_t __init NUM_COMP_GPIO_CHIPS = sizeof(compatible_gpio_chips) / sizeof(char*); // init only?
+static char* const compatible_gpio_chips[] = {"bcm2708_gpio", "pinctrl-bcm2835"}; // init only?
+static const size_t NUM_COMP_GPIO_CHIPS = sizeof(compatible_gpio_chips) / sizeof(char*); // init only?
 
 // helper function inspired by lirc_rpi.c
 inline static int __init is_compatible_gpio_chip(struct gpio_chip *chip, void *dummy) {
