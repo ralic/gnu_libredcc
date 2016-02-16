@@ -6,7 +6,7 @@
 
 // should go to a privade header perhaps:
 
-#define F_SYS_SIGNAL "/sys/class/virtual/dccc/signal"
+#define F_SYS_SIGNAL "/sys/devices/virtual/dccc/dccc_dcc/signal"
 #define PWMDMA_NAME "dccc"
 
 #define PREAMBLE_WORD 0xAAAAAAAA

@@ -184,7 +184,7 @@ static ssize_t show_signal(struct device *dev, struct device_attribute *attr, ch
 
 static ssize_t store_signal(struct device *dev, struct device_attribute *attr, char *buf, size_t count) {
 
-  signal = (strncmp("on", buf, PAGE_SIZE) == 0) ? true : false;
+  signal = (strncmp("on", buf, 2) == 0) ? true : false;
   printk(KERN_INFO DEVICE_NAME " signal generation switched %s.\n", signal ? "on" : "off");
 
   return count;

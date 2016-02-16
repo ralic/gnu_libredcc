@@ -117,7 +117,8 @@ int __init pwm_init(void) {
   //writel(DATUM, __io_address(PWM_BASE + PWM_FIF1));
 
 
-  writel(PWEN1 | MODE1 | RPTL1 | SBIT1 | POLA1 | USEF1 | CLRF1 | MSEN1, 
+  //  writel(PWEN1 | MODE1 | RPTL1 | SBIT1 | POLA1 | USEF1 | CLRF1 | MSEN1,
+    writel(PWEN1 | MODE1 | RPTL1 | POLA1 | USEF1 | CLRF1 | MSEN1, 
 	 __io_address(PWM_BASE + PWM_CTL)); 
 
   writel(ENAB | PANIC(7) | DREQ(7), __io_address(PWM_BASE + PWM_DMAC));
