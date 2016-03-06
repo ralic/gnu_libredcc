@@ -26,6 +26,7 @@
     - "-": Power Off
     - "+": Power On
     - "O": Send DCC packet given as a sequence of hex bytes.
+    - "?": Replay with version information.
     
     programming:
     - "C" -- direct mode programming -- write only
@@ -272,6 +273,9 @@ void sprog() {
       case 'Q':
 	FPUTL("Exiting.", stdout); 
 	exit(0);
+	break;
+      case '?':
+	FPUTL("MYPROG -- Version X.XX", stdout);
 	break;
       default:
 	fputs("Unknown Command: <", stdout); 
