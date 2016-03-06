@@ -33,7 +33,7 @@ void service_mode_off() {
 
 /** in this implementation, this hook is not used hence it should always return true**/
 uint_fast8_t is_new_packet_ready() {
-  fprintf(stderr, __FUNCTION__);
+  // fprintf(stderr, __FUNCTION__);
   return 1;
 }
 
@@ -46,14 +46,14 @@ static inline int has_next() {
 }
 
 void end_of_preamble_hook() {
-  fprintf(stderr, __FUNCTION__);
+  // fprintf(stderr, __FUNCTION__);
   has_next_dccbit = 0;
   return;
 }
 
 /** hook not used */
 void done_with_packet() {
-  fprintf(stderr, __FUNCTION__);
+  // fprintf(stderr, __FUNCTION__ EOLSTR);
   return;
 }
 
@@ -96,12 +96,12 @@ static inline void generate_packet(const uint_fast8_t bit) {
     signal[word_p] |= 0b10 << bit_p;
   }
  
-  fprintf(stderr, "Word: %8x\n", signal[word_p]);
+  // fprintf(stderr, "Word: %8x\n", signal[word_p]);
 
   if(bit_p <= 0) {
     word_p++;
     bit_p+= BITS_PER_WORD;
-    fprintf(stderr, "bit_p: %0x,\t word_p: %ox\n", bit_p, word_p);
+    // fprintf(stderr, "bit_p: %0x,\t word_p: %ox\n", bit_p, word_p);
   }
 }    
 
@@ -150,10 +150,10 @@ void commit_packet(const dcc_packet* const new_packet) {
   packet = *new_packet; // it would in this case suffice to have a
 			// pointer and not to the full copying.
 
-  int j;
-  for(j = 0; j < packet.len; j++) {
-    fprintf(stderr, "%0x ", packet.pp.byte[j]);
-  }
+  /* int j; */
+  /* for(j = 0; j < packet.len; j++) { */
+  /*   fprintf(stderr, "%0x ", packet.pp.byte[j]); */
+  /* } */
 
 
 
@@ -169,7 +169,7 @@ void commit_packet(const dcc_packet* const new_packet) {
 
   while(has_next()) {
     const uint_fast8_t bit = next_bit();
-    fprintf(stderr, "Next bit: %s\n", bit ? "1" : "0");
+    //fprintf(stderr, "Next bit: %s\n", bit ? "1" : "0");
     generate_packet(bit);
   }
   finalise_packet(); 
@@ -182,9 +182,9 @@ void commit_packet(const dcc_packet* const new_packet) {
 
 void encoder_init() {
     // advance state of next_bit to bring it in the right state:
-  fputs("\nInitialising: \n", stderr);
+  fputs("\nInitialising \n", stderr);
   while(has_next()) {
-    fputs(next_bit() ? "Init: 1\n" : "Init: 0\n", stderr);
+    // fputs(next_bit() ? "Init: 1\n" : "Init: 0\n", stderr);
   }
 }
   
@@ -193,7 +193,8 @@ void dcc_on() {
 
   FILE* f_signal = fopen(F_SYS_SIGNAL, "w");
   if(f_signal == NULL) {
-    perror(": Count not open" F_SYS_SIGNAL ". Check that " PWMDMA_NAME " is loaded and you have write access rights.");
+    perror(__FILENAME__ ": Count not open" F_SYS_SIGNAL ". Check that " 
+	   PWMDMA_NAME " is loaded and you have write access rights.");
     return;
   }
   fputs("on\n", f_signal);
@@ -216,10 +217,7 @@ void dcc_off() {
   }
   fputs("off\n", f_signal);
   fclose(f_signal);
-
-
   // nothing else do at this level??
-
   fputs("DCC switched off.\n", stderr);
   return;
 }
