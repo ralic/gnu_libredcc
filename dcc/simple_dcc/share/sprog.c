@@ -1,5 +1,5 @@
 /* 
- * Copyright 2015 André Grüning <libredcc@email.de>
+ * Copyright 2015,2016 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -14,7 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
+ * along with LibreDCC. If not, see <http://www.gnu.org/licenses/>.
  */
 
 /** \file
@@ -36,7 +36,7 @@
     - "M" -- direct mode programming (ie CVs are programmed direct) --
     to be implemented
 
-    - "Q" -- exit. \todo what does that mean for an embedded system?
+    - "Q" -- exit. 
 
 */
 
@@ -143,9 +143,7 @@ static inline uint16_t tokentonum(const char* str) {
     base = 2; 
     str++;
   }
-
   return strtoul(str, NULL, base);
-
 }
 
 static inline void program_cv(const uint8_t argc, char* const argv[]) {
@@ -261,27 +259,27 @@ void sprog() {
 	// no responses for this command?
 	//! \todo for this and other cases: only return OK if the
 	//command was successfully executed.
-	FPUTL(OK,stdout); // is this answer expected according to the sprog manual?
+	FPUTL(OK, stdout); // is this answer expected according to the sprog manual?
 	break;
       case '+': 
 	dcc_on(); 
-	FPUTL(OK,stdout); // is this answer expected according to the sprog manual?
+	FPUTL(OK, stdout); // is this answer expected according to the sprog manual?
 	break;
       case 'C': 
 	if(is_dcc_on()) program_cv(argc, argv);
-	FPUTL(OK,stdout); // is this answer expected according to the sprog manual?
+	FPUTL(OK, stdout); // is this answer expected according to the sprog manual?
 	break;
       case 'Q':
+	FPUTL("Exiting.", stdout); 
 	exit(0);
 	break;
       default:
-	FPUTL("Unknown Command.", stdout); // Command token too long or
-	// empty. -- this seems to
-	// unsettle the arduino  -- what did I mean with "unsettle"? I think I dealt with the case of empty token above
+	fputs("Unknown Command: <", stdout); 
+	fputc(cmd[0], stdout);
+	FPUTL(">", stdout);
       }
     }
     else {
-      // Command token too long.
       FPUTL("Command token too long or empty.", stdout); 
     }
   }
