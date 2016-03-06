@@ -51,7 +51,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#define TEST 1
+//#define TEST 1
 
 
 char line[INPUT_LINE_LEN + 1]; // store maximally 64 chars plus the terminating null char.
