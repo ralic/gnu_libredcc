@@ -14,32 +14,11 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
+ * along with LibreDCC. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file
-    Emultates SPROG as far so that it can collaborate with rocrail
 
-    For ROCRAIL we need cmds:
-
-    running:
-    - "-": Power Off
-    - "+": Power On
-    - "O": Send DCC packet given as a sequence of hex bytes.
-    
-    programming:
-    - "C" -- direct mode programming -- write only
-    - "V" -- obsolete (but required by NMRA) -- not planned to implement.
-
-    extensions:
-
-    - "M" -- direct mode programming (ie CVs are programmed direct) --
-    to be implemented
-
-*/
-
-
-#define _GNU_SOURCE // needed?
+#define _GNU_SOURCE // needed -- what for?
 
 #include "../share/sprog.h"
 #include <errno.h>
@@ -50,7 +29,7 @@
 #include "sprog2packet.h"
 
 
-int fd_dcc;
+int fd_dcc = 0;
 char* dcc_device_name = DCC_DEVICE_NAME;
 
 int main(int argc, char** argv) {
@@ -62,7 +41,7 @@ int main(int argc, char** argv) {
   fd_dcc = open(dcc_device_name, O_WRONLY | O_CREAT | O_SYNC | O_TRUNC, S_IRUSR | S_IWUSR); // these different flags needed?
   if(fd_dcc < 0) {
     fputs(dcc_device_name, stderr);
-    perror(": Could not open " );
+    perror(__FILE__ ": Could not open " DCC_DEVICE_NAME ".");
     exit(errno);
   }
 

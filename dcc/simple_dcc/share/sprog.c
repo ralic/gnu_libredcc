@@ -51,6 +51,9 @@
 #include <ctype.h>
 #include <string.h>
 
+#define TEST 1
+
+
 char line[INPUT_LINE_LEN + 1]; // store maximally 64 chars plus the terminating null char.
 
 static inline void make_dcc_packet(uint8_t argc, char* argv[]) {
@@ -196,7 +199,7 @@ void sprog() {
 
 #ifdef TEST
     fputs("Raw: ", stdout);
-    fputs(str, stdout); fputc(EOLCHAR, stdout); // just an echo for testing!
+    //fputs(str, stdout); fputc(EOLCHAR, stdout); // just an echo for testing!
 #endif
 
     

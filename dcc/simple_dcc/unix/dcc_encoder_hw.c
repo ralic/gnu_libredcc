@@ -132,7 +132,7 @@ static inline void send_packet(const unsigned signal[], const unsigned count) {
     
   int written = write(fd_dcc, signal, sizeof(signal[0])*count);
   if(written != count*sizeof(signal[0])) {
-    perror(": Not all bytes written.");
+    perror(__FILE__ ": Not all bytes written.");
   }
   
   return;
@@ -144,8 +144,6 @@ static inline void send_packet(const unsigned signal[], const unsigned count) {
    \todo not reentrant.
  */
 void commit_packet(const dcc_packet* const new_packet) {
-#warning implement like avr and than adttional stuff -- ie we need to call next_bit and fill a data structure with bits and the final  
-
 
   packet = *new_packet; // it would in this case suffice to have a
 			// pointer and not to the full copying.
@@ -182,10 +180,12 @@ void commit_packet(const dcc_packet* const new_packet) {
 
 void encoder_init() {
     // advance state of next_bit to bring it in the right state:
-  fputs("\nInitialising \n", stderr);
+  fputs("\nInitialising. \n", stderr);
   while(has_next()) {
     // fputs(next_bit() ? "Init: 1\n" : "Init: 0\n", stderr);
+    next_bit();
   }
+  fputs("\nEnd Initialising. \n", stderr);
 }
   
 
