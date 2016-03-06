@@ -4,7 +4,7 @@
 
 #include<stdio.h>
 
-#define DCC_DEVICE_NAME "/dev/null"
+#define DCC_DEVICE_NAME "/dev/pwmdwm"
 
 
 //* file descriptor for the DCC device file:
