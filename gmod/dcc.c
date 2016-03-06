@@ -16,9 +16,7 @@
  * \todo add the slide set from xilinx
  * \todo make my own device structure.
    \todo run userspace programme with strace.
-   \todo do we need to use volatile in the kernel?
    \todo should we allow asynchronous notification? For IAV?
-   \todo can we assume that the OS does not break down short writes into shorter ones?
 */
 
 #include <linux/module.h>
@@ -117,11 +115,11 @@ static int release (struct inode * i, struct file * f) {
     
     Currently does nothing as we do not intend to read much from here.
 */
-static ssize_t read (struct file * f , char __user * u, size_t s, loff_t * l) {
+/* static ssize_t read (struct file * f , char __user * u, size_t s, loff_t * l) { */
  
-  printk(KERN_INFO DEVICE_NAME " read attempt.\n");
-  return -EINVAL;
-}
+/*   printk(KERN_INFO DEVICE_NAME " read attempt.\n"); */
+/*   return -EINVAL; */
+/* } */
 
 /** 
     @todo
@@ -211,6 +209,7 @@ static ssize_t store_signal(struct device *dev, struct device_attribute *attr, c
 
 /// \todo get rid of the warning on this line.
 static DEVICE_ATTR(signal, S_IWUSR | S_IRUSR | S_IRGRP | S_IWGRP, show_signal, store_signal);
+
 
 /**** lifecycle functions of the module ****/
 
