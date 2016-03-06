@@ -35,7 +35,7 @@
 
 
 
-#include "dcc.h" \todo inc
+#include "dcc.h" // \todo inc
 //#include "../dcc/simple_dcc/unix/dcc_encoder_hw.h" \todo use this include file.
 #include "gpio.h"
 #include "pwm.h"
@@ -48,7 +48,7 @@
 /// major device number
 static int major = DEVICE_MAJOR; 
 module_param(major, int, S_IRUSR | S_IRGRP);
-MODULE_PARM_DESC(major, "Major device number used for pwmdma device.");
+MODULE_PARM_DESC(major, "Major device number used for " DEVICE_NAME " device.");
 
 /**** module global variable -- \todo perhaps better in a device structure? */
 
@@ -210,7 +210,7 @@ static ssize_t store_signal(struct device *dev, struct device_attribute *attr, c
 }
 
 /// \todo get rid of the warning on this line.
-static DEVICE_ATTR(signal, S_IWUSR | S_IRUSR | S_IWGRP | S_IROTH, show_signal, store_signal);
+static DEVICE_ATTR(signal, S_IWUSR | S_IRUSR | S_IRGRP | S_IWGRP, show_signal, store_signal);
 
 /**** lifecycle functions of the module ****/
 
@@ -243,7 +243,7 @@ int __init dcc_init(void) {
   init_level = level_class;
  
   /* create device */
-  device = device_create(class, NULL, MKDEV(major, 0), NULL, CLASS_NAME "_" DEVICE_NAME);
+  device = device_create(class, NULL, MKDEV(major, 0), NULL, DEVICE_NAME);
   if (IS_ERR(device)) {
     printk(KERN_ERR "failed to create device '%s_%s'\n", CLASS_NAME, DEVICE_NAME);
     unwind();
@@ -326,7 +326,7 @@ static void unwind(void) {
     class_destroy(class);
   case level_chrdev:
     unregister_chrdev(major, DEVICE_NAME); 
-    printk(KERN_INFO DEVICE_NAME "unregistered major %d.\n", major);
+    printk(KERN_INFO DEVICE_NAME " unregistered major %d.\n", major);
   case level_nothing: 
     break;
   }

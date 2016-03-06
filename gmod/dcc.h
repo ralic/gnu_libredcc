@@ -5,7 +5,7 @@
 #define DRIVER_DESC "DCC encoder -- hardware side"
 
 #define DEVICE_MAJOR 0 
-#define DEVICE_NAME "dcc"
+#define DEVICE_NAME "pwmdma"
 
 #define CLASS_NAME "dccc" // is this really necessary?
 

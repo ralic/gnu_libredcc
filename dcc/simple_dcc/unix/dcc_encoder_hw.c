@@ -11,8 +11,8 @@
 #define PREAMBLE_WORD 0xAAAAAAAA
 
 
-/** The function below will talk to the dcc module via the device or
-    proc fs.
+/** The function below will talk to the dcc module via the device or the
+    sysfs.
     \todo implement later */
 uint8_t is_dcc_on() {
   return -1;

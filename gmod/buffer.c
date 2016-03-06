@@ -27,7 +27,7 @@ void callback(struct cb_data* cbd) {
   dma_unmap_single(NULL, cbd->dma_addr, cbd->size, DMA_MEM_TO_DEV);
   kfree(cbd->buffer);
 #warning I have to uncomment the below to also free the cdb data structure
-  //kfree(cbd);
+  kfree(cbd);
 }
 
 void buffer_unwind(void) {
