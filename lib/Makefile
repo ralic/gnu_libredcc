@@ -17,14 +17,14 @@
 
 SUBDIRS = uart
 
+MCU_TARGET ?= atmega328p
+
+
 .PHONY: subdirs $(SUBDIRS)
 
 subdirs: $(SUBDIRS)
 
 $(SUBDIRS):
-	$(MAKE) -C $@; 
-	mkdir -p avr
-	mv $@/lib$@.a avr/
-
-#dependencies:
-#     foo: baz
+	$(make) -D MCU_TARGET=$(MCU_TARGET) -C $@; 
+	mkdir -p avr/$(MCU_TARGET)
+	mv $@/lib$@.a avr/$(MCU_TARGET)
