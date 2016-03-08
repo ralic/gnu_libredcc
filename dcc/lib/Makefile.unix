@@ -15,16 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
 
-SUBDIRS = uart
-
-MCU_TARGET ?= atmega328p
-
+SUBDIRS = dcc 
+ARCH = unix
 
 .PHONY: subdirs $(SUBDIRS)
 
 subdirs: $(SUBDIRS)
 
 $(SUBDIRS):
-	$(make) -D MCU_TARGET=$(MCU_TARGET) -C $@; 
-	mkdir -p avr/$(MCU_TARGET)
-	mv $@/lib$@.a avr/$(MCU_TARGET)
+	$(MAKE) -C $@; 
+	mkdir -p $(ARCH)
+	mv $@/lib$@.a $(ARCH)/
+
+#dependencies:
+#     foo: baz

@@ -1,0 +1,1 @@
+ACTION=="add", KERNEL=="pwmdma", GROUP="dialout", MODE="660", SYMLINK+="dcc", RUN+="/bin/chgrp dialout /sys/devices/virtual/dccc/pwmdma/signal"

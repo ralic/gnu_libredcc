@@ -1,7 +1,10 @@
 # Version: $Id: Makefile 1326 2014-12-27 16:21:01Z ag0015 $
 
+ARCH = avr
+MCU = atmega328p
+
 PRG = simple_dcc
-OBJ = $(PRG).o dcc_encoder.o r_io.o service_mode.o
+OBJ = $(PRG).o dcc_encoder_hw.o ../share/r_io.o ../share/sprog.o ../share/service_mode.o ../share/dcc_encoder_core.o
 
 LIBS1 = dcc uart
 LIBS = -ldcc -luart
@@ -10,8 +13,8 @@ MCU_TARGET = atmega328p
 OPTIMIZE = -O2
 
 DEFS = -D F_CPU=16000000 -D DEBUG=5
-INCLUDE_DIRS = -I ../include -I ../../include
-LIB_DIRS = -L ../lib/avr -L ../../lib/avr
+INCLUDE_DIRS = -I ../../include -I ../../../include
+LIB_DIRS = -L ../../lib/$(ARCH)/$(MCU) -L ../../../lib/$(ARCH) #/$(MCU) should also be with uar
 
 CXX = avr-g++
 CC = avr-gcc
@@ -49,7 +52,7 @@ dcc_receiver.o: uart.h
 uart.c: uart.h
 
 clean:
-	rm -rf *.o $(PRG).elf 
+	rm -rf $(OBJ) $(PRG).elf 
 	rm -rf *.lst *.map $(EXTRA_CLEAN_FILES)
 
 lst: $(PRG).lst

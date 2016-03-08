@@ -16,7 +16,7 @@
  * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef ServiceMode 
-#define ServiceMode
+#define ServiceMode 1
 
 #include <dcc.h>
 
@@ -28,4 +28,5 @@ void service_mode_off();
 
 /** send a direct mode packet embedded into the appropriate number of resets and repitition and decoder recovery time **/
 uint8_t send_sm_dm_sequence(const dcc_packet * const packet);
+
 #endif
