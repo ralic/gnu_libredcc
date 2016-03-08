@@ -27,29 +27,30 @@
    1. does not initialise static locals and 
    2. could not deal with const pointer in certain circumstance 
    3. and perhals cannot well initialise structs
-
-   \todo WHY THE DECODER MIGHT GET STUCK:
-   - TRYING TO use the uart while on the interrupt?
-   - but would this survive the reset? does the crash survive a reaset?
 */
 
-#include <share/defs.h>
+#include <avr/wdt.h>
 
+#include<share/defs.h>
 #include<stdint.h>
 
-#include "decoder.h"
 #include<dcc.h>
 
 #include <eeprom_hw.h>
 #include <error.h>
 
-#include <dcc.h>
-
+#include "decoder.h"
 #include "io.h"
+#include <share/bitqueue.h>
+#include <io_hw.h>
+
+#include <reset.h>
 
 static uint16_t port_id[PORTS];
 
 #ifdef __AVR
+#include <util/delay.h>
+#include <avr/interrupt.h>
 #elif SDCC_pic14
 #else 
 #error "Architecture not implemented"
@@ -69,12 +70,10 @@ inline static void handle_ba_opmode() {
       //      INFO("Execute BA packet" EOLSTR);
 #if DEBUG
       fprintf(&uart, "for port/gate %u/%u\n", i, packet.pp.ba.gate);
-      #warning remove this.
 #endif
       return; // this precludes having two outputs programmed to the same address
     }
   }
-
   INFO("BA Packet not for us" EOLSTR);
 }
 
@@ -88,21 +87,25 @@ inline static void handle_ba_progmode(const uint8_t port) {
   if(port < PORTS) {
     const uint16_t portid = BA_PORTID(packet);
     port_id[port] = portid; 
-    eeprom_update_word(&(port_id_eeprom[port]), portid); // currently
-							 // this waits
-							 // until
-							 // EEPROM is
-							 // written --
-							 // so this
-							 // introduces
-							 // a delay of
-							 // about 5ms
-							 // on PIC and
-							 // ??ms on AVR
-    //    INFO("BA Address programmed");
+    eeprom_update_word(&(port_id_eeprom[port]), portid); 
+    /* on the AVR the above is so quick that in conjunction with the
+       bitqueue if the central sends the BA command multiple times in a short
+       time window, a subsequent address would also unintentionally be
+       programmed to the same address. Therefore at least for AVR we
+       delay here 500ms before proceeding (in the hope that the
+       bitqueue will then have missed the transmission of the repeated
+       BA command.
+     */
+#ifdef __AVR
+    cli();
+    wdt_disable();
+    _delay_ms(500); 
+    wdt_enable(WDTO_120MS);
+    sei();
+#endif
+
 #ifdef DEBUG
     fprintf(&uart, "for port %u, address id %x\n", port, portid);
-#warning remove this.
 #endif
 
   }
@@ -133,18 +136,8 @@ inline static void handle_ba_packet() {
 
   if(button_count) { // progmode.
     INFO("BA prog mode");
-#warning this is not thread-safe. as the prog button might be pressed between the previous and following line of code
-    // on PIC this is not a problem as both the output routne and compose packet run on the main thread
-    // on AVR this could be a problem if the DCC interrupt allows other interrupts to occur.
-    // for AVR -- so I need to make sure the AVR does not reenable
-    // other inttruts while running! At least not the timer
-    // interrupts. (or if we change it so that the output routine will
-    // run in its own interript, while the rest runs on the main programme)
     handle_ba_progmode(button_count-1);
-    button_count++;
-    if(button_count > PORTS) { // if we have reached the end of the ports, stop the programming mode
-      button_count = 0;
-    }
+    INCR(button_count, PORTS);
   }
   else { 
     INFO("BA opmode" EOLSTR);
@@ -227,3 +220,46 @@ void init_decoder() {
     port_id[i] = eeprom_read_word(&(port_id_eeprom[i]));
   }
 }
+
+int main(void) __attribute__((noreturn));
+int main(void) {
+
+
+  sei();
+  INFO("Starting " __FILE__ "\n");
+
+  if(MCUSR_copy & _BV(PORF))
+    INFO("Power On Reset\n");
+  if(MCUSR_copy & _BV(EXTRF))
+    INFO("External Reset\n");
+  if(MCUSR_copy & _BV(BORF))
+    INFO("Brown Out Reset\n");
+  if(MCUSR_copy & _BV(WDRF))
+    INFO("Watchdog Timeout Reset\n");
+  if(MCUSR == 0) 
+    ERROR(no_reset_source);
+        
+  //! @todo loop can be made more power efficient by sending to sleep as currently done in exit.
+
+
+  wdt_enable(WDTO_120MS);
+  wdt_reset();
+
+  while(1) {
+#if DEBUG
+    if(bit_pointer > (1 << (3))) {
+      INFO("More than 3\n");
+    }
+#endif
+    if(has_next_bit()) {
+      compose_packet(next_bit());
+    }
+    /* \todo the below can lead to starvation, so introduce a watchdog? */
+    if(io_tick()) /* && bitqueue is halfempty */  {
+      acknowledge_io_tick();
+      tick();
+    }
+    wdt_reset();
+  }
+}
+

@@ -17,14 +17,16 @@
 
 SUBDIRS = dcc 
 
-.PHONY: subdirs $(SUBDIRS)
+MCU_TARGET ?= atmega328p
 
-subdirs: $(SUBDIRS)
+#.phony: subdirs $(SUBDIRS)
+
+#subdirs: $(SUBDIRS)
 
 $(SUBDIRS):
-	$(MAKE) -C $@; 
-	mkdir -p avr
-	mv $@/lib$@.a avr/
+	$(make) -D MCU_TARGET=$(MCU_TARGET) -C $@; 
+	mkdir -p avr/$(MCU_TARGET)
+	mv $@/lib$@.a avr/$(MCU_TARGET)
 
 #dependencies:
 #     foo: baz

@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 Wolfgang Kufer <kufer@gmx.de>
- * Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014,2015 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -96,7 +96,7 @@ void compose_packet(const uint8_t bit) {
 */
 
   // reflects the different states the bit stream can be in, compare [NMRA]:
-  typedef enum {START_BIT = 0, BYTE = 1, STOP_BIT = 2} DCC_SIGNAL_STATE;
+  enum {START_BIT = 0, BYTE = 1, STOP_BIT = 2}; 
 
 #ifndef NO_LOCAL_STATICS
   static uint8_t state = -DECODER_PREAMBLE_MIN_LEN;
