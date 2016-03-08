@@ -35,6 +35,12 @@ LIB_DIR = -L ../../lib/$(ARCH)/$(MCU_TARGET) -L ../../../lib/$(ARCH)/$(MCU_TARGE
 # could I get those automatically?
 #LIBS = -ldcc -luart
 SYMBOLS = -D F_CPU=$(F_CPU) #-D DEBUG=5 
+
+
+
+
+
+
 OPTIMIZE = -O3
 #OPTIMIZE = -O0        -fsee        -fsection-anchors        -mno-long-calls        -mno-longcall
 
