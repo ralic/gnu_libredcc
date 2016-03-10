@@ -17,7 +17,7 @@ CHIP ?= m328p
 
 PRG ?= decoder
 
-OBJ = init_avr.o reset.o interrupts.o ../share/compose_packet.o eint0_isr.o ../share/$(PRG).o error_hw.o ../share/bitqueue.o
+OBJ = init_avr.o reset.o interrupts.o ../share/compose_packet.o eint0_isr.o ../share/$(PRG).o error_hw.o ../share/bitqueue.o ../share/port.o ../share/switch.o
 
 ifeq ($(PRG), decoder)
 OBJ += ../share/io.o io_hw.o eeprom_hw.o
@@ -50,14 +50,14 @@ DEFS =
 CC = avr-gcc
 AS = avr-gcc
 
-CFLAGS = -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) $(DEFS) $(INCLUDE_DIR) $(SYMBOLS) # -fno-jump-tables -
+CFLAGS = -std=c99 -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) $(DEFS) $(INCLUDE_DIR) $(SYMBOLS) # -fno-jump-tables -
 AFLAGS = -g -Wall -mmcu=$(MCU_TARGET) $(DEFS) $(SYMBOLS) -c
 
 
 LDFLAGS = -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) -ldcc  $(LIB_DIR) #$(LIBS) # -nostdlib $(DEFS) # -fnojum
 
 ifeq ($(MCU_TARGET), atmega328p) 
-LDFLAGS += -u uart_init -luart
+LDFLAGS += -u uart_init -luart ../../../lib/avr/atmega328p/libuart.a ../../../lib/uart/uart_stdio.o ../../../lib/uart/uart_rx.o ../../../lib/uart/uart_tx.o
 endif
 
 

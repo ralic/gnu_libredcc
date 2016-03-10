@@ -20,7 +20,7 @@
 #define IOTIMER 0
 #define DCCTIMER 2
 
-#define PORTS 3
+//#define PORTS 3
 
 #elif defined (__AVR_ATtiny25__)
 #define DCCPORT B
@@ -35,9 +35,7 @@
 
 #define HELPERPIN PB3
 
-//! number of ports that the decoder has -- the number of physical
-//! outputs is twice this number. 
-#define PORTS 2
+// #define PORTS 2
 
 #else
 #error Pins not yet defined for this AVR chip

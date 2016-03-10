@@ -14,7 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
+ * along with LibreDCC. If not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef IOHW_H
 #define IOHW_H 1
@@ -47,8 +47,10 @@ extern volatile uint8_t io_ticks;
 
 extern const uint8_t output_mask[];
 
-#define set_output(_output) do { PORTx(IOPORT) |= output_mask[_output]; } while (0)
-#define reset_output(_output) do { PORTx(IOPORT) &= ~(output_mask[_output]); } while(0)
+#define make_output(_output) do { DDRx(IOPORT) |= _output; } while(0)
+#define set_output(_output) do { PORTx(IOPORT) |= _output; } while (0)
+#define clear_output(_output) do { PORTx(IOPORT) &= ~(_output); } while(0)
+
 
 
 /**

@@ -14,7 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
+ * along with LibreDCC. If not, see <http://www.gnu.org/licenses/>.
  */
 
 /** \file 
@@ -40,13 +40,12 @@
 #include <error.h>
 
 #include "decoder.h"
-#include "io.h"
+//#include "io.h"
 #include <share/bitqueue.h>
-#include <io_hw.h>
+#include <io_hw.h> // for io_tick(), acknowledge_io_tick
 
 #include <reset.h>
-
-static uint16_t port_id[PORTS];
+#include "port.h"
 
 #ifdef __AVR
 #include <util/delay.h>
@@ -62,11 +61,11 @@ inline static void handle_ba_opmode() {
   const uint16_t portid = BA_PORTID(packet);
 
   uint8_t i;
-  for(i = 0; i < PORTS; i++) {
-    if(port_id[i] == portid) {
+  for(i = 0; i < num_ports; i++) {
+    if(ports[i].id == portid) {
       // bei vorherigem button progmode muessen wir noch ein wenig
       // warten bevor wir das naechste Packet annehmen?  
-      activate_output((i << 1) + packet.pp.ba.gate); // \todo and deactive the other one?
+      ports[i].activate(ports + i, packet.pp.ba.gate); 
       //      INFO("Execute BA packet" EOLSTR);
 #if DEBUG
       fprintf(&uart, "for port/gate %u/%u\n", i, packet.pp.ba.gate);
@@ -84,9 +83,9 @@ inline static void handle_ba_progmode(const uint8_t port) {
 
   //  INFO("In BA Progmode");
 
-  if(port < PORTS) {
+  if(port < num_ports) {
     const uint16_t portid = BA_PORTID(packet);
-    port_id[port] = portid; 
+    ports[port].id = portid; 
     eeprom_update_word(&(port_id_eeprom[port]), portid); 
     /* on the AVR the above is so quick that in conjunction with the
        bitqueue if the central sends the BA command multiple times in a short
@@ -119,7 +118,6 @@ inline static void handle_ba_packet() {
   // future handling of BROADCAST packets here?
 #endif
   
-  // ignore packets that are off commands, we do our own timing.
   if(!packet.pp.ba.on) {
     INFO("Ignore BA off packet" EOLSTR);
     return; 
@@ -137,7 +135,7 @@ inline static void handle_ba_packet() {
   if(button_count) { // progmode.
     INFO("BA prog mode");
     handle_ba_progmode(button_count-1);
-    INCR(button_count, PORTS);
+    INCR(button_count, num_ports);
   }
   else { 
     INFO("BA opmode" EOLSTR);
@@ -216,14 +214,13 @@ void init_decoder() __attribute__((naked)) __attribute__((section(".init8")));
 #endif
 void init_decoder() {
   uint8_t i;
-  for(i = 0; i < PORTS; i++) {
-    port_id[i] = eeprom_read_word(&(port_id_eeprom[i]));
+  for(i = 0; i < num_ports; i++) {
+    ports[i].id = eeprom_read_word(&(port_id_eeprom[i]));
   }
 }
 
 int main(void) __attribute__((noreturn));
 int main(void) {
-
 
   sei();
   INFO("Starting " __FILE__ "\n");
@@ -240,7 +237,6 @@ int main(void) {
     ERROR(no_reset_source);
         
   //! @todo loop can be made more power efficient by sending to sleep as currently done in exit.
-
 
   wdt_enable(WDTO_120MS);
   wdt_reset();
@@ -262,4 +258,3 @@ int main(void) {
     wdt_reset();
   }
 }
-

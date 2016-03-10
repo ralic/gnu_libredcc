@@ -14,7 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
+ * along with LibreDCC. If not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef IOIO_H
 #define IOIO_H
@@ -27,11 +27,8 @@
  */
 extern volatile uint8_t button_count;
 
-//! activates an output
-void activate_output(const uint8_t output); 
-
 //! to be periodically executed for io timings -- currently every 16ms
-inline void tick();
+void tick();
 
 //! Cyclically increment variable var up to _lastval (inclusive) and then set to 0
 #define INCR(_var, _lastval) do {		\
@@ -40,9 +37,5 @@ inline void tick();
     (_var) = 0;					\
   }						\
   } while(0)
-
-#ifdef HAS_NO_INIT
-inline void init_ports(); 
-#endif
 
 #endif
