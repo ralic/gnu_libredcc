@@ -2,7 +2,6 @@
 #include <share/switch.h>
 #include <avr/io.h>
 
-
 port_t ports[] = {
   [0] = { activate: pulsed_activate,
 	  tick: pulsed_tick,
@@ -12,20 +11,26 @@ port_t ports[] = {
 	  output: {_BV(2), _BV(1)},
   },
   [1] = { activate: pulsed_activate,
-	  tick: pulsed_tick,
+	  tick: do_nothing,
 	  init: pulsed_init,
 	  timer: 0,
 	  ontime: {10,10},
 	  output: {_BV(4), _BV(3)},
   },
-  [2] = { activate: permanent_activate,
-       tick: permanent_tick,
-       init: permanent_init,
-       //timer: 0,
-       //ontime: {10,10},
-       output: {_BV(0), _BV(5)},
-  },
-
+  /*  [2] = { activate: permanent_activate,
+	  tick: permanent_tick,
+	  init: permanent_init,
+	  // timer: 0,
+	  //ontime: {10,10},
+	  output: {_BV(0), _BV(5)},
+	  }, */
+    [2] = { activate: single_blink_activate,
+	    tick: do_nothing, //single_permanent_tick,
+            init: single_blink_init,
+	  // timer: 0,
+	  ontime: {50,50},
+	  output: {_BV(0), _BV(5)},
+	  }, 
 };
 
 
