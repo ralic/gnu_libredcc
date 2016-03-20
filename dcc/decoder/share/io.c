@@ -30,25 +30,13 @@
 
 #include <share/io.h>
 #include <share/port.h>
-//#include <avr/chip.h>
 #include <avr/io_hw.h> // for get_progbutton
-//#include <avr/io.h>
 #include <share/port.h>
 
 
 #ifdef NO_LOCAL_STATICS
 static uint8_t button = 1;  
 #endif
-
-/* #if PORTS == 2 */
-/* static uint8_t output_timer[OUTPUTS] = {0,0,0,0};  */
-/* static const uint8_t output_ontime[OUTPUTS] = { 5, 5, 5, 5}; // x 16ms.  */
-/* #elif PORTS == 3 */
-/* static uint8_t output_timer[OUTPUTS] = {0,0,0,0,0,0};  */
-/* static const uint8_t output_ontime[OUTPUTS] = { 5, 5, 10, 10, 0, 0}; // x 16ms.  */
-/* #else  */
-/* #error Change the above manualy re number of ports */
-/* #endif */
 
 #if SDCC_pic14
 #warning check whether sdcc can init this one? Yes! -- Check. Because we would not need to init this separately.
