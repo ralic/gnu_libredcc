@@ -49,7 +49,7 @@ void init_io() {
   //nop(); // what one clock cycle for effect of output manipulation to propagate to input latch.
   //nop();
   if (PINx(IOPORT) & _BV(HELPERPIN)) { // if high then button is depressed (because the booster pulls it down)
-    INCR(button_count, num_ports);
+    INCR(button_count, NUM_PORTS);
     while (PINx(IOPORT) & _BV(HELPERPIN)) {} // wait for button release
   }
   //PORTx(IOPORT) &= ~_BV(HELPERPIN); // pull up off

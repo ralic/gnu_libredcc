@@ -6,7 +6,8 @@ LIB_DIR = ..
 
 OBJ = xor_checksum.o get_ba_address.o idle_packet.o reset_packet.o
 
-#MCU_TARGET = atmega328p
+MCU_TARGET ?= atmega328p
+
 OPTIMIZE = -O3
 
 #DEFS = -D F_CPU=16000000 -D DEBUG=5 

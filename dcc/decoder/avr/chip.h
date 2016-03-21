@@ -22,7 +22,7 @@
 
 //#define PORTS 3
 
-#elif defined (__AVR_ATtiny25__)
+#elif defined (__AVR_ATtiny25__) || defined (__AVR_ATtiny45__)
 #define DCCPORT B
 #define DCCPIN PB2
 #define PROGPORT DCCPORT
@@ -124,7 +124,7 @@
 
 #warning No fuse programmed b/o Arduino
 
-#elif defined __AVR_ATtiny25__
+#elif defined (__AVR_ATtiny25__) || defined (__AVR_ATtiny45__)
 
 #define PRESCALER_8_1 _BV(CS12)
 #define PRESCALER_1024_1 _BV(CS13) | _BV(CS11) | _BV(CS10)
