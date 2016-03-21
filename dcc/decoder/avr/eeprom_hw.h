@@ -39,8 +39,9 @@
 
 #include <avr/eeprom.h>
 #include <share/io.h> // config.h would be better for this!
+#include <share/port.h>
 
-extern uint16_t port_id_eeprom[PORTS] EEMEM; //= {0xFFFF}; // initialise such
+extern uint16_t port_id_eeprom[NUM_PORTS] EEMEM; //= {0xFFFF}; // initialise such
 
 
 #endif

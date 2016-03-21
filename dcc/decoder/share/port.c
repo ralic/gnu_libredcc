@@ -34,9 +34,6 @@ port_t ports[] = {
 };
 
 
-const uint8_t num_ports = sizeof(ports) / sizeof(ports[0]);
-
-
 #ifdef NO_LOCAL_STATICS
 static uint8_t count = 0;
 #endif
@@ -67,7 +64,7 @@ void port_toggle(port_t * const port) {
 void init_ports() __attribute__((naked)) __attribute__((section(".init8"))); 
 #endif
 void init_ports() { 
-  for(uint8_t i = 0; i < num_ports; i++) {
+  for(uint8_t i = 0; i < NUM_PORTS; i++) {
     ports[i].init(ports + i);
   }
 }

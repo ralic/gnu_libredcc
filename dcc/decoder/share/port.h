@@ -24,7 +24,10 @@ struct _port {
 extern port_t ports[];
 
 /// number of ports this decoder controls
-extern const uint8_t num_ports;
+#define NUM_PORTS 3 // (sizeof(ports) / sizeof(ports[0]))
+
+
+//extern const uint8_t num_ports;
 
 /// toggle a port if ticked
 void port_toggle(port_t * const port);

@@ -65,7 +65,7 @@ void tick() {
   const uint8_t button_new = get_progbutton(); 
 
   if(button_new && !button) { // button just released.
-    INCR(button_count, PORTS);
+    INCR(button_count, NUM_PORTS);
   }
   button = button_new;
 
@@ -75,7 +75,7 @@ void tick() {
   }
 
   // 3. Tick down timed outputs.
-  for(int i = 0; i < num_ports; i++) {
+  for(int i = 0; i < NUM_PORTS; i++) {
     ports[i].tick(ports + i);
   }
 }

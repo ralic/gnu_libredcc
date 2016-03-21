@@ -30,22 +30,18 @@
 */
 
 #include <avr/wdt.h>
-
-#include<share/defs.h>
-#include<stdint.h>
-
-#include<dcc.h>
-
+#include <share/defs.h>
+#include <stdint.h>
+#include <dcc.h>
 #include <eeprom_hw.h>
 #include <error.h>
 
 #include "decoder.h"
-//#include "io.h"
 #include <share/bitqueue.h>
-#include <io_hw.h> // for io_tick(), acknowledge_io_tick
+#include <avr/io_hw.h> // for io_tick(), acknowledge_io_tick
 
 #include <reset.h>
-#include "port.h"
+#include <share/port.h>
 
 #ifdef __AVR
 #include <util/delay.h>
@@ -61,7 +57,7 @@ inline static void handle_ba_opmode() {
   const uint16_t portid = BA_PORTID(packet);
 
   uint8_t i;
-  for(i = 0; i < num_ports; i++) {
+  for(i = 0; i < NUM_PORTS; i++) {
     if(ports[i].id == portid) {
       // bei vorherigem button progmode muessen wir noch ein wenig
       // warten bevor wir das naechste Packet annehmen?  
@@ -83,7 +79,7 @@ inline static void handle_ba_progmode(const uint8_t port) {
 
   //  INFO("In BA Progmode");
 
-  if(port < num_ports) {
+  if(port < NUM_PORTS) {
     const uint16_t portid = BA_PORTID(packet);
     ports[port].id = portid; 
     eeprom_update_word(&(port_id_eeprom[port]), portid); 
@@ -135,7 +131,7 @@ inline static void handle_ba_packet() {
   if(button_count) { // progmode.
     INFO("BA prog mode");
     handle_ba_progmode(button_count-1);
-    INCR(button_count, num_ports);
+    INCR(button_count, NUM_PORTS);
   }
   else { 
     INFO("BA opmode" EOLSTR);
@@ -214,7 +210,7 @@ void init_decoder() __attribute__((naked)) __attribute__((section(".init8")));
 #endif
 void init_decoder() {
   uint8_t i;
-  for(i = 0; i < num_ports; i++) {
+  for(i = 0; i < NUM_PORTS; i++) {
     ports[i].id = eeprom_read_word(&(port_id_eeprom[i]));
   }
 }
