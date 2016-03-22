@@ -210,7 +210,7 @@ void dcc_on() {
 
 void dcc_off() {
 
-  FILE* f_signal = fopen(F_SYS_SIGNAL, "r");
+  FILE* f_signal = fopen(F_SYS_SIGNAL, "w");
   if(f_signal == NULL) {
     perror(": Count not open" F_SYS_SIGNAL ". Check that " PWMDMA_NAME " is loaded and you have write access rights.");
     return;

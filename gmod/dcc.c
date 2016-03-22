@@ -161,7 +161,7 @@ static ssize_t write (struct file * f, const char __user * user, size_t size, lo
 
   submit_dma_single(dma_handle, written, data);
 
-  printk(KERN_INFO DEVICE_NAME "actually written %x bytes to DMA\n", written);
+  //printk(KERN_INFO DEVICE_NAME ": actually written %x bytes to DMA\n", written);
 
   return written;
 
@@ -219,7 +219,7 @@ int __init dcc_init(void) {
   int ret = 0;
   
   /// setup chardev
-  /// @todo: transfer to new device interface.
+  /// \todo do we need this as we are creating a new device anyway?
   major = register_chrdev(major, DEVICE_NAME, &fops);
   if (major < 0) {
     printk(KERN_ERR "Registering device " DEVICE_NAME " failed with %d\n", major);
