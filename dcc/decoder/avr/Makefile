@@ -134,8 +134,7 @@ hex: $(PRG).hex
 # Rules for Uploading to the Arduino board:
 upload: all
 #	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Ueeprom:w:$(PRG)_eeprom.hex
-	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Uflash:w:$(PRG).elf  -Uflash:w:$(PRG).elf 
+	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Uflash:w:$(PRG).elf  #-Uflash:w:$(PRG).elf 
 
-upload1: all
-#	avrdude -p m328p -c $(PROGRAMMER) -P /dev/ttyACM1 -Ueeprom:w:$(PRG)_eeprom.hex
-	avrdude -p $(CHIP) -c $(PROGRAMMER) -P /dev/ttyACM1 -Uflash:w:$(PRG).elf  -Ueeprom:w:$(PRG).elf
+fuse: all
+	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Ulfuse:w:$(PRG).elf  #-Uflash:w:$(PRG).elf -Ueeprom:w:$(PRG).elf

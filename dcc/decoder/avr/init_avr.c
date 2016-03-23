@@ -18,8 +18,6 @@
  */
 
 /** \file
- * \todo watchdog timer
- * \todo check whether to merge with the PIC code now.
  */
 
 #include <avr/io.h>
@@ -34,8 +32,7 @@ FUSES = {
   .extended = EFUSE_DEFAULT
   #error before setting the fuses, read them from the ARDUINO
 };
-#elif defined __AVR_ATtiny25__
-
+#elif defined __AVR_ATtiny25__ || defined __AVR_ATtiny45__
 FUSES = {
   .low = LFUSE_DEFAULT | ~(FUSE_CKDIV8), // make F_CPU 8 MHz from inbuilt RC oscillator
   // make RESET pin normal gpio pin, avoid erasing EEPROM, and enable BOD at about 2.8Volst 
@@ -52,34 +49,9 @@ FUSES = {
   .extended = EFUSE_DEFAULT
 };
 
-
 #else
-#warning no fuses being programmed
+#warning no fuses being programmed or unknown architecure
 #endif
-
-// delete the below:
-
-/* #include <avr/interrupt.h> */
-/* #include <avr/sleep.h> */
-/* #include <avr/power.h> */
-
-/* #include <error.h> */
-/* #include <share/bitqueue.h> */
-/* #include <share/compose_packet.h> */
-/* #include <avr/io_hw.h> */
-/* #include <share/io.h> */
-
-#if 0
-FUSES = {
-  .low = LFUSE_DEFAULT,
-  .high = HFUSE_DEFAULT,
-  .extended = EFUSE_DEFAULT
-  #error before setting the fuses, read them from the ARDUINO
-};
-#else
-#warning no fuses being programmed
-#endif
-
 
 #if 0
 /*! When all is setup, processing occurs only on interrupts for avr,
@@ -108,4 +80,3 @@ void init_avr() {
   EECR &= ~(_BV(EERIE));
   power_all_disable(); // to save as much power as possible.
 }
-

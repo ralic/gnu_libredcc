@@ -23,10 +23,10 @@
 //! \todo Some centrals might send activate packets continuously (LEnz), so only the first should be reacted to... (so we need to store our state...) -- what is the source of this? 
 //! @todo: change attributes to near, pure, const
 
-/* there were 2 problems with sdcc: 
+/* there were 3 problems with sdcc: 
    1. does not initialise static locals and 
    2. could not deal with const pointer in certain circumstance 
-   3. and perhals cannot well initialise structs
+   3. and perhaps cannot well initialise structs
 */
 
 #include <avr/wdt.h>
