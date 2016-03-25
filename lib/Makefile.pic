@@ -1,0 +1,24 @@
+SUBDIRS = dcc picutil #uart
+
+export ARCH = pic
+export DEVICE = 16f690
+
+export OPTIMIZE = -O3
+export CC = sdcc
+export CFLAGS = -c -m$(ARCH)14 -p$(DEVICE)  -opt-ext=o --std-sdcc89  -I $(INCLUDE_DIR) $(SYMBOLS) # --use-non-free  # -V
+export AR = gplib
+export ARFLAGS = -c
+export LIB_DIR = $(CURDIR)/$(ARCH)/$(DEVICE)
+export INCLUDE_DIR = $(CURDIR)/../include
+
+.PHONY: subdirs $(SUBDIRS)
+
+subdirs: $(SUBDIRS)
+
+%.a: $(OBJ) # would be better to add all files individually... # what symbol do I use to $>
+	$(AR) $(ARFLAGS) $@ $? 
+
+$(SUBDIRS):
+	mkdir -p $(ARCH)/$(DEVICE)
+	$(MAKE) -C $@ -f Makefile.pic LIB=$@
+

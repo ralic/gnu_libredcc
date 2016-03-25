@@ -21,19 +21,20 @@ PROGRAMMER ?= arduino
 F_CPU ?= 16000000
 DEVICE ?=/dev/ttyACM0
 CHIP ?= m328p
+SHARE = ../share
 
 
-PRG ?= decoder
+PRG ?= decoder_$(CHIP)
 
-OBJ = init_avr.o reset.o interrupts.o ../share/compose_packet.o eint0_isr.o ../share/$(PRG).o error_hw.o ../share/bitqueue.o ../share/port.o ../share/switch.o
+OBJ = init_avr.o reset.o interrupts.o $(SHARE)/compose_packet.o eint0_isr.o $(SHARE)/decoder.o error_hw.o $(SHARE)/bitqueue.o $(SHARE)/port.o $(SHARE)/switch.o
 
-ifeq ($(PRG), decoder)
-OBJ += ../share/io.o io_hw.o eeprom_hw.o
+ifeq ($(PRG), decoder_$(CHIP))
+OBJ += $(SHARE)/io.o io_hw.o eeprom_hw.o
 endif	
 
 # \todo this is not strictly necessary -- just a workaround -- remove these from sniffer, and make main so that it also works with sniffer
-ifeq ($(PRG), sniffer)
-#OBJ += ../share/io.o io_hw.o 
+ifeq ($(PRG), sniffer_$(CHIP))
+#OBJ += $(SHARE)/io.o io_hw.o 
 endif	
 
 

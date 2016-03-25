@@ -29,7 +29,13 @@
    3. and perhaps cannot well initialise structs
 */
 
+#ifndef SDCC_pic14
 #include <avr/wdt.h>
+#warning make this a positive definition of gcc/avr or make a common wdt.h file
+#elif defined SDCC_pic14
+#else 
+#error architecruee not defined
+#endif
 #include <share/defs.h>
 #include <stdint.h>
 #include <dcc.h>
@@ -64,7 +70,7 @@ inline static void handle_ba_opmode() {
       ports[i].activate(ports + i, packet.pp.ba.gate); 
       //      INFO("Execute BA packet" EOLSTR);
 #if DEBUG
-      fprintf(&uart, "for port/gate %u/%u\n", i, packet.pp.ba.gate);
+      // fprintf(&uart, "for port/gate %u/%u\n", i, packet.pp.ba.gate);
 #endif
       return; // this precludes having two outputs programmed to the same address
     }
@@ -100,7 +106,7 @@ inline static void handle_ba_progmode(const uint8_t port) {
 #endif
 
 #ifdef DEBUG
-    fprintf(&uart, "for port %u, address id %x\n", port, portid);
+    // fprintf(&uart, "for port %u, address id %x\n", port, portid);
 #endif
 
   }
