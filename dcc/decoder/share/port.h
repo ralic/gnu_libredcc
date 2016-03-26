@@ -24,8 +24,10 @@ struct _port {
 extern port_t ports[];
 
 /// number of ports this decoder controls
-#define NUM_PORTS 3 // (sizeof(ports) / sizeof(ports[0]))
+// extern const uint8_t NUM_PORTS;
 
+#define NUM_PORTS 4 // (sizeof(ports) / sizeof(ports[0]))
+#warning check that NUM_PORTS agrees with the size of ports
 
 //extern const uint8_t num_ports;
 

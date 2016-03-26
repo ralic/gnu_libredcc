@@ -17,21 +17,23 @@ port_t ports[] = {
 	  ontime: {10,10},
 	  output: {_BV(4), _BV(3)},
   },
-  /*  [2] = { activate: permanent_activate,
-	  tick: permanent_tick,
-	  init: permanent_init,
+  [2] = { activate: single_permanent_activate,
+	  tick: single_permanent_tick,
+	  init: single_permanent_init,
 	  // timer: 0,
 	  //ontime: {10,10},
-	  output: {_BV(0), _BV(5)},
-	  }, */
-    [2] = { activate: single_blink_activate,
-	    tick: do_nothing, //single_permanent_tick,
-            init: single_blink_init,
+	  output: {_BV(0)},
+  }, 
+  [3] = { activate: single_permanent_activate,
+	  tick: single_permanent_tick,
+	  init: single_permanent_init,
 	  // timer: 0,
-	  ontime: {50,50},
-	  output: {_BV(0), _BV(5)},
-	  }, 
+	  ontime: {50},
+	  output: {_BV(5)},
+  }, 
 };
+
+// const uint8_t NUM_PORTS = sizeof(ports) / sizeof(ports[0]);
 
 
 #ifdef NO_LOCAL_STATICS
