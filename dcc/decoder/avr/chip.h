@@ -101,7 +101,7 @@
 
 #else
 // #warning no fuses being programmed
-#warning unknown architecture
+#error unknown architecture
 #endif
 
 #define PREACALER_1024(__x) __CONCAT3(PRESCALER_1024_, __x,)

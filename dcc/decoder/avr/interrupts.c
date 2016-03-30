@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014-2016 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -14,9 +14,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
+ * along with LibreDCC. If not, see <http://www.gnu.org/licenses/>.
  */
-// $Id$
 
 #include <avr/io_hw.h>
 #include "error.h"
@@ -25,14 +24,16 @@
 // AVR
 
 /** @todo
-- check EINT und timer2 are enables / disabled in a time locked fashion
+- check EINT und timer2 are enabled / disabled in a time locked fashion
 - check that for running EINT must occur before TIM2_int can occur again
 - simplify TIM2 and TIM0 interrupt handling
-- disable and enable the interrupts alternatingly, early sei() in the timer interrupt to allow early EINT0, and to really have strong time locking
+- disable and enable the interrupts alternatingly, early sei() in the
+  timer interrupt to allow early EINT0, and to really have strong time
+  locking  
 */
 
-/*
- * The code uses interrupt INT0 to let timer2 rum for 3/4 of
+/**
+ * The code uses interrupt INT0 to let timer2 run for 3/4 of
  * PERIOD_1. (\see eint0_isr.S for the actual ISR)
  * whenever we get a rising edge of the DCC signal. If the timer has
  * elapsed then we sample the DCC signal again (using the timer2
@@ -53,7 +54,6 @@
  */
 
 #include<share/compose_packet.h>
-
 #include<avr/power.h>
 #include<avr/interrupt.h>
 #include<share/bitqueue.h>
@@ -102,16 +102,12 @@ ISR(INT0_vect) {
 } */
 
 
-
-
 /**
  * Interrupt service routine to sample the signal when timer2 has
  * gone SAMPLE_TICKS. It converts the signal into a bit. It then calls
  * the function compose_packet which composed the bits into a DCC
  * packet.
  */
-
-
 ISR(TIMERx_COMPA_vect(DCCTIMER)) {
   // bit = 1 if PIND2 is high and bit = 0 if PIND2 is still low 87us after a falling edge.
   const uint8_t bit = sample_dccpin(); 
@@ -132,7 +128,6 @@ ISR(TIMERx_COMPA_vect(DCCTIMER)) {
    */
   EIFR |= _BV(INTF0);  
   EIMSK |= _BV(INT0); // reenable interrupt INT0.
-
 }
 
 /**
@@ -143,10 +138,11 @@ void init_dcc_receiver() __attribute__((naked));
 void init_dcc_receiver() __attribute__((section(".init8"))); // to be executed before main.
 void init_dcc_receiver() {
 
-  // enable timer2:
+  // enable timer to time DCC signals
   power_timer_enable(DCCTIMER);
 
-  // enable INT0 on falling edge -- this is often clearer than the rising edge of the signal. (Also a machine instruction might be saved later on when converting the read potential to the DCC bit).
+  // enable INT0 on falling edge -- this is often clearer than the
+  // rising edge of the signal. 
   EICRA |= _BV(ISC01);  
   EIMSK |= _BV(INT0);
 

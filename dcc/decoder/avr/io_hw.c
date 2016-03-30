@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014-2016 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -14,7 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
+ * along with LibreDCC. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "io_hw.h"
@@ -27,10 +27,9 @@
 
 volatile uint8_t io_ticks = 0;
 
-/*! The timer is setup so that it overfl.o-ws every 16ms
+/*! The timer is setup so that it overflows every 16ms
     Like on the PIC we could perhaps just poll the corresponding overflow flag?
     If we wanted the IO to run on the ISR itself, we would call tick() in the ISR.
-
  * If we are running with F_CPU = 16MHz, and a prescaler 1:1024, then
  * there is a timer0 overflow every 15.625 times in a ms, that is one
  * tick is 0.064ms. If we count an 8bit timer byte up, then ports are updated

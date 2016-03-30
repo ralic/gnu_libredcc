@@ -1,10 +1,10 @@
 # Version: $Id: Makefile 1265 2013-05-04 21:45:24Z ag0015 $
 
-# MCU_TARGET = attiny25
-# DEVICE = /dev/ttyUSB0
-# PROGRAMMER = buspirate
-# F_CPU = 8000000
-# CHIP = t25
+MCU_TARGET = attiny25
+DEVICE = /dev/ttyUSB0
+PROGRAMMER = buspirate
+F_CPU = 8000000
+CHIP = t25
 
 # MCU_TARGET = attiny45
 # DEVICE = /dev/ttyUSB0
@@ -134,5 +134,7 @@ upload: all
 #	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Ueeprom:w:$(PRG)_eeprom.hex
 	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Uflash:w:$(PRG).elf  #-Uflash:w:$(PRG).elf 
 
-fuse: all
+lfuse: all
 	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Ulfuse:w:$(PRG).elf  #-Uflash:w:$(PRG).elf -Ueeprom:w:$(PRG).elf
+
+fuses: lfuse

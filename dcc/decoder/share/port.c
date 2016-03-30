@@ -2,8 +2,8 @@
 #include <share/switch.h>
 #include <avr/io.h>
 
-#define     TWOSWITCHES_TWOSIGNALS
-//#define FOUR_BLINK
+//#define     TWOSWITCHES_TWOSIGNALS
+#define FOUR_BLINK
 #if defined TWOSWITCHES_TWOSIGNALS
 port_t ports[] = {
   [0] = { init: pulsed_init,
@@ -21,22 +21,21 @@ port_t ports[] = {
 	  output: {_BV(5)},
   }, 
 };
-
 #elif defined FOUR_BLINK
 port_t ports[] = {
-  [0] = { init: single_blink_init,
+  [0] = { init: single_permanent_init,
 	  ontime: {10},
 	  output: {_BV(0)},
   },
-  [1] = { init: single_blink_init,
-	  ontime: {20},
+  [1] = { init: single_permanent_init,
+	  ontime: {60},
 	  output: {_BV(1)},
   },
-  [2] = { init: single_blink_init,
+  [2] = { init: single_permanent_init,
           ontime: {30},
 	  output: {_BV(3)},
   }, 
-  [3] = { init: single_blink_init,
+  [3] = { init: single_permanent_init,
 	  ontime: {50},
 	  output: {_BV(4)},
   }, 

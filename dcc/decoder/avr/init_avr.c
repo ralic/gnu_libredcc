@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014,2015,2016 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -14,7 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
+ * along with LibreDCC. If not, see <http://www.gnu.org/licenses/>.
  */
 
 /** \file
@@ -48,7 +48,6 @@ FUSES = {
 							 // :-( 
   .extended = EFUSE_DEFAULT
 };
-
 #else
 #warning no fuses being programmed or unknown architecure
 #endif
