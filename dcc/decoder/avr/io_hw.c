@@ -17,13 +17,13 @@
  * along with LibreDCC. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "io_hw.h"
-#include "../share/io.h"
+#include <avr/io_hw.h>
+#include <share/io.h>
 #include <avr/chip.h>
 
-#include<avr/power.h>
-#include<avr/interrupt.h>
-#include<share/port.h>
+#include <avr/power.h>
+#include <avr/interrupt.h>
+#include <share/port.h>
 
 volatile uint8_t io_ticks = 0;
 
@@ -39,7 +39,7 @@ ISR(TIMERx_OVF_vect(IOTIMER)) {
   io_ticks++; 
 }
 
-void init_io() __attribute__((section(".init8"))) __attribute__((naked));
+void init_io() __attribute__((section(".init7"))) __attribute__((naked));
 void init_io() {
 
   // to allow entering progmode at power on if we have few pins and do not want to sacrifies the reset pin:
@@ -47,12 +47,12 @@ void init_io() {
   //PORTx(IOPORT) |= _BV(HELPERPIN); // pull up on
   //nop(); // wait one clock cycle for effect of output manipulation to propagate to input latch.
   //nop();
-  if (PINx(IOPORT) & _BV(HELPERPIN)) { // if high then button is depressed (because the booster pulls it down)
+  if (PINx(IOPORT) & _BV(HELPERPIN)) { // if high then button is depressed (because the driver pulls it down)
     INCR(button_count, NUM_PORTS);
     while (PINx(IOPORT) & _BV(HELPERPIN)) {} // wait for button release
   }
   //PORTx(IOPORT) &= ~_BV(HELPERPIN); // pull up off
-  #warning NOT USING THE RESET BUTTON
+  #warning Using HELPERPIN as reset button
 #endif
 
   // enable timer0
@@ -61,8 +61,10 @@ void init_io() {
   // configure input for progbutton:
   // DDRD &= ~(_BV(PD3)); // is input by default.
   // switch on pull up:
+  #ifdef PROGPIN
   PORTx(PROGPORT) |= _BV(PROGPIN);
-	    
+  #endif
+
   // enable overflow interrupt
   TIMSKx(IOTIMER) |= _BV(TOIEx(IOTIMER)); 
   TCNTx(IOTIMER) = 0;    

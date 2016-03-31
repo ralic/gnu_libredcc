@@ -237,6 +237,9 @@ int main(void) {
   wdt_enable(WDTO_120MS);
   wdt_reset();
 
+#if 1
+#endif
+
   while(1) {
 #if DEBUG
     if(bit_pointer > (1 << (3))) {
