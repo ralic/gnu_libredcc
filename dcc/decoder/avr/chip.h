@@ -25,7 +25,7 @@
 //#define PROGPORT DCCPORT
 //#define PROGPIN PB5
 #define HELPERPIN PB3
-
+#undef HELPERLOW
 #define IOPORT B
 
 #define IOTIMER 1

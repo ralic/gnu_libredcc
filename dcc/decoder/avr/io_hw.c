@@ -42,16 +42,28 @@ ISR(TIMERx_OVF_vect(IOTIMER)) {
 void init_io() __attribute__((section(".init7"))) __attribute__((naked));
 void init_io() {
 
-  // to allow entering progmode at power on if we have few pins and do not want to sacrifies the reset pin:
+  // to allow entering progmode at power on if we have few pins and do not want to sacrifice the reset pin:
 #ifdef HELPERPIN
-  //PORTx(IOPORT) |= _BV(HELPERPIN); // pull up on
-  //nop(); // wait one clock cycle for effect of output manipulation to propagate to input latch.
-  //nop();
-  if (PINx(IOPORT) & _BV(HELPERPIN)) { // if high then button is depressed (because the driver pulls it down)
+#ifdef HELPERLOW 
+#warning Assumning helper input is low in inactive state
+  // if high then button is depressed (because external circuit pulls it down) 
+  if (PINx(IOPORT) & _BV(HELPERPIN)) { 
     INCR(button_count, NUM_PORTS);
     while (PINx(IOPORT) & _BV(HELPERPIN)) {} // wait for button release
   }
+#else // helper input is high in inactive state
+#warning Assuming helper input is high in inactive state
+  // if low then button is depressed (because external circuit or internal pull-up pulls it up)
+  //PORTx(IOPORT) |= _BV(HELPERPIN); // pull up on
+  //nop(); // wait one clock cycle for effect of output manipulation to propagate to input latch.
+  //nop();
+  if (! (PINx(IOPORT) & _BV(HELPERPIN))) { 
+    INCR(button_count, NUM_PORTS);
+    while (! ((PINx(IOPORT) & _BV(HELPERPIN)))) {} // wait for button release
+  }
   //PORTx(IOPORT) &= ~_BV(HELPERPIN); // pull up off
+#endif
+ 
   #warning Using HELPERPIN as reset button
 #endif
 

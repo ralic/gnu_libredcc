@@ -1,16 +1,16 @@
 # Version: $Id: Makefile 1265 2013-05-04 21:45:24Z ag0015 $
 
-MCU_TARGET = attiny25
-DEVICE = /dev/ttyUSB0
-PROGRAMMER = buspirate
-F_CPU = 8000000
-CHIP = t25
-
-# MCU_TARGET = attiny45
+# MCU_TARGET = attiny25
 # DEVICE = /dev/ttyUSB0
 # PROGRAMMER = buspirate
 # F_CPU = 8000000
-# CHIP = t45
+# CHIP = t25
+
+MCU_TARGET = attiny45
+DEVICE = /dev/ttyUSB0
+PROGRAMMER = buspirate
+F_CPU = 8000000
+CHIP = t45
 
 # default settings:
 ARCH ?= avr
@@ -29,7 +29,8 @@ ifeq ($(PRG), decoder)
 OBJ += ../share/io.o io_hw.o eeprom_hw.o
 endif	
 
-# \todo this is not strictly necessary -- just a workaround -- remove these from sniffer, and make main so that it also works with sniffer
+# \todo this is not strictly necessary -- just a workaround -- remove
+# these from sniffer, and make main so that it also works with sniffer 
 ifeq ($(PRG), sniffer)
 #OBJ += ../share/io.o io_hw.o 
 endif	
