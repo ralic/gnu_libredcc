@@ -12,8 +12,6 @@ PROGRAMMER = buspirate
 F_CPU = 8000000
 CHIP = t45
 
-
-
 # default settings:
 ARCH ?= avr
 MCU_TARGET ?= atmega328p
@@ -32,7 +30,8 @@ ifeq ($(PRG), decoder_$(CHIP))
 OBJ += $(SHARE)/io.o io_hw.o eeprom_hw.o
 endif	
 
-# \todo this is not strictly necessary -- just a workaround -- remove these from sniffer, and make main so that it also works with sniffer
+# \todo this is not strictly necessary -- just a workaround -- remove
+# these from sniffer, and make main so that it also works with sniffer 
 ifeq ($(PRG), sniffer_$(CHIP))
 #OBJ += $(SHARE)/io.o io_hw.o 
 endif	
@@ -137,5 +136,7 @@ upload: all
 #	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Ueeprom:w:$(PRG)_eeprom.hex
 	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Uflash:w:$(PRG).elf  #-Uflash:w:$(PRG).elf 
 
-fuse: all
+lfuse: all
 	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Ulfuse:w:$(PRG).elf  #-Uflash:w:$(PRG).elf -Ueeprom:w:$(PRG).elf
+
+fuses: lfuse

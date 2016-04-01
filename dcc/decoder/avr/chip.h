@@ -22,15 +22,16 @@
 #elif defined (__AVR_ATtiny25__) || defined (__AVR_ATtiny45__)
 #define DCCPORT B
 #define DCCPIN PB2
-#define PROGPORT DCCPORT
-#define PROGPIN PB5
-
+//#define PROGPORT DCCPORT
+//#define PROGPIN PB5
+#define HELPERPIN PB3
+#undef HELPERLOW
 #define IOPORT B
 
 #define IOTIMER 1
 #define DCCTIMER 0
 
-#define HELPERPIN PB3
+
 
 #else
 #error Pins not yet defined for this AVR chip
@@ -101,7 +102,7 @@
 
 #else
 // #warning no fuses being programmed
-#warning unknown architecture
+#error unknown architecture
 #endif
 
 #define PREACALER_1024(__x) __CONCAT3(PRESCALER_1024_, __x,)

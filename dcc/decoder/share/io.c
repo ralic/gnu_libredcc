@@ -45,6 +45,7 @@ static uint8_t button = 1;
 //! indicates whether we are in prog mode and which port is being programmend next.:
 volatile uint8_t button_count = 0;
 
+
 /**
  * The code below is to be called periodically.
  * Essentially the code below does the followng

@@ -40,7 +40,13 @@ extern volatile uint8_t io_ticks;
 /**
    the pseudo function that returns the state of the programming button.
 */
-#define get_progbutton() (PINx(PROGPORT) & _BV(PROGPIN)) //! @todo should think switching this off if we only have a helper button.
+#if defined PROGPIN
+#define get_progbutton() (PINx(PROGPORT) & _BV(PROGPIN)) 
+#else
+#warning No Prog Button!
+#define get_progbutton() 1
+#endif
+
 
 //extern const uint8_t output_mask[];
 

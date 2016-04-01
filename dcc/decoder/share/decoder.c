@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014-2016 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -242,6 +242,9 @@ int main(void) {
 
   wdt_enable(WDTO_120MS);
   wdt_reset();
+
+#if 1
+#endif
 
   while(1) {
 #if DEBUG
