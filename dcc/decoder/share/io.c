@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014-2016 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -30,16 +30,12 @@
 
 #include <share/io.h>
 #include <share/port.h>
-#include <avr/io_hw.h> // for get_progbutton
+#include <arch/io_hw.h> // for get_progbutton
 #include <share/port.h>
 
 
 #ifdef NO_LOCAL_STATICS
 static uint8_t button = 1;  
-#endif
-
-#if SDCC_pic14
-#warning check whether sdcc can init this one? Yes! -- Check. Because we would not need to init this separately.
 #endif
 
 //! indicates whether we are in prog mode and which port is being programmend next.:
@@ -54,7 +50,7 @@ volatile uint8_t button_count = 0;
  * 2. If the button has been pressed, we are in programming mode. If
  *    we are in progamming mode, we toggle the port, that corresponds to the port being programmed.
  * 3. Finally, we tick down all (timed) outputs, both if we are in normal mode
- *     or in programmingh mdode
+ *     or in programming mode
  */
 void tick() {
 
@@ -64,6 +60,8 @@ void tick() {
 
   // 1. Poll Progbutton.
   const uint8_t button_new = get_progbutton(); 
+  uint8_t i;
+
 
   if(button_new && !button) { // button just released.
     INCR(button_count, NUM_PORTS);
@@ -72,12 +70,12 @@ void tick() {
 
   // 2. If in progmode toggle corresponding port
   if(button_count) {
-    port_toggle(ports + (button_count-1));
+    port_toggle(button_count-1);
   }
 
   // 3. Tick down timed outputs.
-  for(int i = 0; i < NUM_PORTS; i++) {
-    ports[i].tick(ports + i);
+  for(i = 0; i < NUM_PORTS; i++) {
+    ports[i].tick(i);
   }
 }
 

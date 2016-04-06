@@ -37,5 +37,5 @@
 #include "eeprom_hw.h"
 
   // sdcc yields an error if we do not initialised the eepromvars!
- __code uint16_t __at (0x2100) port_id_eeprom[PORTS] = {0xFFFF};
+ __code uint16_t __at (0x2100) port_id_eeprom[NUM_PORTS] = {0xFFFF};
 

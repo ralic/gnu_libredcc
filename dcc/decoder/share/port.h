@@ -4,9 +4,9 @@
 #include <stdint.h>
 
 typedef struct _port port_t;
-typedef void activate_t(port_t* const this_port, const uint8_t gate);
-typedef void tick_t(port_t* const this_port);
-typedef void init_t(port_t* const this_port);
+typedef void activate_t(const uint8_t this_port, const uint8_t gate);
+typedef void tick_t(const uint8_t this_port);
+typedef void init_t(const uint8_t this_port);
 typedef uint8_t output_t; /// in this case, a bitmask to indentify the pins to set/clear
 
 /// structure to hold a port
@@ -32,7 +32,7 @@ extern port_t ports[];
 //extern const uint8_t num_ports;
 
 /// toggle a port if ticked
-void port_toggle(port_t * const port);
+void port_toggle(const uint8_t this);
 
 
 

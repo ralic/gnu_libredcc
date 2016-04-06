@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014-2016 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -22,12 +22,6 @@
 #include<share/io.h>
 #include<avr/io.h>
 
-
-//! delete this?
-// extern volatile uint8_t io_ticks;
-// #define io_tick() io_ticks
-// #define acknowledge_io_tick() io_ticks--
-
 /**
    pseudo functions to deal with timing of io (port) updates:
    If io_tick() returns true, then we should if possible run the function that updates the outputs.
@@ -35,7 +29,7 @@
  */
 extern volatile uint8_t io_ticks;
 #define io_tick() io_ticks
-#define acknowledge_io_tick() io_ticks--
+#define acknowledge_io_tick() (io_ticks--)
 
 /**
    the pseudo function that returns the state of the programming button.

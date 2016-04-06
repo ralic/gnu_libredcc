@@ -133,7 +133,7 @@ int first(void) { // bit_buffered!
   init_compose_packet();
   init_decoder();
 
-  GIE = 1;
+  sei();
 
   while(1) { // loop must call tick.
     
