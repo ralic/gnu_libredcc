@@ -70,6 +70,6 @@
 extern const uint8_t output_mask[]; 
 
 /*! function that sets up the io ports for the decoder */
-void init_io();
+void init_io_hw();
 
 #endif

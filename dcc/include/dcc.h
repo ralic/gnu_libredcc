@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014-2016 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -14,10 +14,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
+ * along with LibreDCC. If not, see <http://www.gnu.org/licenses/>.
  */
 /**
- * test ga with very high and very low address and with broadcast address
+ * \file test ga with very high and very low address and with broadcast address
  * test with optimidation -fess und with something with las
  */ 
 
@@ -144,12 +144,21 @@ typedef struct {
 
 
 /// calulates and returns the xor_checksum of a dcc_packet
+#ifdef SDCC_pic14
+#warning SDCC cannot compile this with const before packet
+  uint8_t xor_checksum(const dcc_packet * packet);
+#else
   uint8_t xor_checksum(const dcc_packet  * const packet);
+#endif
 
   /// returns the decoder (not the port) address of a ba packet
   /// perhaps I should rename it do get_ba_decoder_address??
+#ifdef SDCC_pic14
+#warning SDCC cannot compile this with const before packet
+  uint16_t get_ba_address(const dcc_packet * packet);
+#else
   uint16_t get_ba_address(const dcc_packet * const packet);
-
+#endif
 
 /// various packet:
 

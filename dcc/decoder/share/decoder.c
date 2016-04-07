@@ -221,11 +221,14 @@ void init_decoder() {
     ports[i].id = eeprom_read_word(&(port_id_eeprom[i]));
   }
 }
-
+#ifdef SDCC_pic14
+void pic_main(void) {
+#else
 #ifndef HAS_NO_INIT
 int main(void) __attribute__((noreturn));
 #endif
 int main(void) {
+#endif 
 
 sei();
 INFO("Starting " __FILE__ "\n");
@@ -245,7 +248,7 @@ INFO("Starting " __FILE__ "\n");
         
   //! @todo loop can be made more power efficient by sending to sleep as currently done in exit.
 
-wdt_enable(WDTO_120MS);
+  wdt_enable(WDTO_120MS);
   wdt_reset();
 
 

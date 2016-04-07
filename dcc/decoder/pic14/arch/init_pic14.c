@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014-2016 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -16,15 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
  */
-// $Id$
-
 #include<pic14regs.h>
 #include<pic/picutil.h>
 
-#include "interrupt.h" 
+#include <arch/interrupt.h>
+#include <arch/io_hw.h>
+
 #include <share/compose_packet.h>
-#include "io_hw.h"
-#include <share/io.h>
+#include <share/port.h>
 
 /*
  * RC0: set if we miss a preamble bit, cleared routinely in the output -- we still mis preamble bit if we are handling a command
@@ -48,7 +47,6 @@
  *   interrupt flags are clear -- so that we do not get a deadlock if
  *   one interrupt is missed because the execution of itself or another
  *   just takes too long, and  
- * - check when the timer is running and when stops (for AVR)
  */
 
 // asssume the clock is running with F_CPU Hz, than we have F_CPU Hz/ 4  instruction clock,
@@ -56,8 +54,7 @@
 /// actually the below is almost the same as for the AVR -- so perhaps
 /// should go into a separate header?
 #define PRESCALER 1 
-// just the prescaler is different, due to the
-		      // different CPU clock.
+// just the prescaler is different, due to the different CPU clock.
 #define TICKS_PER_US (F_CPU / 4000000) 
 #define SAMPLE_TICKS ((3 * PERIOD_1 * TICKS_PER_US) / (PRESCALER * 4))
 
@@ -74,7 +71,7 @@
  */  
 /*  is there something like sections also in sdcc (ie assembler segments??) -- yes, but sdcc does not makes use of that. */
 
-static inline void init_pic() { //__naked {
+static inline void init_pic14() { //__naked {
 
 #if F_CPU == 8000000
   // select 8Mhz from the internal clock
@@ -85,14 +82,11 @@ static inline void init_pic() { //__naked {
 #error Please set IRCF flags to match cpu frequency
 #endif
 
-
-
   // make RC0 a proper output -- to detect we have a timer interrupt
   // and perhaps we have to do it in a different order: first set the
   // output to zero, unless we want to get spurios pulses!
   // for debugging only! we need it for error!
   // ANS4 = 0;  // we are restting all ANSEL/ANSELH in init_io_hw anyway
-
 
   // RA2 doubles as external interrupt input pin. Make sure, it is an input and
   // the pull up switched on.
@@ -122,54 +116,23 @@ static inline void init_pic() { //__naked {
 __code uint16_t __at(0x2007) config  = _MCLRE_OFF & _INTOSCIO;
 //__code uint16_t __at(0x2007) config  =  _INTOSCIO;
 
+/// the main function to be called
+void pic_main(void);
+
 
 int first(void) { // bit_buffered!
 
-  init_interrupt();
-  init_pic(); // for the pic we must make sure manually that this
+  init_pic14(); // for the pic we must make sure manually that this
 	      // works, as there are no init sections (or at least
 	      // sdcc does not implement a correpsopndign attribute. 
-  init_io();
+  init_interrupt();
+  init_io_hw();
+  //init_eeprom_hw(); // no such init
+  //init_io(); // such such init
   init_compose_packet();
   init_decoder();
-
-  sei();
-
-  while(1) { // loop must call tick.
-    
-    //if(count <= 8) // so we still have four bits available in the bibbuttger
-    while(!has_next_bit()) {; // wait until we have at least one bit to process. -- perhaps we never get here with the new code... 
-      // perhaps this is not a good idea, as this could lead to starvation of this part of code if the bit_buffer is never empty...
-      // on the other hand we must ensure it never overruns even if DCC commands are sent at max speed and each command send is a valid command for this decoder.
-	// we perhas could also check whehter count has at least 2 bits or so left...
-#warning "find out what the period if the wdt is"
-	
-	// if there is no new bit, we check whether enough time as elapsed to tick down the outputs
-	//      if((state == PREAMBLE) && (TMR1IF)) { // state must be volatile!
-	//      if(TMR1IF) { // here change to checking another bit in TMR1H ! -- and see whether it drives up the use of the bitbuffer 
-#warning wieso wird der code nie ausgefuert, wenn ich tested, ob wir im Zustand preamble sind?? Wir muessten doch p state muess vielleicht volatile seind?
-	//    TMR1IF = 0;
-	if((TMR1H & 0x08) /* && count < 16 */) { // if highest bit in TMR1
-					   // is set and make sure we
-					   // have at least 4 bit
-					   // space in the buffer... 
-	  TMR1H &= 0x07; // reset that bit (am I resetting the right
-			 // bit here?
-	  
-	  // RESET_ERROR();
-
-	  // where is the watchdog setup?
-	  clrwdt(); // but what if timing is such that we always have
-		    // a new bit -- then this code is never
-		    // executed. Experimental evidence with a max
-		    // DCC stream speed shows, we currently also ways
-		    // have times when count is zero.re
-	  tick(); // instead of an interrupt, we are polling for the , every 32ms, reduce this to 16ms by preloading TMR1!
-	}
-      }
-    //while(!count); // make sure we have at least one bit to process.
-  
-    compose_packet(next_bit()); 
-  }
+  init_port();
+  // init_switch(); // no such thing
+  pic_main();
 }
 

@@ -31,8 +31,12 @@ extern port_t ports[];
 
 //extern const uint8_t num_ports;
 
-/// toggle a port if ticked
+/// toggle a port if ticked -- this should go back to io.h
 void port_toggle(const uint8_t this);
+
+
+/// init all the ports
+void init_port();
 
 
 

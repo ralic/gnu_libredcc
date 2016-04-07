@@ -103,9 +103,9 @@ void port_toggle(const uint8_t this) {
 } 
 
 #ifndef HAS_NO_INIT
-void init_ports() __attribute__((naked)) __attribute__((section(".init8"))); 
+void init_port() __attribute__((naked)) __attribute__((section(".init8"))); 
 #endif
-void init_ports() { 
+void init_port() { 
   uint8_t i;
   for(i = 0; i < NUM_PORTS; i++) {
     ports[i].init(i);

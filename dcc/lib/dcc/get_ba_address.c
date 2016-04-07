@@ -26,8 +26,6 @@
  *
  * @todo reimplement as a macro.
  */
-
-#warning this would need rewriting without SDCC_pic14?
 #ifdef SDCC_pic14
 #warning SDCC cannot compile this with const before packet
 uint16_t get_ba_address(const dcc_packet * packet) {

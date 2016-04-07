@@ -41,6 +41,6 @@
 #endif
 
 const dcc_packet idle_packet = {
- len:  3,
- {byte: {0xFF, 0, 0xFF}}
+ .len =  3,
+ {.byte = {0xFF, 0, 0xFF}}
 };

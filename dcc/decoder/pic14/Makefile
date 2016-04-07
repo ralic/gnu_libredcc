@@ -7,10 +7,10 @@ PRG ?= decoder_$(CHIP)
 
 SHARE = ../share
 
-OBJ = $(SHARE)/compose_packet.o $(SHARE)/decoder.o $(SHARE)/io.o arch/io_hw.o arch/init.o arch/main.o arch/interrupt.o arch/eeprom_hw.o $(SHARE)/switch.o $(SHARE)/port.o #pic$(CHIP)/io_hw.o 
+OBJ = $(SHARE)/compose_packet.o $(SHARE)/decoder.o $(SHARE)/io.o arch/io_hw.o arch/init.o arch/init_$(ARCH).o arch/interrupt.o arch/eeprom_hw.o $(SHARE)/switch.o $(SHARE)/port.o #pic$(CHIP)/io_hw.o 
 
 INCLUDE_DIR = -I . -I .. -I ../../include -I ../../../include
-LIB_DIR = ../../lib/$(ARCH)/$(CHIP)
+LIB_DIRS = -L ../../lib/$(ARCH)/$(CHIP) -L ../../../lib/$(ARCH)/$(CHIP)
 
 LIBS = -llibdcc.a -llibpicutil.a # -luart
 
@@ -30,7 +30,7 @@ OPTIMIZE = -O3
 DEFS =
 
 CFLAGS = --use-non-free  -V -c -m$(ARCH) -p$(CHIP)  -opt-ext=o --std-sdcc99  $(INCLUDE_DIR)  $(SYMBOLS) 
-LDFLAGS = --use-non-free -V -opt-ext=o -m$(ARCH) -Wl-m -Wl-smy_$(CHIP).lkr -p$(CHIP) -L $(LIB_DIR) 
+LDFLAGS = --use-non-free -V -opt-ext=o -m$(ARCH) -Wl-m -Wl-smy_$(CHIP).lkr -p$(CHIP) $(LIB_DIRS) 
 CC = sdcc
 LD = sdcc 
 AS = gpasm 

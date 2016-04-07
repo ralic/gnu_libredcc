@@ -21,7 +21,7 @@
 
 #include <pic16regs.h>
 
-void init_io() {
+void init_io_hw() {
 
   #warning " so far only receiver_pic14.h makes sure the pullup is on."
 
