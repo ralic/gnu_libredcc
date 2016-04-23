@@ -18,14 +18,9 @@
  */
 
 /**
-<<<<<<< HEAD
- * \todo test ga with very high and very low address and with broadcast address
- * \todo test with optimidation -fess und with something with las
-=======
- * \file test ga with very high and very low address and with broadcast address
- * test with optimidation -fess und with something with las
->>>>>>> 31a8e5d500685a7859d28e55a9baee50d55d5eb7
- */ 
+   * \todo test ga with very high and very low address and with broadcast address
+   * \todo test with optimidation -fess und with something with las
+*/ 
 
 #ifndef DCC_H
 #define DCC_H 1
@@ -81,13 +76,9 @@ extern "C" {
   /** mimimal number of 1 bits u#in the preamble for the encoder for service mode */
   //#define SERVICE_MODE_PREAMBLE_MIN_LEN 20
 
-<<<<<<< HEAD
-
 
   /** the number of bits we are using in the preamble: */
-=======
-/** the number of bits we are using in the preamble: */
->>>>>>> 31a8e5d500685a7859d28e55a9baee50d55d5eb7
+
 
 #define ENCODER_PREAMBLE_LEN (ENCODER_PREAMBLE_MIN_LEN + 3)
 #define ENCODER_LONG_PREAMBLE_LEN (ENCODER_PREAMBLE_MIN_LEN + 3)
@@ -101,11 +92,6 @@ extern "C" {
    * minimal length of a dcc packet in bytes including the xor checksum:
    */
 #define MIN_PACKET_LEN 3
-
-<<<<<<< HEAD
-
-
-
 
   /** 
    * A struct to hold a dcc packet:
@@ -121,29 +107,9 @@ extern "C" {
     } pp; // the different packet type -- I would like to leave it an unnamed union, but then initialising it gets difficult.
   } dcc_packet;
 
-
   /**
      checks whether the packet is the idle packet, check with
      documentation.
-=======
-/** 
- * A struct to hold a dcc packet:
- */
-typedef struct {
-  uint8_t len;
-  union {
-    uint8_t byte[MAX_PACKET_LEN]; // addressing byte-wise
-    uint16_t packet2; // to deal with the two first bytes at the same time.
-    ba_packet ba; // for parsing as a ba packet.
-    mf_packet mf; // packet for multifunction (ie loco decoders) with long addresses
-    smd_packet sm; // service mode direct packet
-  } pp; // the different packet type -- I would like to leave it an unnamed union, but then initialising it gets difficult.
-} dcc_packet;
-
-/**
-  checks whether the packet is the idle packet, check with
-  documentation.
->>>>>>> 31a8e5d500685a7859d28e55a9baee50d55d5eb7
 
      The packet does not need to full fill any preconditions as it is
      assumed that this is the first check done because idle packages are
@@ -157,29 +123,24 @@ typedef struct {
 #define is_reset_packet(__packet) (					\
 				   (					\
 				    (__packet).pp.byte[0] == 0x00	\
-				     ) &&				\
+									) && \
 				   (					\
 				    (__packet).len == 3			\
-				     ) &&				\
+									) && \
 				   (					\
 				    (__packet).pp.byte[1] == 0x00	\
-				     ) &&				\
+									) && \
 				   (					\
 				    (__packet).pp.byte[2] == 0x00	\
-				     )					\
-				    )
+									) \
+									)
 
-
-<<<<<<< HEAD
 
   /// calulates and returns the xor_checksum of a dcc_packet
-=======
-/// calulates and returns the xor_checksum of a dcc_packet
 #ifdef SDCC_pic14
 #warning SDCC cannot compile this with const before packet
   uint8_t xor_checksum(const dcc_packet * packet);
 #else
->>>>>>> 31a8e5d500685a7859d28e55a9baee50d55d5eb7
   uint8_t xor_checksum(const dcc_packet  * const packet);
 #endif
 
@@ -192,17 +153,10 @@ typedef struct {
   uint16_t get_ba_address(const dcc_packet * const packet);
 #endif
 
-<<<<<<< HEAD
-
-  /// various packet:
-
+  /// various fixed packets:
   extern const dcc_packet idle_packet;
   extern const dcc_packet reset_packet;
-=======
-/// various fixed packets:
-extern const dcc_packet idle_packet;
-extern const dcc_packet reset_packet;
->>>>>>> 31a8e5d500685a7859d28e55a9baee50d55d5eb7
+
 
 #ifdef __cplusplus
 }

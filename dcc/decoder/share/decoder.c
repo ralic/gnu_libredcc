@@ -29,18 +29,7 @@
    3. and perhaps cannot well initialise structs
 */
 
-<<<<<<< HEAD
-/*  \todo make this a positive commanded */
-#ifndef __SDCC_pic14 
-#include <avr/wdt.h>
-#warning make this a positive definition of gcc/avr or make a common wdt.h file
-#elif defined __SDCC_pic14
-#else 
-#error architecruee not defined
-#endif
-=======
 #include <arch/wdt.h>
->>>>>>> 31a8e5d500685a7859d28e55a9baee50d55d5eb7
 #include <share/defs.h>
 #include <stdint.h>
 #include <dcc.h>
@@ -58,7 +47,7 @@
 #ifdef __AVR
 #include <util/delay.h>
 #include <avr/interrupt.h>
-#elif SDCC_pic14
+#elif __SDCC_pic14
 #include <arch/interrupt.h>
 #else 
 #error "Architecture not implemented"
