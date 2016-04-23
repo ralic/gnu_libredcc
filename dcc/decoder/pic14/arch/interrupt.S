@@ -56,7 +56,6 @@ _next_bit:
 	andwf _bit_buffer, w	; resulting bit is in w
 	bsf INTCON, GIE	
 
-	
 	bcf STATUS, C
 	rrf _bit_pointer, f	; can be done thread-safely outside
 				; the interruot-disable part, we
@@ -70,7 +69,6 @@ _next_bit:
 	;; set reagding an INTERNALT interrupt.
 INTERRUPT CODE 0x0004
 
-	
 	movwf WSAVE
 	swapf STATUS,w
 	movwf SSAVE

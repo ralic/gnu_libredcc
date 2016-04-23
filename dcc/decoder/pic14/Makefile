@@ -30,7 +30,7 @@ OPTIMIZE = -O3
 DEFS =
 
 CFLAGS = --use-non-free  -V -c -m$(ARCH) -p$(CHIP)  -opt-ext=o --std-sdcc99  $(INCLUDE_DIR)  $(SYMBOLS) 
-LDFLAGS = --use-non-free -V -opt-ext=o -m$(ARCH) -Wl-m -Wl-smy_$(CHIP).lkr -p$(CHIP) $(LIB_DIRS) 
+LDFLAGS = --use-non-free -V -opt-ext=o -m$(ARCH) -p$(CHIP) $(LIB_DIRS) # -Wl-m -Wl-smy_$(CHIP).lkr
 CC = sdcc
 LD = sdcc 
 AS = gpasm 

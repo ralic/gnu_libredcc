@@ -19,7 +19,7 @@
 #include <share/io.h>
 #include <arch/io_hw.h>
 
-#include <pic16regs.h>
+#include <pic14regs.h>
 
 void init_io_hw() {
 

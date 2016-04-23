@@ -22,6 +22,7 @@
 #include<stdint.h>
 
 #warning I must create a new linker script -- otherwise PCL might be pointing to the moon when interrupt is called    
+#warning check that the interrupt does pagesel at the correct places!
 
 #define sei() GIE = 1
 

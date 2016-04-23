@@ -49,7 +49,6 @@ extern "C" {
 #include <mf14.h>
 
   /// service mode packets
-
 #include <sm.h>
 
 /**
@@ -73,11 +72,8 @@ extern "C" {
 #define ENCODER_PREAMBLE_MIN_LEN 14
 #define ENCODER_LONG_PREAMBLE_MIN_LEN 20
 
-  /** mimimal number of 1 bits un the preamble for the encoder for service mode */
-  
+  /** mimimal number of 1 bits u#in the preamble for the encoder for service mode */
   //#define SERVICE_MODE_PREAMBLE_MIN_LEN 20
-
-
 
 /** the number of bits we are using in the preamble: */
 
@@ -94,10 +90,6 @@ extern "C" {
  */
 #define MIN_PACKET_LEN 3
 
-
-
-
-
 /** 
  * A struct to hold a dcc packet:
  */
@@ -111,7 +103,6 @@ typedef struct {
     smd_packet sm; // service mode direct packet
   } pp; // the different packet type -- I would like to leave it an unnamed union, but then initialising it gets difficult.
 } dcc_packet;
-
 
 /**
   checks whether the packet is the idle packet, check with
@@ -142,7 +133,6 @@ typedef struct {
   )
 
 
-
 /// calulates and returns the xor_checksum of a dcc_packet
 #ifdef SDCC_pic14
 #warning SDCC cannot compile this with const before packet
@@ -160,8 +150,7 @@ typedef struct {
   uint16_t get_ba_address(const dcc_packet * const packet);
 #endif
 
-/// various packet:
-
+/// various fixed packets:
 extern const dcc_packet idle_packet;
 extern const dcc_packet reset_packet;
 

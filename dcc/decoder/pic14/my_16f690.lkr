@@ -1,5 +1,3 @@
-// $Id$ 
-//
 // My linker command file for 16F690, difference to gputils supplied one is that we made
 // page1 PROTECTED so that all code goes into one page so that we can leave out PAGESEL commands especially in// in the interrupt service routine.
 

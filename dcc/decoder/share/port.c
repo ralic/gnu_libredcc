@@ -48,7 +48,7 @@ port_t ports[] = {
 #endif
 
 #elif defined SDCC_pic14
-#include <pic16regs.h>
+#include <pic14regs.h>
 #define _BV(__bit) (1 << (__bit))
 
 port_t ports[] = {
