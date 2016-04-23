@@ -40,7 +40,9 @@ static void unwind(void);
 
 int __init init(void) {
   
-  int ret = gpio_init();
+  int ret = 0;
+
+  //ret = gpio_init();
   if(ret) {
     return ret;
   }
@@ -48,7 +50,7 @@ int __init init(void) {
   init_level = init_gpio;
 
 
-  ret = dma_init();
+  //ret = dma_init();
   if(ret) {
     unwind();
     return ret;
@@ -71,6 +73,7 @@ int __init init(void) {
   /* 
      send a dummy packet!
   */
+  return ret;
 }
 
 static void unwind() {
@@ -84,14 +87,14 @@ static void unwind() {
   switch(init_level) {
   default:
   case init_pwm: 
-    buffer_unwind();
+    //buffer_unwind();
     pwm_unwind();
     //	pwm_free(pd); pwm_disable();
   case init_dma:
-    dma_unwind();
+    //dma_unwind();
     //		dma_unmap_sg(NULL, sgl, 1, DMA_MEM_TO_DEV);
   case init_gpio:
-    gpio_unwind();
+    //gpio_unwind();
   case init_nothing:  {
     // nothing to unwind 
   }

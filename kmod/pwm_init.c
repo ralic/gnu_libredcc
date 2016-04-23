@@ -4,37 +4,39 @@
 #include <asm/io.h> // for readl / writel
 #include <mach/platform.h> // for __io_address
 #include <linux/delay.h> // for udelay
-
+#include <linux/pwm.h>
 
 int __init pwm_init(void) {
 
   // now acquire pwm device (more elegant via pwm_get / device tree) \todo but I do not know how to get access to it.
 
-#if 0
+#if 1
 #define PWM_NUMBER 0
 
-  pd = pwm_request(PWM_NUMBER, "bcm2835-pwm"); // or use bcm2708-pwm or checkwith device tree -- is it inclded? and is the device tree copied to // also checl the pwm interfsce what it generally provides.
+  int init_level =0;
+
+
+  struct pwm_device* pd = pwm_get(NULL, "bcm2835-pwm"); //pwm_request(PWM_NUMBER, "bcm2835-pwm"); // or use bcm2708-pwm or checkwith device tree -- is it inclded? and is the device tree copied to // also checl the pwm interfsce what it generally provides.
   // \todo and is there a similar devietree method to get a pinctrl device?
     //pd = pwm_get(NULL, NULL);
     if(IS_ERR(pd)) {
       printk(KERN_ALERT "Requesting PWM %d failed with %ld.\n", PWM_NUMBER, PTR_ERR(pd));
-      unwind_setup(init_level);
+      //unwind_setup(init_level);
       return PTR_ERR(pd);
     }
-  init_level = level_got_pwm; 
 
 #define TICKS_NS 1000000000ul // 1sec
-  ret = pwm_config(pd, TICKS_NS / 2, TICKS_NS);
+  int ret = pwm_config(pd, TICKS_NS / 2, TICKS_NS);
   if(ret < 0) {
     printk(KERN_ALERT "Configuring PWM %d with %ld/%ld failed with %d.\n", PWM_NUMBER, TICKS_NS/2, TICKS_NS, ret);
-    unwind_setup(init_level);
+    //unwind_setup(init_level);
     return ret;
   }
   
   ret = pwm_enable(pd);
   if(ret < 0) {
     printk(KERN_ALERT "Enabling PWM %d failed with %d.\n", PWM_NUMBER, ret);
-    unwind_setup(init_level);
+    //unwind_setup(init_level);
     return ret;
   }
   
@@ -120,6 +122,7 @@ int __init pwm_init(void) {
 	printk(KERN_INFO "CM_PWMDIV: %x\n", readl(__io_address(CM_PWMDIV))); 
   */
 
+#endif
   return 0; // currently no error conditions foreseen.
 }
 
@@ -130,4 +133,4 @@ void pwm_unwind(void) {
   */
 }
 
-#endif
+
