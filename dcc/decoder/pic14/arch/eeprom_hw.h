@@ -38,7 +38,7 @@
 #define EEPROMHW_H 1
 
 #include <pic/picutil.h>
-#include <share/io.h> // because of "PORTS", perhaps a file "config.h" would be a better place?
+#include <share/port.h> // because of "PORTS", perhaps a file "config.h" would be a better place?
 
 extern __code uint16_t __at (0x2100) port_id_eeprom[NUM_PORTS];
 

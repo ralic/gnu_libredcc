@@ -41,6 +41,6 @@
 #endif
 
 const dcc_packet reset_packet = {
-  len: 3,
-  {byte: {0, 0, 0}}
+  .len = 3,
+  {.byte = {0, 0, 0}}
 };

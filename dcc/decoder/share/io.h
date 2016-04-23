@@ -20,8 +20,7 @@
 #define IOIO_H
 
 #include <stdint.h>
-#include <chip.h>
-
+#include <arch/chip.h>
 /**
  * counts the number of button presses of programme button 
  */
