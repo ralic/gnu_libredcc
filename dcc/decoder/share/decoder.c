@@ -29,10 +29,11 @@
    3. and perhaps cannot well initialise structs
 */
 
-#ifndef SDCC_pic14
+/*  \todo make this a positive commanded */
+#ifndef __SDCC_pic14 
 #include <avr/wdt.h>
 #warning make this a positive definition of gcc/avr or make a common wdt.h file
-#elif defined SDCC_pic14
+#elif defined __SDCC_pic14
 #else 
 #error architecruee not defined
 #endif

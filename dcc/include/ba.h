@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014-2016 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -14,13 +14,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
+ * along with LibreDCC. If not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef BA_H
 #define BA_H 1
-
-#include<stdint.h>
-//#include <dcc.h>
 
 /********** Basic Accessory **********/
 

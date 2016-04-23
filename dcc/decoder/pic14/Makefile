@@ -29,7 +29,7 @@ SYMBOLS = \
 OPTIMIZE = -O3
 DEFS =
 
-CFLAGS = -V -c -m$(ARCH)14 -p$(CHIP)  -opt-ext=o --std-sdcc89  $(INCLUDE_DIR)  $(SYMBOLS) # --use-non-free 
+CFLAGS = -V -c -m$(ARCH)14 -p$(CHIP)  -opt-ext=o --std-sdcc89  $(INCLUDE_DIR)  $(SYMBOLS) --use-non-free 
 LDFLAGS = -V -opt-ext=o -m$(ARCH)14 -Wl-m -Wl-smy_$(CHIP).lkr -p$(CHIP) -L $(LIB_DIR) 
 CC = sdcc
 LD = sdcc 
