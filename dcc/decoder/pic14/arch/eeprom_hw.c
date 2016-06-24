@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014-2016 André Grüning <libredcc@email.de>
+ * Copyright 2014 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -16,36 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with LibreDCC. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ERROR_H
-#define ERROR_H 1
+#include "eeprom_hw.h"
 
-#if DEBUG 
-// size_error is just a constant to get the maximum used value of this enum
+  // sdcc yields an error if we do not initialised the eepromvars!
+ __code uint16_t __at (0x2100) port_id_eeprom[NUM_PORTS] = {0xFFFF};
 
-enum {
-  no_error,
-  preamble_too_short,
-  checksum_nonzero,
-  dcc_fall_through,
-  //  size_errors,
-  lost_bit,
-  packet_too_long,
-  size_error,
-  no_reset_source,
-  NUM_ERRORS};  
-
-extern char* error_msg[];
-
-#include <uart.h>
-#define INFO(str) fputs((str), &uart)
-#define ERROR(code) fputs(error_msg[(code)], &uart)
-
-#else // debug not defined!
-#define ERROR(code) do{} while(0)
-#define INFO(str) do{} while(0)
-#endif
-
-#define RESET_ERROR(dummy) do{} while(0)
-#define WARNING(str) INFO(str)
-
-#endif

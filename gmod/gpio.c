@@ -5,12 +5,13 @@
 #warning "DUMMY is on!"
 #define GPIO_FSEL_ALT5 -1
 #else
-#include <mach/gpio.h> // @todo Why do I need to include this? 
+//#include <mach/gpio.h> // @todo Why do I need to include this? 
 #endif
 
 #include <linux/gpio.h>
 
 #include "gpio.h"
+#include "defs.h"
 
 static int pwm_pin =   18; // possible are GPIOs 12 , 40, 18 (pwm0) and
 // 13, 19 for pwm1 -- only 18 is possible on

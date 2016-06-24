@@ -34,13 +34,41 @@
  * You should have received a copy of the GNU General Public License
  * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include<dcc.h>
+#ifndef ERROR_H
+#define ERROR_H 1
 
-#ifdef SDCC_pic14
-#warning does not work with pick!
+//! $Id$
+
+
+#include <arch/io_hw.h>
+#include <arch/chip.h>
+
+// codes for errors and warnings:
+enum {no_error, preamble_too_short, checksum_nonzero, dcc_fall_through};
+
+#ifdef DEBUG 
+
+#define ERROR(code) set_error_indicator(code)
+#define RESET_ERRORS(dummy) clear_error_indicators()
+
+#else 
+
+#define ERROR(code) do{} while(0)
+#define RESET_ERROR(dummy) do{} while(0)
+
 #endif
 
-const dcc_packet idle_packet = {
- .len =  3,
- {.byte = {0xFF, 0, 0xFF}}
-};
+#if DEBUG >= 2
+#define WARNING(code) set_warning_indicator(code)
+#else
+#define WARNING(code) do{} while(0)
+#endif
+
+#if DEBUG >= 3
+#define INFO(str) do{} while(0) // we have no way of sending messages
+#else
+#define INFO(str) do{} while(0) 
+#endif
+
+
+#endif

@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014-2016 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -22,13 +22,6 @@
 #include<share/io.h>
 #include<avr/io.h>
 
-
-//! delete this?
-// extern volatile uint8_t io_ticks;
-// #define io_tick() io_ticks
-// #define acknowledge_io_tick() io_ticks--
-
-
 /**
    pseudo functions to deal with timing of io (port) updates:
    If io_tick() returns true, then we should if possible run the function that updates the outputs.
@@ -36,22 +29,24 @@
  */
 extern volatile uint8_t io_ticks;
 #define io_tick() io_ticks
-#define acknowledge_io_tick() io_ticks--
-
+#define acknowledge_io_tick() (io_ticks--)
 
 /**
- the pseudo function that returns the state of the programming button.
+   the pseudo function that returns the state of the programming button.
 */
-#define get_progbutton() (PINx(PROGPORT) & _BV(PROGPIN)) //! @todo should think switching this off if we only have a helper button.
+#if defined PROGPIN
+#define get_progbutton() (PINx(PROGPORT) & _BV(PROGPIN)) 
+#else
+#warning No Prog Button!
+#define get_progbutton() 1
+#endif
 
 
-extern const uint8_t output_mask[];
+//extern const uint8_t output_mask[];
 
 #define make_output(_output) do { DDRx(IOPORT) |= _output; } while(0)
 #define set_output(_output) do { PORTx(IOPORT) |= _output; } while (0)
 #define clear_output(_output) do { PORTx(IOPORT) &= ~(_output); } while(0)
-
-
 
 /**
    pseudo function that samples (reads) the input with the DCC signal.
@@ -66,5 +61,3 @@ extern const uint8_t output_mask[];
 #define __power_timer_enable(__x) power_timer ## __x ## _enable()
 
 #endif
-
-

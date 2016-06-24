@@ -34,13 +34,12 @@
  * You should have received a copy of the GNU General Public License
  * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include<dcc.h>
+#ifndef EEPROMHW_H
+#define EEPROMHW_H 1
 
-#ifdef SDCC_pic14
-#warning does not work with pick!
+#include <pic/picutil.h>
+#include <share/port.h> // because of "PORTS", perhaps a file "config.h" would be a better place?
+
+extern __code uint16_t __at (0x2100) port_id_eeprom[NUM_PORTS];
+
 #endif
-
-const dcc_packet idle_packet = {
- .len =  3,
- {.byte = {0xFF, 0, 0xFF}}
-};

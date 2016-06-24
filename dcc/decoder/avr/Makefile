@@ -12,8 +12,6 @@ PROGRAMMER = buspirate
 F_CPU = 8000000
 CHIP = t45
 
-
-
 # default settings:
 ARCH ?= avr
 MCU_TARGET ?= atmega328p
@@ -21,19 +19,21 @@ PROGRAMMER ?= arduino
 F_CPU ?= 16000000
 DEVICE ?=/dev/ttyACM0
 CHIP ?= m328p
+SHARE = ../share
 
 
-PRG ?= decoder
+PRG ?= decoder_$(CHIP)
 
-OBJ = init_avr.o reset.o interrupts.o ../share/compose_packet.o eint0_isr.o ../share/$(PRG).o error_hw.o ../share/bitqueue.o ../share/port.o ../share/switch.o
+OBJ = init_avr.o reset.o interrupts.o $(SHARE)/compose_packet.o eint0_isr.o $(SHARE)/decoder.o error_hw.o $(SHARE)/bitqueue.o $(SHARE)/port.o $(SHARE)/switch.o
 
-ifeq ($(PRG), decoder)
-OBJ += ../share/io.o io_hw.o eeprom_hw.o
+ifeq ($(PRG), decoder_$(CHIP))
+OBJ += $(SHARE)/io.o io_hw.o eeprom_hw.o
 endif	
 
-# \todo this is not strictly necessary -- just a workaround -- remove these from sniffer, and make main so that it also works with sniffer
-ifeq ($(PRG), sniffer)
-#OBJ += ../share/io.o io_hw.o 
+# \todo this is not strictly necessary -- just a workaround -- remove
+# these from sniffer, and make main so that it also works with sniffer 
+ifeq ($(PRG), sniffer_$(CHIP))
+#OBJ += $(SHARE)/io.o io_hw.o 
 endif	
 
 
@@ -134,8 +134,9 @@ hex: $(PRG).hex
 # Rules for Uploading to the Arduino board:
 upload: all
 #	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Ueeprom:w:$(PRG)_eeprom.hex
-	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Uflash:w:$(PRG).elf  -Uflash:w:$(PRG).elf 
+	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Uflash:w:$(PRG).elf  #-Uflash:w:$(PRG).elf 
 
-upload1: all
-#	avrdude -p m328p -c $(PROGRAMMER) -P /dev/ttyACM1 -Ueeprom:w:$(PRG)_eeprom.hex
-	avrdude -p $(CHIP) -c $(PROGRAMMER) -P /dev/ttyACM1 -Uflash:w:$(PRG).elf  -Ueeprom:w:$(PRG).elf
+lfuse: all
+	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Ulfuse:w:$(PRG).elf  #-Uflash:w:$(PRG).elf -Ueeprom:w:$(PRG).elf
+
+fuses: lfuse

@@ -38,18 +38,18 @@
  * The DCC packet itself to be parsed elsewhere, in \code handle_packet
  */
 
-#include "compose_packet.h"
-#include <error.h>
+#include <share/compose_packet.h>
+#include <arch/error.h>
 
 #ifdef DEBUG
-#include <avr/io.h>
+//#include <avr/io.h>
 #endif
 
 #ifdef NO_STRUCT_INIT
 dcc_packet packet; 
 #else
 //! initialises len to 0 and leaves the rest undefined 
-dcc_packet packet = {len: 0}; 
+dcc_packet packet = {.len = 0}; 
 #endif 
 
 #ifdef NO_LOCAL_STATICS

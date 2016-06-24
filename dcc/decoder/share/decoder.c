@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014-2016 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -23,30 +23,32 @@
 //! \todo Some centrals might send activate packets continuously (LEnz), so only the first should be reacted to... (so we need to store our state...) -- what is the source of this? 
 //! @todo: change attributes to near, pure, const
 
-/* there were 2 problems with sdcc: 
+/* there were 3 problems with sdcc: 
    1. does not initialise static locals and 
    2. could not deal with const pointer in certain circumstance 
-   3. and perhals cannot well initialise structs
+   3. and perhaps cannot well initialise structs
 */
 
-#include <avr/wdt.h>
+#include <arch/wdt.h>
 #include <share/defs.h>
 #include <stdint.h>
 #include <dcc.h>
-#include <eeprom_hw.h>
-#include <error.h>
+#include <arch/eeprom_hw.h>
+#include <arch/error.h>
+#include <share/io.h>
 
 #include "decoder.h"
 #include <share/bitqueue.h>
-#include <avr/io_hw.h> // for io_tick(), acknowledge_io_tick
+#include <arch/io_hw.h> // for io_tick(), acknowledge_io_tick
 
-#include <reset.h>
+#include <arch/reset.h>
 #include <share/port.h>
 
 #ifdef __AVR
 #include <util/delay.h>
 #include <avr/interrupt.h>
-#elif SDCC_pic14
+#elif __SDCC_pic14
+#include <arch/interrupt.h>
 #else 
 #error "Architecture not implemented"
 #endif
@@ -55,21 +57,19 @@
 inline static void handle_ba_opmode() {
 
   const uint16_t portid = BA_PORTID(packet);
+  uint8_t i = 0;
 
-  uint8_t i;
   for(i = 0; i < NUM_PORTS; i++) {
+    
+    #warning have to test the below -- introduced because it is being swallowed by sdcc
     if(ports[i].id == portid) {
       // bei vorherigem button progmode muessen wir noch ein wenig
       // warten bevor wir das naechste Packet annehmen?  
-      ports[i].activate(ports + i, packet.pp.ba.gate); 
-      //      INFO("Execute BA packet" EOLSTR);
-#if DEBUG
-      fprintf(&uart, "for port/gate %u/%u\n", i, packet.pp.ba.gate);
-#endif
+      ports[i].activate(i, packet.pp.ba.gate); 
       return; // this precludes having two outputs programmed to the same address
     }
   }
-  INFO("BA Packet not for us" EOLSTR);
+  //INFO("BA Packet not for us" EOLSTR);
 }
 
 /*!
@@ -100,7 +100,7 @@ inline static void handle_ba_progmode(const uint8_t port) {
 #endif
 
 #ifdef DEBUG
-    fprintf(&uart, "for port %u, address id %x\n", port, portid);
+    // fprintf(&uart, "for port %u, address id %x\n", port, portid);
 #endif
 
   }
@@ -138,7 +138,13 @@ inline static void handle_ba_packet() {
     handle_ba_opmode();
   }
 }
-  
+
+
+#ifdef NO_LOCAL_STATICS
+  enum {opmode, premode, smmode, postmode};
+  static uint8_t previous_mode = opmode;
+#endif
+
 void handle_packet() {
 
   //  INFO("Got valid packet" EOLSTR);
@@ -147,8 +153,9 @@ void handle_packet() {
     accept any opmode commands that could also be progmode commands...
   */
   //typedef enum {opmode, premode, smmode, postmode} modes; 
-  enum {opmode, premode, smmode, postmode};
+
 #ifndef NO_LOCAL_STATICS
+  enum {opmode, premode, smmode, postmode};
   static uint8_t previous_mode = opmode;
 #endif
   uint8_t next_mode = opmode; // default is the next mode is opmode
@@ -214,13 +221,19 @@ void init_decoder() {
     ports[i].id = eeprom_read_word(&(port_id_eeprom[i]));
   }
 }
-
+#ifdef SDCC_pic14
+void pic_main(void) {
+#else
+#ifndef HAS_NO_INIT
 int main(void) __attribute__((noreturn));
+#endif
 int main(void) {
+#endif 
 
-  sei();
-  INFO("Starting " __FILE__ "\n");
+sei();
+INFO("Starting " __FILE__ "\n");
 
+#if 0
   if(MCUSR_copy & _BV(PORF))
     INFO("Power On Reset\n");
   if(MCUSR_copy & _BV(EXTRF))
@@ -231,13 +244,15 @@ int main(void) {
     INFO("Watchdog Timeout Reset\n");
   if(MCUSR == 0) 
     ERROR(no_reset_source);
+#endif
         
   //! @todo loop can be made more power efficient by sending to sleep as currently done in exit.
 
   wdt_enable(WDTO_120MS);
   wdt_reset();
 
-  while(1) {
+
+while(1) {
 #if DEBUG
     if(bit_pointer > (1 << (3))) {
       INFO("More than 3\n");

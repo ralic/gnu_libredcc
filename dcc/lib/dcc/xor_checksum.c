@@ -1,5 +1,5 @@
 /* 
- *  Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014-2016 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -14,7 +14,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
+ * along with LibreDCC. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "dcc.h"
 
@@ -31,7 +31,12 @@
  *
  * Perhaps implementation as a macro would also make sense -- especially for PIC
  */
-uint8_t xor_checksum(const dcc_packet const * packet) {
+#ifdef SDCC_pic14
+#warning SDCC cannot compile this with const before packet
+uint8_t xor_checksum(const dcc_packet * packet);
+#else
+uint8_t xor_checksum(const dcc_packet * const packet) {
+#endif
 
   uint8_t i = packet->len;
   uint8_t checksum = 0;
