@@ -7,7 +7,10 @@
 #define PWM_BASE 0
 #else
 #include <mach/platform.h> // for PWM_BASE
+#include "defs.h"
 #endif
+
+
 
 // static struct pwm_device *pd;
 

@@ -40,6 +40,10 @@
 #include "dma.h"
 #include "buffer.h"
 
+#include "defs.h"
+
+
+
 /**** module parameters ****/
 
 

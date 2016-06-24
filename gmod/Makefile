@@ -2,9 +2,9 @@
 #ccflags-y += -D DUMMY
 
 
-
-#ARCH=arm
-#CROSS_COMPILE=arm-linux-gnueabi-
+BUILD=build_new/linux/
+ARCH=arm
+CROSS_COMPILE=arm-linux-gnueabi-
 
 #AS		= $(CROSS_COMPILE)as
 #LD		= $(CROSS_COMPILE)ld
@@ -25,11 +25,11 @@ kdcc-objs += dcc.o gpio.o pwm.o dma.o buffer.o
 
 
 all:
-#	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
-	make ARCH=arm CROSS_COMPILE=arm-linux-gnueabi- -C ~/build M=$(PWD) modules
+#	make -C /lib/modules/$(shell uname -r)/$(BUILD) M=$(PWD) modules
+	make ARCH=arm CROSS_COMPILE=arm-linux-gnueabi- -C ~/$(BUILD) M=$(PWD) modules
 
 
 clean:
-#	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
-	make ARCH=arm -C ~/build M=$(PWD) clean
+#	make -C /lib/modules/$(shell uname -r)/$(BUILD) M=$(PWD) clean
+	make ARCH=arm -C ~/$(BUILD) M=$(PWD) clean
 

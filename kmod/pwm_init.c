@@ -13,7 +13,7 @@ int __init pwm_init(void) {
 #if 0
 #define PWM_NUMBER 0
 
-  pd = pwm_request(PWM_NUMBER, "bcm2835-pwm"); // or use bcm2708-pwm or checkwith device tree -- is it inclded? and is the device tree copied to // also checl the pwm interfsce what it generally provides.
+  pd = pwm_request(PWM_NUMBER, "pwm-bcm2835"); // or use bcm2708-pwm or checkwith device tree -- is it inclded? and is the device tree copied to // also checl the pwm interfsce what it generally provides.
   // \todo and is there a similar devietree method to get a pinctrl device?
     //pd = pwm_get(NULL, NULL);
     if(IS_ERR(pd)) {

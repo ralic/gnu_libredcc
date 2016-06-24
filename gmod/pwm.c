@@ -14,6 +14,7 @@
 
 #include <linux/delay.h> // for udelay
 
+#include "defs.h"
 
 int __init pwm_init(void) {
 
