@@ -32,6 +32,8 @@ char* r_fgets(char* str, const uint8_t size, FILE* const stream);
 #warning EOL is currently \r
 #define EOLSTR "\r"
 #define EOLCHAR '\r'
+  //#define EOLSTR "\n"
+  //#define EOLCHAR '\n'
 
 #define FPUTL(string, fileptr)			\
   do {						\

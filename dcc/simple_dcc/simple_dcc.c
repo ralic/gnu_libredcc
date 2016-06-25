@@ -223,11 +223,11 @@ int main() {
 
   while(1) {
 
+    FPUTL("P> ",&uart); // send a prompt
+
     r_fgets(str, INPUT_LINE_LEN + 1, &uart); // this did block, right?
 					     // -- yes.
     
-
-
 #ifdef TEST
     fputs("Raw: ", &uart);
     fputs(str, &uart); fputc(EOLCHAR, &uart); // just an echo for testing!
@@ -303,8 +303,13 @@ int main() {
       case 'C': 
 	if(is_dcc_on()) program_cv(argc, argv);
 	break;
+      case 'S':
+	// output status -- to be done
+	FPUTL(OK,&uart); 
+	break;
       default:
-	FPUTL("Unknown Command.", &uart); // Command token too long or
+	fputc(cmd[0], &uart);
+	FPUTL(": Unknown Command.", &uart); // Command token too long or
 					    // empty. -- this seems to
 					    // unsettle the arduino  -- what did I mean with "unsettle"? I think I dealt with the case of empty token above
       }
