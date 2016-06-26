@@ -22,19 +22,23 @@
 
     For ROCRAIL we need cmds:
 
+
+    general:
+    - "S": return status -- simply returns "OK".
+
     running:
     - "-": Power Off
     - "+": Power ßOn
     - "O": Send DCC packet given as a sequence of hex bytes.
     
     programming:
-    - "C" -- direct mode programming -- write only
-    - "V" -- obsolete (but required by NMRA) -- implementation not implemented.
+    - "C" -- direct bit mode programming -- implementation not implemented, we execute direct programming
+    - "V" -- obsolete (but required by NMRA) -- implementation not implemented, we execute direct programming
 
     extensions:
 
-    - "M" -- direct mode programming (ie CVs are programmed direct) --
-      to be implemented
+    - "M" -- direct mode programming (ie CVs are programmed direct)
+
 
 */
 
@@ -301,6 +305,8 @@ int main() {
 	FPUTL(OK,&uart); // is this answer expected according to the sprog manual?
 	break;
       case 'C': 
+      case 'V':
+      case 'M':
 	if(is_dcc_on()) program_cv(argc, argv);
 	break;
       case 'S':
