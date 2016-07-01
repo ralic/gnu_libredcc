@@ -1,8 +1,10 @@
 # comment the following line out for real.
 #ccflags-y += -D DUMMY
 
+BUILD=linux-e88b69aa792dbe2b289ff528c0d07303068aa0aa
+#BUILD=build_new/linux/
+#BUILD=linux-headers-4.4.0-1-rpi
 
-BUILD=build_new/linux/
 ARCH=arm
 CROSS_COMPILE=arm-linux-gnueabi-
 
@@ -19,9 +21,9 @@ CROSS_COMPILE=arm-linux-gnueabi-
 #DEPMOD		= /sbin/depmod
 
 #obj-m += dcc.o pwm-bcm2835.o pwm_init.o
-obj-m += kdcc.o
+obj-m += kdcc.o test_pwm.o
 kdcc-objs += dcc.o gpio.o pwm.o dma.o buffer.o
-
+test_pwm-objs+=t_pwm.o
 
 
 all:
