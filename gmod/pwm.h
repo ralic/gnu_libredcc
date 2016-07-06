@@ -1,6 +1,12 @@
 #ifndef PWM_H
 #define PWM_H
 
+#include <linux/pwm.h>
+
+extern struct bcm2835_pwm *pwm;
+extern struct pwm_device *pd;
+
+
 int pwm_init(void);
 void pwm_unwind(void);
 

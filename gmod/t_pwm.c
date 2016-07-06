@@ -15,18 +15,6 @@
 /*** copy from pwm module ****/
 
 
-struct bcm2835_pwm {
-        struct pwm_chip chip;
-        struct device *dev;
-        unsigned long scaler;
-        void __iomem *base;
-        struct clk *clk;
-};
-
-static inline struct bcm2835_pwm *to_bcm2835_pwm(struct pwm_chip *chip)
-{
-        return container_of(chip, struct bcm2835_pwm, chip);
-}
 
 
 
@@ -76,13 +64,13 @@ int __init test_pwm_init(void) {
 
   ret = pwm_config(pd, 1000000, 2000000);
   if(ret) {
-    printk(KERN_ALERT "Config PWM %d failed with %ld.\n", PWM_NUMBER, ret);
+    printk(KERN_ALERT "Config PWM %d failed with %d.\n", PWM_NUMBER, ret);
     return ret;
   }
 
   ret = pwm_enable(pd);
   if(ret) {
-    printk(KERN_ALERT "Enableing PWM %d failed with %ld.\n", PWM_NUMBER, ret);
+    printk(KERN_ALERT "Enableing PWM %d failed with %d.\n", PWM_NUMBER, ret);
     return ret;
   }
 
@@ -97,7 +85,7 @@ int __init test_pwm_init(void) {
   // does not work: the pwm does not come on -- set gpio pin?
 
 
-  struct bcm2835_pwm *pc = to_bcm2835_pwm(pd);
+  struct bcm2835_pwm *pc = to_bcm2835_pwm(pd->chip);
 
   printk(KERN_INFO __FILE__ " PWM base address: %x\n", pc);
 

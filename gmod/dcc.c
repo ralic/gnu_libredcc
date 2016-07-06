@@ -62,7 +62,7 @@ static struct device* device = NULL;
 
 /** true if we are currently producing an output signal, false
     otherwise. */
-static bool signal = true;
+static bool signal = false;
 
 
 /** encodes the level of resource initialisation and allcation we have
@@ -191,17 +191,17 @@ static ssize_t show_signal(struct device *dev, struct device_attribute *attr, ch
 
 static ssize_t store_signal(struct device *dev, struct device_attribute *attr, char *buf, size_t count) {
 
-  // insert here dma_pause and dma_resume, or stop the pwm directly?
-
-  u32 pwm_ctl = readl(__io_address(PWM_BASE + PWM_CTL));
+  // delete u32 pwm_ctl = readl((pwm->base + PWM_CTL));
 
 
   if (strncmp("on", buf, 2) == 0) {
-    writel(pwm_ctl | PWEN1, __io_address(PWM_BASE + PWM_CTL)); 
+    pwm_enable(pd);
+    // delete: writel(pwm_ctl | PWEN1, (pwm->base + PWM_CTL)); 
     signal = true;
   }
   else {
-    writel(pwm_ctl & ~(PWEN1), __io_address(PWM_BASE + PWM_CTL)); 
+    pwm_disable(pd); 
+    // delete: writel(pwm_ctl & ~(PWEN1), (pwm->base + PWM_CTL)); 
     signal = false;
   }
 
@@ -267,6 +267,7 @@ int __init dcc_init(void) {
 
   /*** init dma resources we require *****/
 
+#if 1
   ret = gpio_init(); // could also be given the device structure.
   if (ret < 0) {
     printk(KERN_ERR "failed to acquire gpio pin.\n");
@@ -274,7 +275,7 @@ int __init dcc_init(void) {
     return ret;
   }
   init_level = level_gpio;
-
+#endif 
   /**** acquire pwm resources ****/
   ret = pwm_init(); // could also be given the device structure as
 		      // an argument.
@@ -319,8 +320,10 @@ static void unwind(void) {
     dma_unwind();
   case level_pwm:
     pwm_unwind();
+#if 1
   case level_gpio:
     gpio_unwind();
+#endif
   case level_sysfs:
     device_remove_file(device, &dev_attr_signal);
   case level_device:

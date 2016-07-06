@@ -95,7 +95,7 @@ int __init gpio_init(void) {
   #warning commented out -- just for sake of compilation -- needs to be replaced by using pinctrl
   //  ret = bcm2708_gpio_set_function(gc, pwm_pin, GPIO_FSEL_ALT5);
   if (ret) {
-    printk(KERN_ALERT "Setting up GPIO %d as function %d failed with %d.\n", pwm_pin, GPIO_FSEL_ALT5, ret);
+    printk(KERN_ALERT "Setting up GPIO %d as function %d failed with %d.\n", pwm_pin,GPIO_FSEL_ALT5, ret);
     gpio_unwind();
     return ret;
   }
