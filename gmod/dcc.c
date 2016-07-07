@@ -27,14 +27,8 @@
 #include <linux/device.h>
 #include <linux/dma-mapping.h>
 
-#include <asm/io.h> // for readl / writel
-#include <mach/platform.h> // for __io_address
 #include "pwm.h"
-
-
-
-#include "dcc.h" // \todo inc
-//#include "../dcc/simple_dcc/unix/dcc_encoder_hw.h" \todo use this include file.
+#include "dcc.h" // \todo include "../dcc/simple_dcc/unix/dcc_encoder_hw.h" 
 #include "gpio.h"
 #include "pwm.h"
 #include "dma.h"
@@ -46,22 +40,19 @@
 
 /**** module parameters ****/
 
-
-/// major device number
 static int major = DEVICE_MAJOR; 
 module_param(major, int, S_IRUSR | S_IRGRP);
-MODULE_PARM_DESC(major, "Major device number used for " DEVICE_NAME " device.");
+MODULE_PARM_DESC(major, "Major device number of " DEVICE_NAME " device.");
 
-/**** module global variable -- \todo perhaps better in a device structure? */
+/**** module global variables -- \todo perhaps better in a device structure? */
 
 /// \todo what is the class name used for?
-static struct class* class = NULL;
+static struct class* class;
 
 /// \todo shall I do my own device structure
-static struct device* device = NULL;
+static struct device* device;
 
-/** true if we are currently producing an output signal, false
-    otherwise. */
+/** true if we are currently producing an output signal, false otherwise. */
 static bool signal = false;
 
 
@@ -69,23 +60,22 @@ static bool signal = false;
     successfully done. 
     \todo for some of the resource there is probably manage allocation. */
 static enum {level_nothing, level_chrdev, level_class, level_device, level_sysfs, 
-	     level_gpio, level_pwm, level_dma, 
+	     level_pwm, level_dma, 
 	     level_running} init_level = level_nothing;
 
-/** function to release / undo resource allocation.*/
+/** release resources.*/
 static void unwind(void); 
 
 
-/**** device fops ****/
+/**** fops ****/
 
-/// atomic flag to indicate whether dcc device is in use or available. 
 static atomic_t available = ATOMIC_INIT(1); 
 
 /** open the dcc device. Allow only one client have device open at a
     time.
 
-    \todo deny  opening for writing
-    \todo allow several openers because in the end all is reentrend up
+    \todo deny opening for reading
+    \todo allow several writers because in the end all is reentrend up
     \todo move all the initialise from init to open.
     \todo up to the point where we commit to DMA? -- make it reentrent.
 */
@@ -95,9 +85,7 @@ static int open (struct inode * i, struct file * f) {
     atomic_inc(&available); 
     return -EBUSY; 
   }
-
   nonseekable_open(i,f); 
-  printk(KERN_INFO DEVICE_NAME " opened.\n");
   return 0;
 }
 
@@ -108,72 +96,43 @@ static int open (struct inode * i, struct file * f) {
 static int release (struct inode * i, struct file * f) {
 
   atomic_inc(&available);
-  printk(KERN_INFO DEVICE_NAME " closed.\n");
-  
   return 0;
 }
 
-/** @todo should block if no data available (from [bigbook]?)
-    @todo just give back chuncks of data that are convenient (think of
-    IAV implementation)
-    
-    Currently does nothing as we do not intend to read much from here.
-*/
-/* static ssize_t read (struct file * f , char __user * u, size_t s, loff_t * l) { */
- 
-/*   printk(KERN_INFO DEVICE_NAME " read attempt.\n"); */
-/*   return -EINVAL; */
-/* } */
-
-/** 
-    @todo
-    - must be reentrant due to copy_user which can wait.
-    - could I block? Yes, no problems with that?
-    - If I accepted less bytes than count the caller will most
-    probably retry immediately -- ie the driver will be stuck as it is
-    expecting more bytes,  
-    @todo perhaps just raise a warning if the data to be send is not a
-    multiple of the dma channel width.
-    @todo was there a convention to first return 0 bytes and the an error?
-*/
-
-#define WIDTH sizeof(u32) // \todo get this value direct from the DMA headers
-//#define ROUNDUP(_size, _width) ( ( ( (_size) + (_width) - 1) / (_width) ) * (_width) )
-
 static ssize_t write (struct file * f, const char __user * user, size_t size, loff_t * l ) {
 
-  if(size > PAGE_SIZE) size = PAGE_SIZE; 
-  if(size % WIDTH) 
-    printk(KERN_INFO "Submitting a number of bytes not aligned with width of DMA channel"); 
+  u32* data;
+  int written;
+  dma_addr_t dma_handle;
 
-  u32 *data = kmalloc(size, GFP_DMA | GFP_KERNEL); // \todo replace with pool?
+  if(size > PAGE_SIZE) size = PAGE_SIZE; 
+  if(size % sizeof(*data)) 
+    printk(KERN_WARNING "Submitting a number of bytes not aligned with width of DMA channel"); 
+
+  data = kmalloc(size, GFP_DMA | GFP_KERNEL); // \todo replace with pool?
   if(data == NULL) {
-    printk(KERN_INFO "No DMA mappable memory.\n");
-    // block if no dma mappable memory -- most probably not necessary for DCC application
+    printk(KERN_ERR "No DMA mappable memory.\n");
+    // \todo block if no dma mappable memory?
     return -ENOMEM;
   }
 
-  int written = size - copy_from_user(data,user,size); // \todo can copy_from_user return an error?
+  written = size - copy_from_user(data,user,size); // \todo can copy_from_user return an error?
 
-  dma_addr_t dma_handle = dma_map_single(NULL, data, written, DMA_MEM_TO_DEV); // add the device -- but which? PWM?
+  dma_handle = dma_map_single(NULL, data, written, DMA_MEM_TO_DEV); // add the device -- but which? PWM?
   if (dma_mapping_error(NULL, dma_handle)) { // first argument is dev?
-    printk(KERN_INFO "Can't map to DMA address space.");
+    printk(KERN_ERR "Can't map to DMA address space.");
     // block if no mapping into DMA space?
     kfree(data);
     return -ENOMEM; // or return value of mapping error?
   } 
 
   submit_dma_single(dma_handle, written, data);
-
-  //printk(KERN_INFO DEVICE_NAME ": actually written %x bytes to DMA\n", written);
-
   return written;
 
 }
 
 /// file operations this module supports.
 static struct file_operations fops = {
-  .read = NULL, 
   .owner = THIS_MODULE,
   .write = write,
   .open = open,
@@ -191,23 +150,14 @@ static ssize_t show_signal(struct device *dev, struct device_attribute *attr, ch
 
 static ssize_t store_signal(struct device *dev, struct device_attribute *attr, char *buf, size_t count) {
 
-  // delete u32 pwm_ctl = readl((pwm->base + PWM_CTL));
-
-
   if (strncmp("on", buf, 2) == 0) {
     pwm_enable(pd);
-    // delete: writel(pwm_ctl | PWEN1, (pwm->base + PWM_CTL)); 
     signal = true;
   }
   else {
     pwm_disable(pd); 
-    // delete: writel(pwm_ctl & ~(PWEN1), (pwm->base + PWM_CTL)); 
     signal = false;
   }
-
-
-  printk(KERN_INFO DEVICE_NAME " signal generation switched %s.\n", signal ? "on" : "off");
-
   return count;
 }
 
@@ -217,13 +167,14 @@ static DEVICE_ATTR(signal, S_IWUSR | S_IRUSR | S_IRGRP | S_IWGRP, show_signal, s
 
 /**** lifecycle functions of the module ****/
 
-/** \todo aquicre resource only in open **/
 int __init dcc_init(void) {
 
   int ret = 0;
   
   /// setup chardev
   /// \todo do we need this as we are creating a new device anyway?
+
+#if 1
   major = register_chrdev(major, DEVICE_NAME, &fops);
   if (major < 0) {
     printk(KERN_ERR "Registering device " DEVICE_NAME " failed with %d\n", major);
@@ -232,10 +183,12 @@ int __init dcc_init(void) {
   }
   init_level = level_chrdev;
   printk(KERN_INFO "DCC service has major device number %d.\n", major);
+#endif
 
   /** create virtual device class 
       @todo why required?
       @todo better chose an existing device class?
+      @todo deal with error in case the device class exists already?
   */
   class = class_create(THIS_MODULE, CLASS_NAME);
   if (IS_ERR(class)) {
@@ -255,30 +208,27 @@ int __init dcc_init(void) {
   init_level = level_device;
 
  
-  /* sysfs files:
-   * dev_attr_signals comes from the DEVICE_ATTR(...) earlier */
+  /* create sysfs files */
   ret = device_create_file(device, &dev_attr_signal);
   if (ret < 0) {
-    printk(KERN_ERR "failed to create /sys endpoint '%s'\n", "signal");
+    printk(KERN_ERR "failed to create sysfs endpoint '%s'\n", "signal");
     unwind();
     return ret;
   }
   init_level = level_sysfs ;
 
-  /*** init dma resources we require *****/
-
-#if 1
+#if 0
+  /* optionally grap GPIO (pwm-bcm2835 does not do it) -- so that nobody else can get it */
   ret = gpio_init(); // could also be given the device structure.
   if (ret < 0) {
-    printk(KERN_ERR "failed to acquire gpio pin.\n");
-    unwind();
+    printk(KERN_WARN "failed to acquire gpio pin.\n");
     return ret;
   }
   init_level = level_gpio;
 #endif 
+
   /**** acquire pwm resources ****/
-  ret = pwm_init(); // could also be given the device structure as
-		      // an argument.
+  ret = pwm_init(); 
   if (ret < 0) {
     printk(KERN_ERR "failed to acquire pwm device.\n");
     unwind();
@@ -297,21 +247,12 @@ int __init dcc_init(void) {
   }
   init_level = level_dma;
 
-
-  /** here goes the next step of init */
-
-
-
   init_level = level_running;
   printk(KERN_INFO "DCC service starting sucessfully.\n");
   return ret;
 }
 
-/** release resources in the reverse order in which they were
-    acquired, starting from the latest successfull level. */
 static void unwind(void) {
-
-  printk(KERN_INFO "Unwinding from init level %d.\n", init_level);
 
   switch(init_level) {
   default:
@@ -320,10 +261,6 @@ static void unwind(void) {
     dma_unwind();
   case level_pwm:
     pwm_unwind();
-#if 1
-  case level_gpio:
-    gpio_unwind();
-#endif
   case level_sysfs:
     device_remove_file(device, &dev_attr_signal);
   case level_device:
@@ -332,7 +269,6 @@ static void unwind(void) {
     class_destroy(class);
   case level_chrdev:
     unregister_chrdev(major, DEVICE_NAME); 
-    printk(KERN_INFO DEVICE_NAME " unregistered major %d.\n", major);
   case level_nothing: 
     break;
   }

@@ -1,21 +1,16 @@
 #include <linux/module.h>
 
 
-#ifdef DUMMY
-#warning "DUMMY is on!"
-#define GPIO_FSEL_ALT5 -1
-#else
-//#include <mach/gpio.h> // @todo Why do I need to include this? 
-#endif
-
 #include <linux/gpio.h>
-
 #include "gpio.h"
+
 #include "defs.h"
 
-static int pwm_pin =   18; // possible are GPIOs 12 , 40, 18 (pwm0) and
-// 13, 19 for pwm1 -- only 18 is possible on
-// my rpi (alt5)  
+/** \todo: get this from the pwm device tree entry?
+ possible are GPIOs 12 , 40, 18 (pwm0) and
+ 13, 19 for pwm1 -- only 18 is possible on my rpi (alt5)  
+*/
+static int pwm_pin =   18; 
 module_param(pwm_pin, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
 MODULE_PARM_DESC(pwm_pin, "GPIO pin used for the output of the pwm signal.");
 
@@ -24,7 +19,6 @@ static const size_t NUM_COMP_GPIO_CHIPS = sizeof(compatible_gpio_chips) / sizeof
 
 // helper function inspired by lirc_rpi.c
 inline static int __init is_compatible_gpio_chip(struct gpio_chip *chip, void *dummy) {
-
 
   int i;
   printk(KERN_INFO "GPIO Chip %s\n", chip->label);
@@ -35,9 +29,6 @@ inline static int __init is_compatible_gpio_chip(struct gpio_chip *chip, void *d
   }
   return 0;
 }
-
-/// @todo move this to platform?
-extern int bcm2708_gpio_set_function(struct gpio_chip *gc, unsigned offset, int function); 
 
 static enum {gpio_nothing, gpio_got_pin} gpio_init_level = gpio_nothing; 
 
@@ -52,17 +43,14 @@ int __init gpio_init(void) {
     gpio_unwind();
     return ret;
   } 
-  //printk(KERN_INFO "Successfully requested GPIO %d.\n", pwm_pin);
   gpio_init_level = gpio_got_pin;
 	
-  // 	struct gpio_chip* gc = gpiochip_find("pinctrl-bcm2835", is_right_chip);
   struct gpio_chip* gc = gpiochip_find(NULL, is_compatible_gpio_chip);
   if(gc == NULL) {
     printk(KERN_ALERT "No gpiochip found.\n");
     gpio_unwind();
     return -ENODEV;
   }
-  printk(KERN_ALERT "Gpiochip %s found.\n", gc->label);
 
   /*
     struct pinctrl *pinctrl;
@@ -92,14 +80,6 @@ int __init gpio_init(void) {
   //  return ret;
   //}
 
-  #warning commented out -- just for sake of compilation -- needs to be replaced by using pinctrl
-  //  ret = bcm2708_gpio_set_function(gc, pwm_pin, GPIO_FSEL_ALT5);
-  if (ret) {
-    printk(KERN_ALERT "Setting up GPIO %d as function %d failed with %d.\n", pwm_pin,GPIO_FSEL_ALT5, ret);
-    gpio_unwind();
-    return ret;
-  }
-
   printk(KERN_INFO "Successfully requested pin %u for PWM.", pwm_pin);
   return ret;
 }
@@ -116,5 +96,4 @@ void gpio_unwind(void) {
     // nothing to do.
   }
   }
-  printk(KERN_INFO "Releasing pin %u.\n", pwm_pin);
 }

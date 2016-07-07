@@ -1,9 +1,4 @@
-  // for clockmanager:
-
-//#define CM_PWMCTL (CM_BASE + 0xA0)
-//#define CM_PWMDIV (CM_BASE + 0xA4)
-
-// offset for the various clocks:
+// offset for peripherial clocks:
 #define CM_PWM 0xA0
 
 // offset within each clock:
@@ -17,12 +12,12 @@
 #define CLK_ENAB (1 << 4)
 #define CLK_SRC(__source) (__source & 0xF) // source can be one of the following below:
 
-#define CLK_SRC_GND 0
-#define CLK_SRC_XTAL 1 // 19.2 MHz
-#define CLK_SRC_PLLA 4
-#define CLK_SRC_PLLC 5
-#define CLK_SRC_PLLD 6
-#define CLK_SRC_HDMIAUX 7
+#define SRC_GND 0
+#define SRC_XTAL 1 // 19.2 MHz
+#define SRC_PLLA 4
+#define SRC_PLLC 5
+#define SRC_PLLD 6
+#define SRC_HDMIAUX 7
 
 // values to write into CM_DIV:
 #define CLK_DIVI(__divi) ((__divi & ((1 << 12) -1)) << 12)
@@ -34,5 +29,5 @@
 #define DCC_DIVI(_period) ((F_XTAL * (_period)) / 1000000)
 
 
-int init_clock (void);
-int set_clock(void);
+int init_clockmanager (void);
+void set_clock(void);
