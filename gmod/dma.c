@@ -10,7 +10,7 @@
 #include "defs.h"
 #endif
 
-
+/// \todo need to update dtbs: add dma channels to pwm device -- and how to add the DMA_BIT_MASK(32) to it?
 
 // static struct pwm_device *pd;
 

@@ -1,25 +1,25 @@
-#include "pwm.h"
+
 
 #include <linux/module.h>
 #include <asm/io.h>
 #include <linux/pwm.h>
 
 #include "defs.h"
+#include "pwm.h"
 #include "clock_manager.h"
 
-
+/// os view of pwm device
 struct pwm_device *pd = NULL;
+
+/// platform view of pwm device -- need both.
 struct bcm2835_pwm *pwm = NULL;
 
 
+/** acquire pwm device 
+    \todo more elegant via pwm_get / device tree, but cant get it to work
+    \todo use managed pwm
+*/
 int __init pwm_init(void) {
-
-  /* acquire pwm device 
-     \todo more elegant via pwm_get / device tree
-     \todo use managed pwm
-  */
-
-#define PWM_NUMBER 0
 
   pd = pwm_request(PWM_NUMBER, "bcm2835-pwm"); 
   if (IS_ERR(pd)) {
@@ -32,27 +32,33 @@ int __init pwm_init(void) {
   init_clockmanager();
   set_clock();
 
-  // switch of DMA for pwm peripherial. \todo is this necessary?
+  // switch off DMA for pwm peripherial in case it was running.
   iowrite32(0, (pwm->base + PWM_DMAC)); 
 
-  // shift out 32 bits (-1 is just dummy in FIFO mode)
+  // set to shift out 32 bits (-1 is just dummy in FIFO mode)
   pwm_config(pd, -1, 8*sizeof(u32)); // \todo any better way to get 32 here?
   
-
+  // config the pwm device for use of fifo etc
   iowrite32(MODE1 | RPTL1 | USEF1 | CLRF1, pwm->base + PWM_CTL); 
+
+  // set polarity -- \todo make this a module parameter
   pwm_set_polarity(pd, PWM_POLARITY_INVERSED); // \todo why does TAMS not switch off after this?
 
 
-  // setting up and enabling DMA mode of pwm peripheral
+  // set up and enable DMA mode of pwm peripheral
   iowrite32(ENAB | PANIC(7) | DREQ(7), (pwm->base + PWM_DMAC));
 	
-
-  return 0; // currently no error conditions foreseen.
+  return 0; 
 }
 
+/** release pwm device
+    \todo release clock */
 void pwm_unwind(void) {
-  /* \todo switch off pwm device, and probably free the clock?
-  */
+  
+  // put DMAC back to its reset state:
+  iowrite32(PANIC(7) | DREQ(7), (pwm->base + PWM_DMAC)); 
+  
+  // CTL is reset by free
   pwm_free(pd);
 }
 
