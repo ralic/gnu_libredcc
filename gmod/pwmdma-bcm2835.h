@@ -7,6 +7,6 @@
 #define DEVICE_MAJOR 0 
 #define DEVICE_NAME "pwmdma"
 
-#define CLASS_NAME "pwmdma" // \todo is this really necessary?
+#define CLASS_NAME "pwmdma" // \todo is a new class really necessary or just add it to the pwm class?
 
 #endif

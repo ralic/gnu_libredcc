@@ -11,7 +11,7 @@
 #define CM_BASE (BCM2708_PERI_BASE + 0x101000) /* Clock manager */ 
 
 
-#if 1
+#if 0
 // not needed as pwm / device tree code does the setup
 //! add to mach/gpio.h, remove from ~/build/arch/arm/mach-bcm2708/bcm2708_gpio.c
 enum { GPIO_FSEL_INPUT, GPIO_FSEL_OUTPUT,

@@ -1,3 +1,5 @@
+#include <linux/io.h> /// \todo find better way to provde u32
+
 // offset for peripherial clocks:
 #define CM_PWM 0xA0
 
@@ -26,8 +28,12 @@
 // \todo get the F_XTAL frequency from elsewhere in the raspi sources
 #define F_XTAL 19200000 // 19.2 MHz
 
+// \todo that we can set the PWM clock should be reflected in a change to pwm-bcm2835.c too
 #define DCC_DIVI(_period) ((F_XTAL * (_period)) / 1000000)
 
 
+/// initialise the clockmanager
 int init_clockmanager (void);
-void set_clock(void);
+
+/// set a specific clock
+void set_clock(u32 clock);

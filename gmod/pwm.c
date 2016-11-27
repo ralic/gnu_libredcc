@@ -1,7 +1,7 @@
 
 
 #include <linux/module.h>
-#include <asm/io.h>
+#include <linux/io.h>
 #include <linux/pwm.h>
 
 #include "defs.h"
@@ -18,6 +18,9 @@ struct bcm2835_pwm *pwm = NULL;
 /** acquire pwm device 
     \todo more elegant via pwm_get / device tree, but cant get it to work
     \todo use managed pwm
+    \todo or perhaps use sysfs to be able to set the registers from
+    user space that are not accesible via the pwm.h functions -- but
+    this would be a change to pwm-bcm2835.c
 */
 int __init pwm_init(void) {
 
@@ -30,7 +33,7 @@ int __init pwm_init(void) {
   pwm = to_bcm2835_pwm(pd->chip);
 
   init_clockmanager();
-  set_clock();
+  set_clock(CM_PWM);
 
   // switch off DMA for pwm peripherial in case it was running.
   iowrite32(0, (pwm->base + PWM_DMAC)); 

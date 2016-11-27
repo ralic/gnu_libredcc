@@ -39,7 +39,7 @@ int __init dma_init(void) {
 #define __to_bus1(x) (((x) & 0x00FFFFFF) | 0x7E000000) // applicatable to virt and phys addresses
 #define __to_bus2(x) ((x) - BCM2708_PERI_BASE + 0x7E000000) // applicatable to phys addresses only
 
-#define BCM2708_PWM_DREQ 5 // \todo move to some platform file?
+#define BCM2708_PWM_DREQ 5 // \todo move to some platform file? -- use device tree to set it!
 
   struct dma_slave_config slave_config = {
   .direction = DMA_MEM_TO_DEV,

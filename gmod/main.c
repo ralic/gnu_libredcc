@@ -152,7 +152,7 @@ static ssize_t show_signal(struct device *dev, struct device_attribute *attr, ch
   return scnprintf(buf, PAGE_SIZE, "%s\n", signal ? "on" : "off");
 }
 
-static ssize_t store_signal(struct device *dev, struct device_attribute *attr, char *buf, size_t count) {
+static ssize_t store_signal(struct device *dev, struct device_attribute *attr, const char *buf, size_t count) {
 
   if (strncmp("on", buf, 2) == 0) {
     pwm_enable(pd);
@@ -249,6 +249,10 @@ int __init dcc_init(void) {
   return ret;
 }
 
+/**
+   free acquired resources.
+   \todo is both destroy class and unregister chrdev necessary?
+ */
 static void unwind(void) {
 
   switch(init_level) {
@@ -273,7 +277,7 @@ static void unwind(void) {
 void __exit dcc_exit(void)
 {
   unwind();
-  printk(KERN_INFO "DCC service ending.\n");
+  printk(KERN_INFO DEVICE_NAME " service ending.\n");
 }
 
 module_init(dcc_init);

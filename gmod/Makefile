@@ -24,8 +24,8 @@ CROSS_COMPILE=arm-linux-gnueabi-
 #DEPMOD		= /sbin/depmod
 
 #obj-m += dcc.o pwm-bcm2835.o pwm_init.o
-obj-m += kdcc.o test_pwm.o
-kdcc-objs += dcc.o gpio.o pwm.o dma.o buffer.o clock_manager.o
+obj-m += pwmdma-bcm2835.o test_pwm.o
+pwmdma-bcm2835-objs += main.o pwm.o dma.o buffer.o clock_manager.o gpio.o 
 test_pwm-objs+=t_pwm.o
 
 
