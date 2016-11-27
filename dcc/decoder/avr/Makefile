@@ -1,10 +1,16 @@
 # Version: $Id: Makefile 1265 2013-05-04 21:45:24Z ag0015 $
 
- # # MCU_TARGET = attiny25
- # # DEVICE = /dev/ttyUSB0
- # # PROGRAMMER = buspirate
- # # F_CPU = 8000000
- # # CHIP = t25
+# MCU_TARGET = attiny25
+# DEVICE = /dev/ttyUSB0
+# PROGRAMMER = buspirate
+# F_CPU = 8000000
+# CHIP = t25
+
+MCU_TARGET = attiny45
+DEVICE = /dev/ttyUSB0
+PROGRAMMER = buspirate
+F_CPU = 8000000
+CHIP = t45
 
 # default settings:
 ARCH ?= avr
@@ -13,19 +19,21 @@ PROGRAMMER ?= arduino
 F_CPU ?= 16000000
 DEVICE ?=/dev/ttyACM0
 CHIP ?= m328p
+SHARE = ../share
 
 
-PRG ?= decoder
+PRG ?= decoder_$(CHIP)
 
-OBJ = init_avr.o reset.o interrupts.o ../share/compose_packet.o eint0_isr.o ../share/$(PRG).o error_hw.o ../share/bitqueue.o
+OBJ = init_avr.o reset.o interrupts.o $(SHARE)/compose_packet.o eint0_isr.o $(SHARE)/decoder.o error_hw.o $(SHARE)/bitqueue.o $(SHARE)/port.o $(SHARE)/switch.o
 
-ifeq ($(PRG), decoder)
-OBJ += ../share/io.o io_hw.o eeprom_hw.o
+ifeq ($(PRG), decoder_$(CHIP))
+OBJ += $(SHARE)/io.o io_hw.o eeprom_hw.o
 endif	
 
-# \todo this is not strictly necessary -- just a workaround -- remove these from sniffer, and make main so that it also works with sniffer
-ifeq ($(PRG), sniffer)
-#OBJ += ../share/io.o io_hw.o 
+# \todo this is not strictly necessary -- just a workaround -- remove
+# these from sniffer, and make main so that it also works with sniffer 
+ifeq ($(PRG), sniffer_$(CHIP))
+#OBJ += $(SHARE)/io.o io_hw.o 
 endif	
 
 
@@ -35,6 +43,12 @@ LIB_DIR = -L ../../lib/$(ARCH)/$(MCU_TARGET) -L ../../../lib/$(ARCH)/$(MCU_TARGE
 # could I get those automatically?
 #LIBS = -ldcc -luart
 SYMBOLS = -D F_CPU=$(F_CPU) #-D DEBUG=5 
+
+
+
+
+
+
 OPTIMIZE = -O3
 #OPTIMIZE = -O0        -fsee        -fsection-anchors        -mno-long-calls        -mno-longcall
 
@@ -44,14 +58,14 @@ DEFS =
 CC = avr-gcc
 AS = avr-gcc
 
-CFLAGS = -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) $(DEFS) $(INCLUDE_DIR) $(SYMBOLS) # -fno-jump-tables -
+CFLAGS = -std=c99 -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) $(DEFS) $(INCLUDE_DIR) $(SYMBOLS) # -fno-jump-tables -
 AFLAGS = -g -Wall -mmcu=$(MCU_TARGET) $(DEFS) $(SYMBOLS) -c
 
 
 LDFLAGS = -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) -ldcc  $(LIB_DIR) #$(LIBS) # -nostdlib $(DEFS) # -fnojum
 
 ifeq ($(MCU_TARGET), atmega328p) 
-LDFLAGS += -u uart_init -luart
+LDFLAGS += -u uart_init -luart ../../../lib/avr/atmega328p/libuart.a ../../../lib/uart/uart_stdio.o ../../../lib/uart/uart_rx.o ../../../lib/uart/uart_tx.o
 endif
 
 
@@ -120,8 +134,9 @@ hex: $(PRG).hex
 # Rules for Uploading to the Arduino board:
 upload: all
 #	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Ueeprom:w:$(PRG)_eeprom.hex
-	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Uflash:w:$(PRG).elf  -Uflash:w:$(PRG).elf 
+	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Uflash:w:$(PRG).elf  #-Uflash:w:$(PRG).elf 
 
-upload1: all
-#	avrdude -p m328p -c $(PROGRAMMER) -P /dev/ttyACM1 -Ueeprom:w:$(PRG)_eeprom.hex
-	avrdude -p $(CHIP) -c $(PROGRAMMER) -P /dev/ttyACM1 -Uflash:w:$(PRG).elf  -Ueeprom:w:$(PRG).elf
+lfuse: all
+	avrdude -p $(CHIP) -c $(PROGRAMMER) -P $(DEVICE) -Ulfuse:w:$(PRG).elf  #-Uflash:w:$(PRG).elf -Ueeprom:w:$(PRG).elf
+
+fuses: lfuse

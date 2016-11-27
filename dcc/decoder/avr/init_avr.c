@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014,2015,2016 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -14,13 +14,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
+ * along with LibreDCC. If not, see <http://www.gnu.org/licenses/>.
  */
 
 /** \file
- * \todo watchdog timer
- * \todo move io from interrupt to main thread
- * \todo check whether to merge with the PIC code now.
  */
 
 #include <avr/io.h>
@@ -35,8 +32,7 @@ FUSES = {
   .extended = EFUSE_DEFAULT
   #error before setting the fuses, read them from the ARDUINO
 };
-#elif defined __AVR_ATtiny25__
-
+#elif defined __AVR_ATtiny25__ || defined __AVR_ATtiny45__
 FUSES = {
   .low = LFUSE_DEFAULT | ~(FUSE_CKDIV8), // make F_CPU 8 MHz from inbuilt RC oscillator
   // make RESET pin normal gpio pin, avoid erasing EEPROM, and enable BOD at about 2.8Volst 
@@ -52,24 +48,9 @@ FUSES = {
 							 // :-( 
   .extended = EFUSE_DEFAULT
 };
-
-
 #else
-#warning no fuses being programmed
+#warning no fuses being programmed or unknown architecure
 #endif
-
-// delete the below:
-
-/* #include <avr/interrupt.h> */
-/* #include <avr/sleep.h> */
-/* #include <avr/power.h> */
-
-/* #include <error.h> */
-/* #include <share/bitqueue.h> */
-/* #include <share/compose_packet.h> */
-/* #include <avr/io_hw.h> */
-/* #include <share/io.h> */
-
 
 #if 0
 /*! When all is setup, processing occurs only on interrupts for avr,
@@ -98,28 +79,3 @@ void init_avr() {
   EECR &= ~(_BV(EERIE));
   power_all_disable(); // to save as much power as possible.
 }
-
-// delete below
-/* int main(void) __attribute__((noreturn)); */
-/* int main(void) { */
-
-/*   sei(); */
-/*   INFO("Starting Decoder"); */
-/*   //! @todo loop can be made more efficient by sending to sleep as currently done in exit. */
-/*   while(1) { */
-/* #if DEBUG */
-/*     if(bit_pointer > (1 << (3))) { */
-/*       INFO("More than 3\n"); */
-/*     } */
-/* #endif */
-/*     if(has_next_bit()) { */
-/*       compose_packet(next_bit()); */
-/*     } */
-/*     /\* \todo the below can lead to starvation, so introduce a watchdog? *\/ */
-/*     if(io_tick()) /\* && bitqueue is halfempty *\/  { */
-/*       acknowledge_io_tick(); */
-/*       tick(); */
-/*     } */
-/*   } */
-/* } */
-

@@ -16,40 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with LibreDCC.  If not, see <http://www.gnu.org/licenses/>.
  */
-// 1. Finalise sniffer!
-// 2. Check whether it is a problem of copying the value, because I changed the way the variables are treated! So I need volatie somewhere or how do I need to copy?
 
 #include "service_mode.h"
-#include "dcc_encoder.h"
+#include "dcc_encoder_core.h"
 
 // #define POWERON_CYCLE_MSG "Power on cycle send"
 
 //! Are we in service mode? */
 //static uint8_t mode = OP_MODE;
-
-/** 
-    switches to service mode -- may be called from both service or operations mode
- */
-void service_mode_on() {
-  
-  // switch to long preamble 
-  preamble_len = ENCODER_LONG_PREAMBLE_LEN;
-  // mode = SERVICE_MODE;
-
-  // stop OperationsModeQueue (or even flush it completely??) and start it again when leaving Service mode
-}
-
-/** switches to operations mode -- may be called from bith service or operations mode
- */
-void service_mode_off() {
-  // switch to normal peramble
-    preamble_len = ENCODER_PREAMBLE_LEN;
-    // mode = OP_MODE;
-}
-
-
-
-
 
 /**
  to let decoders tune in on the dcc stream, however I want my own

@@ -1,0 +1,14 @@
+all: $(LIB_DIR)/lib$(LIB).a 
+
+
+.INTERMEDIATE: $(OBJ)	       
+
+%.a: $(OBJ) # hallo
+	$(AR) $(ARFLAGS) $@ $^
+
+clean:
+	rm -rf *.o #$(LIB).a
+	rm -rf *.lst *.map $(EXTRA_CLEAN_FILES)
+
+purge: clean
+	rm lib$(LIB).a

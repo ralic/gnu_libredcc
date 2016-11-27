@@ -18,7 +18,7 @@
  */
 #include "eeprom_hw.h"
 
-uint16_t port_id_eeprom[PORTS] EEMEM; //= {0xFFFF}; // initialise such 						 // for all -- how can
+uint16_t port_id_eeprom[NUM_PORTS] EEMEM; //= {0xFFFF}; // initialise such 						 // for all -- how can
 // I do that if I do
 // not know how many PORTS yet?
 

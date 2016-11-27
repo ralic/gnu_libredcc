@@ -23,8 +23,11 @@ MCU_TARGET ?= atmega328p
 
 #subdirs: $(SUBDIRS)
 
+
+
+
 $(SUBDIRS):
-	$(make) -D MCU_TARGET=$(MCU_TARGET) -C $@; 
+	make -C $@ MCU_TARGET=$(MCU_TARGET) 
 	mkdir -p avr/$(MCU_TARGET)
 	mv $@/lib$@.a avr/$(MCU_TARGET)
 

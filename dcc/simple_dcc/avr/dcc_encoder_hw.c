@@ -18,9 +18,8 @@
  */
 
 /** \file 
-    $Id$
-    
     encodes a dcc packet given as a list of bytes and sends it to WHICH OUTPUT pin?
+    \todo make this deal with the hardware only and rename it to encoder_hw or similar.
  */
 
 #include <avr/io.h>
@@ -29,7 +28,8 @@
 
 #include <dcc.h>
 
-#include "dcc_encoder.h"
+#include "dcc_encoder_hw.h"
+#include "../share/dcc_encoder_core.h"
 
 #define F_CPU_MHZ (F_CPU / 1000000) //! cpu ticks per us
 #define HALF_PERIOD_1 (PERIOD_1 / 2) // us duration of 1 signal.
@@ -41,12 +41,6 @@
  */
 #define ONE_TICKS ((HALF_PERIOD_1 * F_CPU_MHZ) / PRESCALER)
 #define ZERO_TICKS (2*ONE_TICKS)
-
-// advance declarations:
-static uint8_t next_bit();
-//static const dcc_packet* get_next_packet();
-static uint8_t is_new_packet_ready();
-static void done_with_packet();
 
 /**
    ISR that generates the DCC signal on pin XX. It queries next_bit to see whether it needs to encode a 0 or 1 bit next.
@@ -66,145 +60,6 @@ ISR(TIMER2_COMPA_vect) {
   }
 }
 
-//! holds number of 1s to send in the preamble -- this is different
-//! for operations and progeamming mode.
-volatile uint8_t preamble_len = ENCODER_PREAMBLE_LEN;
-
-
-/*! to hold the dcc packet to be sent.
-  This should in principle be made volatile, but as a change does only
-  matter between function calls (isr calls) where dcc_packet is used and we assume
-  that functions read from / write back to memory at their start/end
-  we can get away without making it volatile.
- */
-static dcc_packet packet; 
-
-/**
-   generates DCC conform bit sequence from the bytes in packet, bib by
-   bit on sunsequence calls.
-
-   Initially calls generate the require number of DCC preamble
-   bits. If there is no new packet to send avaiable it continous to
-   generate preamble 1 bits until there is a new packet available.
-
-   Further calls then generate the bit sequence of the DCC packet
-   until all bit have been sent. The function notifies that the global
-   variable packet can be released (and eg updated with the next
-   packet to send) by calling done_with_packet().
-
-   It then continunes to generate preamble bits (at least the minimal
-   number required) until a new packet is available for bit stream encode.
-
-   @return next bit of the DCC stream generated from packet.
- */
-uint8_t next_bit() {
-
-  //! states to go through for DCC signal generation.
-  enum {PREAMBLE, START_BIT, BYTE, STOP_BIT};
-
-  static uint8_t state = PREAMBLE;
-  static uint8_t bytecount = 0;
-
-
-  switch (state) {
-  case PREAMBLE:
-    {
-
-      static uint8_t preamble_ones = 0;
-      preamble_ones++;
-
-      // we move to the start bit state if we have had enough 1s in the preamble
-      if(preamble_ones >= preamble_len) { 
-	preamble_ones = 0;
-	state = START_BIT;
-      }
-      return 1; 
-    }
-
-  case START_BIT:
-    // check whether there is a new packet to send
-    if(is_new_packet_ready()) {
-      state = BYTE;
-      return 0;
-    }
-    else { // just create more preamble bits, if there is no packet to send. :-)
-      return 1; 
-    }
-
-  case BYTE: // when we reach here first we know we have a valid packet to send, and we know we are at the beginning of a packet, so we have a bit to return!
-    {
-      static uint8_t bitmask = 0x80;
-
-      const uint8_t bit = (packet.pp.byte[bytecount] & bitmask);
-
-      bitmask >>= 1;
-      if(bitmask == 0) {
-	bitmask = 0x80;
-	state = STOP_BIT;
-      }
-      return bit;
-    }
-
-  case STOP_BIT:
-    bytecount++;
-    if(bytecount >= packet.len) {
-      done_with_packet(); // make it clear we are done with the current packet
-      bytecount = 0;
-      state = PREAMBLE; // oops we arecreating a extra preamble bit here!
-      //      free(packet); // should this be done outside the ISR? Does it
-		    // take too much time? We will see. 
-      //      preamble_ones++;
-      //      goto CASE_PREAMBLE; // is this valid?
-      return 1;
-	  // we are done with this packet
-    }
-    else { // send next byte
-      state = BYTE;
-      return 0;
-    }
-    break;
-  }
-  // cant happen? or shall we restructure the switch statement, so it falls through to here if not a 0 bit has to be output?
-  return 1;
-}
-
-/*! flag to synchronise between ISR and main thread.
-  The following functions and macros try to hide the mechanism of
-  synchronisation between ISR and main thread. But essentially the
-  ISR check whether flag is 1 to indicate that the main thread has
-  provided a new dcc packet. The ISR sets the flag to 0 to indicate
-  that it is done with the packet. The main thread only overwrites
-  the packet with a new packet is flag is 0, and then sets flag 1 if
-  it has deposited a new packet.
-*/
-static volatile uint8_t flag = 0;
-
-/**
-   checks flag whether new packet is available. Only to be called from
-   within ISR.
-
-   @return true if new packet is available.
- */
-static inline uint8_t is_new_packet_ready() {
-  return flag;
-}
-
-/** checks flag whether ISR is still busy with packet. To be called
-    only from main thread 
-
-    @return true if ISR is still busy with last packet
-*/
-inline uint8_t busy_with_last_packet() {
-  return flag;
-}
-
-/**
-   notify that ISR is done with current packet and hence global
-   variable packet can be set to a new packet. Only to be called from ISR.
- */
-inline static void done_with_packet() {
-  flag = 0;
-}
 
 inline static void dcc_signal_off() {
 
@@ -219,6 +74,24 @@ inline static void dcc_signal_off() {
 #endif
 
  }
+
+
+//* flag for synchronisation in commit_packet
+volatile uint8_t flag = 0;
+
+
+
+
+/** checks flag whether ISR is still busy with packet. To be called
+    only from main thread 
+    
+    @return true if ISR is still busy with last packet
+*/
+static inline uint8_t busy_with_last_packet() {
+  return flag;
+}
+
+
 
 
 /*! 
@@ -239,6 +112,9 @@ void dcc_off() {
   
   dcc_signal_off();
 }
+
+
+
 
 /*! switches dcc signal generation on.
   Must not be called from an ISR.
@@ -320,17 +196,6 @@ void emergency_dcc_off() {
 }
 #endif
 
-/** To be called from the routine that provides the new packets 
-we must make sure this is translated into something atomic 
-blocks hard on flag! Must not be called from an ISR **/
-
-void commit_packet(const dcc_packet* const new_packet) {
-  while(flag); // wait until last packet has been processed
-               // better sleep here instead?
-  packet = *new_packet; // this operation is not atmic, it copies the packet
-  flag = 1; // but should not do any harm, because this one is atomic
-}
-
 void init_encoder() __attribute__((naked)) __attribute__((section(".init8")));
 void init_encoder() {
 
@@ -395,5 +260,98 @@ void init_shortcut() {
   // EIMSK |= _BV(INT0); // check with ATmel manual how often the flag is set and when it is cleared
 
 }
+
+/** 
+    switches to service mode -- may be called from both service or operations mode
+ */
+void service_mode_on() {
+  
+  // switch to long preamble 
+  preamble_len = ENCODER_LONG_PREAMBLE_LEN;
+  // mode = SERVICE_MODE;
+
+  // stop OperationsModeQueue (or even flush it completely??) and start it again when leaving Service mode
+}
+
+/** switches to operations mode -- may be called from bith service or operations mode
+ */
+void service_mode_off() {
+  // switch to normal peramble
+    preamble_len = ENCODER_PREAMBLE_LEN;
+    // mode = OP_MODE;
+}
+
+
+
+
+/** To be called from the routine that provides the new packets 
+we must make sure this is translated into something atomic 
+blocks hard on flag! Must not be called from an ISR **/
+void commit_packet(const dcc_packet* const new_packet) {
+  while(flag); // wait until last packet has been processed
+               // better sleep here instead?
+  packet = *new_packet; // this operation is not atmic, it copies the packet
+  flag = 1; // but should not do any harm, because this one is atomic
+}
+
+
+  //! \return true (power_on) if we are currently generating a dcc signal, otherwise power_off
+uint8_t is_dcc_on() {
+  return (TCCR2B != 0);
+}
+
+
+// interprocess communication:
+ 
+/*! flag to synchronise between ISR and main thread.
+  The following functions and macros try to hide the mechanism of
+  synchronisation between ISR and main thread. But essentially the
+  ISR check whether flag is 1 to indicate that the main thread has
+  provided a new dcc packet. The ISR sets the flag to 0 to indicate
+  that it is done with the packet. The main thread only overwrites
+  the packet with a new packet is flag is 0, and then sets flag 1 if
+  it has deposited a new packet.
+*/
+volatile extern uint8_t flag; 
+
+/**
+   notify that ISR is done with current packet and hence global
+   variable packet can be set to a new packet. Only to be called from ISR.
+*/
+void done_with_packet() {
+  flag = 0;
+}
+
+
+  /**
+     checks flag whether new packet is available. Only to be called from
+     within ISR.
+
+     @return true if new packet is available.
+  */
+uint8_t is_new_packet_ready() {
+  return flag;
+}
+/**
+ * a hook that is called when the preample has finished -- nothing to do for the AVR ISR implementation.
+ */
+void end_of_preamble_hook() {
+  // nothing to do
+  return;
+}
+
+void encoder_init() {
+  // noting to do as the init is done automatically
+  return;
+}
+       
+
+
+
+
+
+
+
+
 
 #endif

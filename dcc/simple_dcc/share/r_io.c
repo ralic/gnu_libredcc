@@ -28,6 +28,8 @@
  * error has happened. And it will be wrong, when a buffer of size 0
  * is given.
  * \todo extended h
+ * @param str must be nonnull otherwise undefined behaviour
+ * @param size must at least be 1 otherwise undefined behaviour
  */
 char* r_fgets(char* const str, const uint8_t size, FILE* const stream) {
   
@@ -35,13 +37,21 @@ char* r_fgets(char* const str, const uint8_t size, FILE* const stream) {
   uint8_t idx = 0;
   int16_t ch; // so that we can distinguish between char 0xFF and EOF (-1),
 
-#warning r_fgets accepts also \n as EOL, not only \r -- might fail with IAV_88!
+#warning r_fgets accepts also \n as EOL, not only \r -- might fail with IAV_88 in binary mode! Check exactly how it my fail.
+
+#warning \todo handling of EOF
 
   //  /*
   while( (idx < size-1) && ((ch = fgetc(stream)) != EOF) && (ch != '\r') && (ch != '\n')) {
     str[idx] = ch;
     idx++;
   }
+  // only return EOF if we actually haven't read anything.
+  if( (idx == 0) && (ch == EOF)) {
+    // set errno?
+    return NULL;
+  }
+
   str[idx] = '\0';
   return str;
   // */
