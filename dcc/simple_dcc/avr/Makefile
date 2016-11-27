@@ -9,7 +9,7 @@ OBJ = $(PRG).o dcc_encoder_hw.o ../share/r_io.o ../share/sprog.o ../share/servic
 LIBS1 = dcc uart
 LIBS = -ldcc -luart
 
-MCU_TARGET = atmega328p
+MCU_TARGET = $(MCU)
 OPTIMIZE = -O2
 
 DEFS = -D F_CPU=16000000 -D DEBUG=5

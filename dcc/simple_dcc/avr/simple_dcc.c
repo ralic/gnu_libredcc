@@ -46,6 +46,7 @@ int main() {
 
   stdout = &uart;
   stdin = &uart;
+  stderr = &uart;
 
   // enable interrupts -- ie start uart input
   sei();

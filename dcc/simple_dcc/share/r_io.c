@@ -35,11 +35,9 @@ char* r_fgets(char* const str, const uint8_t size, FILE* const stream) {
   
 
   uint8_t idx = 0;
-  int16_t ch; // so that we can distinguish between char 0xFF and EOF (-1),
+  int16_t ch = EOF; // so that we can distinguish between char 0xFF and EOF (-1),
 
 #warning r_fgets accepts also \n as EOL, not only \r -- might fail with IAV_88 in binary mode! Check exactly how it my fail.
-
-#warning \todo handling of EOF
 
   //  /*
   while( (idx < size-1) && ((ch = fgetc(stream)) != EOF) && (ch != '\r') && (ch != '\n')) {

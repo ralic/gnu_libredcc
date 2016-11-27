@@ -58,7 +58,16 @@
 #include "service_mode.h"
 #include "sprog.h"
 #include "dcc_encoder_core.h"
+
+#if defined UNIXXXX // insert here right flag name so that unix module will compile!
 #include "../unix/dcc_encoder_hw.h" // \todo change to sth unveristal so I do not have to change this line for AVR
+#elif defined __AVR
+// nothing to include
+#else
+#error "What shall we include?"
+#endif
+
+
 #include "r_io.h"
 
 #include <stdlib.h>
@@ -297,7 +306,7 @@ void sprog() {
 	break;
       case 'S':
 	// output status -- to be done
-	FPUTL(OK,&uart); 
+	FPUTL(OK,stdout); 
 	break;
       default:
 	fputs("Unknown Command: <", stdout); 
