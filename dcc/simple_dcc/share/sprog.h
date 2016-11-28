@@ -10,7 +10,6 @@ void sprog();
 //! sets up sprog() initialially
 void sprog_init();
 
-
 //! an sprog command is maximally 64 chars long including the terminating \r
 #define INPUT_LINE_LEN 64 
 

@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014, 2016 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -52,6 +52,11 @@
 ISR(TIMER2_COMPA_vect) {
 
   static uint8_t toggle = 0;
+
+#ifdef L620x
+  PORTB ^= _BV(PB2) | _BV(PB3); // toggle outputs
+#endif
+
   toggle++;
   
   // do only every second time:
@@ -60,12 +65,15 @@ ISR(TIMER2_COMPA_vect) {
   }
 }
 
-
 inline static void dcc_signal_off() {
 
   TCCR2B = 0; // timer off
+  #ifdef L620x
+  PORTB &= ~ _BV(PB0); // enable off
+  #else
   // switch the output OCR2A to zero for the sake of strange boosters:
   PORTB &= ~ _BV(PB3);
+  #endif
 
 #ifdef SHORTCUT
   //! disable short cut interrupt.
@@ -150,16 +158,19 @@ void dcc_on() {
 		      // interrupt -- so that an shortcut has either
 		      // been processed before the switch on -- or
 		      // will be processed after it.
-  
 
-#ifdef SHORTCUT
+  #ifdef L620x
+  PORTB |= _BV(PB0); // enable on
+  #endif
+  
+  #ifdef SHORTCUT
 
   sei();
 
   // and now normally commit another idle packet, but following in the rules:
   commit_packet(&idle_packet);
 
-#endif
+  #endif
 
 }
 
@@ -199,8 +210,14 @@ void emergency_dcc_off() {
 void init_encoder() __attribute__((naked)) __attribute__((section(".init8")));
 void init_encoder() {
 
+#ifdef L620x
+  TCCR2A = _BV(WGM21); 
+  // we use pin PB0 as enable signal, and PB2 and PB3 as DCC outputs with opposite logic:
+  PORTB &= ~(_BV(PB0) | _BV(PB2)); // switch off
+  PORTB |= _BV(PB3); // switch on
+  DDRB |= (_BV(PB0) | _BV(PB2) | _BV(PB3)); // make output
+#else
   // we use OC2A pin = PB3 as output for the dcc signal.
-
   TCCR2A = _BV(COM2A0) | _BV(WGM21); // toggle OC2A on compare match and CTC mode.
 
   PORTB &= ~ _BV(PB3);
@@ -208,6 +225,7 @@ void init_encoder() {
 		     // value it has initially, but we do not care for
 		     // DCC, but for the sake of strange boosters, we
 		     // set it to zero.
+#endif
 
   OCR2A = ONE_TICKS; //ONE_TICKS; // should be 116 with the current settings
 						   // for a one as the
@@ -219,9 +237,6 @@ void init_encoder() {
 						   // the register!
 
   TIMSK2 = _BV(OCIE2A); // enable interrupt for compare match A
-
-  // now done in the dcc_on!
-  //  TCCR2B = _BV(CS21); // prescaler 8 and start timer (and part of CTC mode)
 
   // for a clean start
   TCCR2B = 0;
@@ -345,13 +360,4 @@ void encoder_init() {
   return;
 }
        
-
-
-
-
-
-
-
-
-
 #endif

@@ -30,6 +30,10 @@ extern dcc_packet packet;
 #endif
 //! \todo everything in here must persumable go back into dcc_encoder_hw
 
+//! set up the encoder hardware -- must be implemented in the hw modules
+void encoder_init();
+
+
 //! commits packet to be sent as a DCC signal
 void commit_packet(const dcc_packet* const packet);
 

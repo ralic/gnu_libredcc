@@ -12,7 +12,7 @@ LIBS = -ldcc -luart
 MCU_TARGET = $(MCU)
 OPTIMIZE = -O2
 
-DEFS = -D F_CPU=16000000 -D DEBUG=5
+DEFS = -D F_CPU=16000000 -D DEBUG=5 -D L620x=1
 INCLUDE_DIRS = -I ../../include -I ../../../include
 LIB_DIRS = -L ../../lib/$(ARCH)/$(MCU) -L ../../../lib/$(ARCH) #/$(MCU) should also be with uar
 
