@@ -55,6 +55,8 @@ ISR(TIMER2_COMPA_vect) {
 
 #ifdef L620x
   PORTB ^= _BV(PB2) | _BV(PB3); // toggle outputs
+#elif MOTOR_SHIELD
+  PORTB ^= _BV(PB4) | _BV(PB5);
 #endif
 
   toggle++;
@@ -70,6 +72,9 @@ inline static void dcc_signal_off() {
   TCCR2B = 0; // timer off
   #ifdef L620x
   PORTB &= ~ _BV(PB0); // enable off
+  #elif MOTOR_SHIELD
+  PORTB &= ~ _BV(PB3);
+  PORTD &= ~ _BV(PD3);
   #else
   // switch the output OCR2A to zero for the sake of strange boosters:
   PORTB &= ~ _BV(PB3);
@@ -161,6 +166,9 @@ void dcc_on() {
 
   #ifdef L620x
   PORTB |= _BV(PB0); // enable on
+  #elif MOTOR_SHIELD
+  PORTB |= _BV(PB3);
+  PORTD |= _BV(PD3);
   #endif
   
   #ifdef SHORTCUT
@@ -216,6 +224,13 @@ void init_encoder() {
   PORTB &= ~(_BV(PB0) | _BV(PB2)); // switch off
   PORTB |= _BV(PB3); // switch on
   DDRB |= (_BV(PB0) | _BV(PB2) | _BV(PB3)); // make output
+#elif MOTOR_SHIELD
+  TCCR2A = _BV(WGM21); 
+  // we use pin PB3 and PD3 as enable signal, and PB4 and PB5 as DCC with the same logic:
+  PORTB &= ~(_BV(PB3) | _BV(PB4)) | _BV(PB5); // switch off
+  PORTD &= ~ _BV(PD3);
+  DDRB |= _BV(PB3) | _BV(PB4) | _BV(PB5); // make output
+  DDRD |= _BV(PD3);
 #else
   // we use OC2A pin = PB3 as output for the dcc signal.
   TCCR2A = _BV(COM2A0) | _BV(WGM21); // toggle OC2A on compare match and CTC mode.
