@@ -29,7 +29,7 @@ extern char line[];
 //! answer sent in response to successful commands.
 #define OK "OK" EOLSTR
 
-
-
+//! prompt
+#define PROMPT EOLSTR "P> "
 
 #endif

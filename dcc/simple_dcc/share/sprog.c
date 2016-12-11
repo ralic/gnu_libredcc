@@ -213,11 +213,13 @@ void sprog_init() {
   encoder_init(); // \todo add this to the headers?
 }
 
+
+
 void sprog() {
   // say hello to the world -- not clear whether sprog does this as well.
-  FPUTL("Start -- Version $Rev$", stdout);
+  // FPUTL("Start -- Version $Rev$", stdout);
   // send prompt
-  fputs("\rP> ", stdout); // "R> ": when is this prompt used? "L> " when we are in bootloader.
+  fputs(PROMPT, stdout); // "R> ": when is this prompt used? "L> " when we are in bootloader.
   
   while(NULL != r_fgets(line, INPUT_LINE_LEN + 1, stdin) /* may block if no input */) {
 
@@ -300,6 +302,7 @@ void sprog() {
 	FPUTL(OK, stdout); // is this answer expected according to the sprog manual?
 	break;
       case 'Q':
+	dcc_off();
 	FPUTL("Exiting.", stdout); 
 	exit(0);
 	break;
@@ -319,6 +322,6 @@ void sprog() {
     else {
       FPUTL("Command token too long or empty.", stdout); 
     }
-    fputs("\rP> ", stdout); // "R> ": when is this prompt used? "L> " when we are in bootloader.
+    fputs(PROMPT, stdout); // "R> ": when is this prompt used? "L> " when we are in bootloader.
   }
 }
