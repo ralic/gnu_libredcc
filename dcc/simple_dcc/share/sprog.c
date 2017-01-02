@@ -232,7 +232,11 @@ void sprog() {
     // first token is cmd:
     char* const cmd = strtok(line, WHITE_SPACE); 
 
-    if(cmd == NULL) continue; // read next line if this one was just an empty line.
+    if(cmd == NULL) {
+      // read next line if this one was just an empty line and issue prompt
+      fputs(PROMPT, stdout); 
+      continue;
+    }
 
 #ifdef TEST
     fputs("CMD: ", stdout);
