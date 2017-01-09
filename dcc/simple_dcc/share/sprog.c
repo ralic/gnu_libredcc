@@ -213,8 +213,6 @@ void sprog_init() {
   encoder_init(); // \todo add this to the headers?
 }
 
-
-
 void sprog() {
   // say hello to the world -- not clear whether sprog does this as well.
   // FPUTL("Start -- Version $Rev$", stdout);
@@ -223,18 +221,17 @@ void sprog() {
   
   while(NULL != r_fgets(line, INPUT_LINE_LEN + 1, stdin) /* may block if no input */) {
 
-#ifdef TEST
-    fputs("Raw: ", stdout);
-    //fputs(str, stdout); fputc(EOLCHAR, stdout); // just an echo for testing!
-#endif
+    if ((line[0] == ' ' ) && (line[1] == '\0')) {
+      fputs(PROMPT, stdout); 
+      continue;
 
-    
+    }
     // first token is cmd:
     char* const cmd = strtok(line, WHITE_SPACE); 
 
     if(cmd == NULL) {
       // read next line if this one was just an empty line and issue prompt
-      fputs(PROMPT, stdout); 
+      // fputs(PROMPT, stdout); 
       continue;
     }
 
@@ -264,8 +261,6 @@ void sprog() {
     }
     fputc(EOLCHAR, stdout);
 #endif 
-
-    
 
     // interpret command and arguments -- we are tolerant if surplus arguments are supplied.
     if(strlen(cmd) == 1) {
