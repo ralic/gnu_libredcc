@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014, 2017 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -19,17 +19,16 @@
 
 /** @file 
 
-    IAV stand for "Intefaccia ad alta velocita".
+    IAV stands for "Interfaccia ad alta velocita" (ie high speed interface).
 
     Implements the HSI88 protocol for communication over USB with a desktop etc.
-    Also contains the main function for the current S88 driver.
+    Also implements the main functions of the current S88 protocol.
 
-    For the HSI88 protocol see downloads on \see http://www.ldt-infocenter.com/dokuwiki/doku.php?id=en:hsi-88
+    For the HSI88 protocol see downloads on \see
+    http://www.ldt-infocenter.com/dokuwiki/doku.php?id=en:hsi-88  
 
-    \todo Currently only the commands are implemented that are used by the Rocrail 
-    software command station, see source code of file
-    rocdigs/impl/hsi88.c of rocrail, \see
-    https://github.com/rocrail/Rocrail/blob/master/rocdigs/impl/hsi88.c
+    \todo Currently only the commands are implemented that are used by
+    the Rocrail/JMRI software command stations.
 */
 
 #include "s88.h"
@@ -48,18 +47,15 @@
 /*! macro if defined some test code and test outputs are produced. */
 #undef TEST
 
-#ifdef TEST
-static uint8_t terminal_mode = 1;
-#else
 /*! flag to determin whether commincation over uart is in terminal
     mode or binary mode.  In terminal mode bytes are transmitted as
     two ascii chars in hexadecimal encoding, and in binary mode simply
     as the byte.
 */
 static uint8_t terminal_mode = 0;
-#endif
 
-/** This function reads byte from the uart respecting the terminal_mode setting.
+
+/** This function reads a byte from the uart respecting the terminal_mode setting.
     @returns byte read from the uart.
  */
 inline static unsigned char fgetc_iav() {
@@ -75,7 +71,7 @@ inline static unsigned char fgetc_iav() {
 }
 
 /** write a byte to a stream respecting the terminal_mode setting.
-    @param  byte byte to write
+    @param  byte to write
     @param f stream to write to
  */
 static inline void fputc_iav(const uint8_t byte, FILE* const f) {
@@ -96,7 +92,7 @@ static inline void fputc_iav(const uint8_t byte, FILE* const f) {
     It is not used to communicate sensor updates while the s88 is
     running.
 
-    @param letter "i" if called in course of setting chain lenghts, "m" if
+    @param letter "i" if called in course of setting chain lengths, "m" if
     requested by the "m" command.
 
     @pre num_sensor is not zero, otherwise undefined behaviour.
@@ -107,7 +103,7 @@ static inline void fputc_iav(const uint8_t byte, FILE* const f) {
     @note this method seems to be the only place outside the ISR
     where readings is read on the main thread.
 
-    \todo check whether the caller sneed to stop polling the s88 while this
+    \todo check whether the callers need to stop polling the s88 while this
     command is executed.
 */
 static void send_all_readings(const char letter) {
@@ -132,7 +128,7 @@ static void send_all_readings(const char letter) {
 /*! sets the number of sensors per chain - ie the length of the chain(s).
 
   \note We read in 3 values (one for each of 3 possible chains), but
-  add them up to form one long chain of sensor.
+  add them up to form one long chain of sensors.
 
   \todo currently deals only with one chain. Should be 3 as in HSI88.
 
@@ -144,7 +140,7 @@ void set_chain_lengths() {
 
   uint8_t i;
   for(i = 0; i < MAX_CHAINS; i++) {
-    modules+= fgetc_iav(); // read in length of each chains and add up
+    modules+= fgetc_iav(); // read in length of each chain and add up
 			   // to form 1 long chain.
   }
 
@@ -163,8 +159,8 @@ void set_chain_lengths() {
     // must also make sure that S88 stops if chain length is set to zero.
     num_sensor = 16*modules;
     // officially we should scan here, but that implemntation would be
-    // in elegant, so we send just all readings as initialised and
-    // there after start the scanning 
+    // inelegant, so we send just all readings as initialised and
+    // thereafter start the scanning 
     // stop_s88();
     send_all_readings('i');
     start_s88();
@@ -196,9 +192,10 @@ inline static void handle_reading() {
     const reading_t reading = dequeue_reading();
 
 #ifdef IAV
+    const uint8_t num_modules = ((num_sensor - 1) / 16) + 1;  // assert num_sensor != 0?
+
     fputc('i', &uart);
-    fputc_iav(1, &uart); // we are always reporting the change of only one
-		  // module!
+    fputc_iav(num_modules, &uart); // report number of connected modules
     fputc_iav((reading.sensor / 16)+1, &uart); // module number =
 					       // sensor /16 -- sensor
 					       // numbers start from
@@ -239,10 +236,6 @@ int main() {
 
   sei(); // start the interrupt, and hence polling the S88 bus.
 
-#ifdef TEST
-  fputs("Starting S88 -- Version $Rev$\n", &uart);
-#endif
-
   while(1) {
     // check whether we have a the beginning of the command
     if(uart_rx_received()) {
@@ -262,6 +255,8 @@ int main() {
 	preserve all memory content (except the stack?) -- ie are all
 	global vars still set?
 
+	\todo perhaps use a timer to time out?
+
 	First letter decides command. see HSI for all the available commands.
  */
       switch(cmd) {
@@ -273,13 +268,10 @@ int main() {
 		     are accepting a wider range of EOL chars than the
 		     HSI88 specification which uses only \r */
       case '\r':  //! \todo add case EOL_CHAR?
-	fputc(cmd, &uart); // answer with the same EOL_CHAR
+	fputc(cmd, &uart); // echo EOL_CHAR
 	break;
-      case 'v': // no parameters -- answer for rocrail musst start
+      case 'v': // no parameters -- answer for rocrail must start
 		// with a "'V'"
-
-	//! \todo what is this line for -- testing I suppose -- delete.
-	fputs("Version", &uart);
 	if(fgetc(&uart) == EOL_CHAR) { // HSI has response length of
 				       // 41 char, not sure whether
 				       // that is decisive.
@@ -297,7 +289,8 @@ int main() {
 	  fputc(EOL_CHAR, &uart);
 	}
 	break;
-	// toggle binary or terminal mode -- not needed for rocrail as it starts working in binary mode
+	// toggle binary or terminal mode -- not needed for rocrail as
+	// it starts working in binary mode 
       case 'm': 
 	/* not really needed as it is not sent by rocrail (but
 	   others?) -- but we probably need to stop the readin process
@@ -306,7 +299,7 @@ int main() {
 	   written to be the interrupt routien (although no change
 	   events will be process -- as this currently would be
 	   happening. on the same thread as this. */
-      default: // unknown -- just do nothing, and do not block.
+      default: // unknown -- just echo the character, and do not block.
 	fputc(cmd, &uart);
 	break;
       }

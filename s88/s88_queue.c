@@ -1,5 +1,5 @@
 /* 
- *  Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -35,6 +35,7 @@
     succeeds. So no error catching at the line below.
     \todo calculate the margines for the serial transmission with respect to the
     maximum speed of the s88 bus!
+    \todo implement the circular buffer more efficiently (ie without blocking )
 */
 
 #include "s88_queue.h"
