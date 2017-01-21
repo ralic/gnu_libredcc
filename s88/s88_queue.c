@@ -135,3 +135,12 @@ void queue_reading(const reading_t reading) {
 reading_t dequeue_reading() {
   return sensor_buffer[read_idx++];
 }
+
+/** only to be called if we have exclusive access to the queue:
+    removes all elements from it.
+*/
+
+void reset_queue() {
+  read_idx = 0;
+  write_idx = 0;
+}

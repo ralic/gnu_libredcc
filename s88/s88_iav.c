@@ -55,6 +55,12 @@
 static uint8_t terminal_mode = 0;
 
 
+
+/** stores number of modules */
+static uint8_t num_modules = 0;
+
+
+
 /** This function reads a byte from the uart respecting the terminal_mode setting.
     @returns byte read from the uart.
  */
@@ -112,13 +118,13 @@ static void send_all_readings(const char letter) {
 
   //! \todo check whether this change works alright -- it is the only
   //! (?) one I made while commenting these files.
-  const uint8_t num_modules = ((num_sensor - 1) / 16) + 1;  // assert(num_sensor !=0)
+  // const uint8_t num_modules = ((num_sensor - 1) / 16) + 1;  // assert(num_sensor !=0)
   fputc_iav(num_modules, &uart);  // reporting all sensors / modules.
 	    
   uint8_t i;
-  for(i = 1; i <= num_modules; i++) {
+  for(i = 0; i < num_modules; i++) {
 
-    fputc_iav(i, &uart); // module number
+    fputc_iav(i+1, &uart); // module number
     fputc_iav(readings.module[i] / 0x100, &uart); // high byte first!
     fputc_iav(readings.module[i] % 0x100, &uart); // low byte second!
   }
@@ -136,36 +142,42 @@ static void send_all_readings(const char letter) {
 */
 void set_chain_lengths() {
 
-  uint8_t modules = 0;
+  uint8_t new_modules = 0;
 
   uint8_t i;
   for(i = 0; i < MAX_CHAINS; i++) {
-    modules+= fgetc_iav(); // read in length of each chain and add up
+    new_modules+= fgetc_iav(); // read in length of each chain and add up
 			   // to form 1 long chain.
   }
 
-  if(fgetc(&uart) == EOL_CHAR) { // confirmation that we have a complete command
+  // check command string is complete.
+  if(fgetc(&uart) == EOL_CHAR) {
 
-    modules = (modules > MAX_MODULES) ? MAX_MODULES : modules;
+    // end s88 traffic XXXXX we must not call this if we haven't started operating bexause otherwise the flag will never be reset to zero! => introduce a main thread only flag to indicated this! and staet_s88() must not be called directly, only, begin_s88(), perhaps with module number as arguments?
+    end_s88();
+    
+    num_modules = (new_modules > MAX_MODULES) ? DEFAULT_MODULES : new_modules;
     
     fputc('s', &uart);
-    fputc_iav(modules, &uart); // new number of modules.
+    fputc_iav(num_modules, &uart); // new number of modules.
     fputc(EOL_CHAR, &uart);
-    // if chain is running
-    // do ths
-    //     // stop the chain, if it is running 
-    // empty the send_queue?
-    // else -- we are doing it for the first time
-    // must also make sure that S88 stops if chain length is set to zero.
-    num_sensor = 16*modules;
+
+    // S88 ISR never runs if modules == 0
+
+    // end of S88 operation?
+    // if(num_modules == 0) return;
+
+
+      // XXXXX at this point we need to check what happens to the other methods we call if modues is 0
+      
     // officially we should scan here, but that implemntation would be
     // inelegant, so we send just all readings as initialised and
     // thereafter start the scanning 
     // stop_s88();
     send_all_readings('i');
-    start_s88();
+    begin_s88(16*num_modules);
   }
-  // else do nothing
+  // else do nothing [or error msg or just a cr in reply?]
 }
 
 /**
@@ -192,7 +204,7 @@ inline static void handle_reading() {
     const reading_t reading = dequeue_reading();
 
 #ifdef IAV
-    const uint8_t num_modules = ((num_sensor - 1) / 16) + 1;  // assert num_sensor != 0?
+    //const uint8_t num_modules = ((num_sensor - 1) / 16) + 1;  // assert num_sensor != 0?
 
     fputc('i', &uart);
     fputc_iav(num_modules, &uart); // report number of connected modules
@@ -291,14 +303,13 @@ int main() {
 	break;
 	// toggle binary or terminal mode -- not needed for rocrail as
 	// it starts working in binary mode 
-      case 'm': 
-	/* not really needed as it is not sent by rocrail (but
-	   others?) -- but we probably need to stop the readin process
-	   or empty the queue. Also during ´m´ the polling of the bus
-	   should be stopped -- because READINGS could still be
-	   written to be the interrupt routien (although no change
-	   events will be process -- as this currently would be
-	   happening. on the same thread as this. */
+      case 'm':  // request update from layout
+	if(fgetc(&uart) == EOL_CHAR) {
+	  end_s88();
+	  send_all_readings('m');
+	  begin_s88(16*num_modules);
+	}
+	break;
       default: // unknown -- just echo the character, and do not block.
 	fputc(cmd, &uart);
 	break;

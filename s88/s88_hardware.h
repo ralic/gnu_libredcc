@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014, 2017 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -60,7 +60,6 @@
 #define reset_on() S88_PORT |= _BV(S88_RESET_PIN)  //! switch reset line on
 #define clock_on() S88_PORT |= _BV(S88_CLOCK_PIN) //! switch clock line on
 #define test_on() S88_PORT |= _BV(S88_TEST_PIN) //! switch test pin on						/
-
 #define load_off() S88_PORT &= ~_BV(S88_LOAD_PIN) //! switch load line off
 #define reset_off() S88_PORT &= ~_BV(S88_RESET_PIN) //! switch reset line off
 #define clock_off() S88_PORT &= ~_BV(S88_CLOCK_PIN) //! switch clock line off
@@ -75,6 +74,7 @@
 /*! Start reading the S88 bus. For AVR, this enables overflow
     interrupt generation and that's it as we set up all other things
     beforehand. */
-#define start_s88() do {TIMSK0 = _BV(OCIE0A);} while(0)
+#define start_s88() do {TCNT0 = 0; TIFR0  &= ~ _BV(OCF0A); TIMSK0 |= _BV(OCIE0A);} while(0)
+#define stop_s88() do {TCNT0 = 0; TIMSK0 &= ~ _BV(OCIE0A);} while(0)
 
 #endif

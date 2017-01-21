@@ -55,14 +55,24 @@
 #include "s88_hardware.h"
 #include "s88_queue.h"
 
+/** flag to indicate whether s88 chain sweeping is to stop.
+    1. set to true in the main thread to indicate to ISR to stop when
+       chain sweep is complete.
+    2. if ISR reads this flag = true at the end, it stops s88 sweeping
+       and sets stopping to true to acknowledge that is has finised
+*/
+static volatile bit_t stopping = 0;
+
+
 /** contains the current sensor readings. Its elements are accessed from
-    both interrupt and main thread, hence it is volatile. */
-volatile READINGS readings;
+    both interrupt and main thread, hence it is volatile. 
+    @todo does volatile have the disred effect? Is it needed? */
+READINGS readings;
 
 /*! length of the sensor chain in bits. 
     Iti is volatile because it may be set in the main programme, but
     is read in ISR. */
-volatile sensor_t num_sensor = 0; 
+static sensor_t num_sensor = 0; 
 
 /*! takes a sensor reading, checks whether the sensor value has
   changed from its previous stored value, and stores the new value. If
@@ -80,6 +90,9 @@ volatile sensor_t num_sensor = 0;
   @param sensor sensor number -- sensor numbers start at 0 (and go up
   to num_sensor-1)
   @param bit sensor value
+
+  @todo rewrite so that changes are only send at the of a sweep
+  through the sensor chain? Would reduce load on the serial interface.  
 */
 inline static void handle_reading(const sensor_t sensor, const bit_t bit) {
 
@@ -97,7 +110,11 @@ inline static void handle_reading(const sensor_t sensor, const bit_t bit) {
    
     /* changed sensor states have this format due to the HSI output
        format -- which only deals with sensors in "modules" of 16- */
-    const reading_t new_reading = {sensor: sensor, value:bit, module_val: readings.module[sensor / 16]};
+    const reading_t new_reading = {
+      .sensor = sensor,
+      .value = bit,
+      .module_val = readings.module[sensor / 16]
+    };
 
     /** see \ref queue_size. 
        \todo At this point we could check whether the queue has free space,
@@ -125,9 +142,9 @@ ISR(TIMER0_COMPA_vect){
     - load_clock: a clock cycle during load to clock the latches.
     - reset: resets the input latches (if required for the decoder) --
       no clock needed
-    - read: reads out the shift register -- one bit in each clock cycle.
+    - clock: reads out the shift register -- one bit in each clock cycle.
   */
-  typedef enum {load, load_clock, reset, clock} s88_state; 
+  enum {load, load_clock, reset, clock}; // s88_state; 
  
   //! The variable state keeps track of the s88 state across
   //! subsequent calls to this function.
@@ -198,12 +215,57 @@ ISR(TIMER0_COMPA_vect){
 	// Not used here -- we handle readings via queue_reading about
 	// whenever a reading is different from a previous reading.
 	state = load;
+
+	/* at this point:
+	   1. all lines ar switched of
+	   2. all sensor have been read in this sweep down the sensor
+              chain, and the next clock cycle would begin a new sweep.
+	   3. all reading have been put into the queie. 
+	   So the sweep is comlete. Ideal time to check whether we
+	   should be stopping:
+	*/
+
+	// main ask us to stop, so we do it here:
+	if(stopping) {
+	  // stop timer interrupt here.
+	  stop_s88();
+	  // acknowledge that we have stopped:
+	  stopping = 0;
+	}
       }
       break;
     }
     } 
   }
 }
+
+
+/**
+ must only be called from main.
+ 1. Requested ISR to stop via stopping flag
+ 2. empties queue;
+ */
+void end_s88() {
+
+  if(num_sensor != 0) {
+    // request ISR to stop
+    stopping = 1;
+
+    // wait until it has actually stopped:
+    while(stopping) { /* wait */ }
+    
+    // at this point stopping is false: ie end acknowledged.
+
+    num_sensor = 0;  
+  }
+}
+
+void begin_s88(const sensor_t sensors) {
+  num_sensor = sensors;
+  if(num_sensor) start_s88();
+}
+
+  
 
 /*! initialises the hardware independent part of the s88 reader:
   - sets all initial readings to zero. */

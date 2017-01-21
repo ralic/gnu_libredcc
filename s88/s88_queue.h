@@ -37,7 +37,7 @@ void queue_reading(const reading_t reading);
 //! pop an element from the queue.
 reading_t dequeue_reading();
 
-
-
+//! empty the queue
+void reset_queue();
 
 #endif
