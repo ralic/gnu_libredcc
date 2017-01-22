@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014, 2017 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -32,10 +32,10 @@
     a rare event, and that serial transmission (which pops off the
     queue) is sufficiently fast, so that the queue is never at full
     capacity -- hence we assume queuing a new reading always
-    succeeds. So no error catching at the line below.
+    succeeds. So no error catching.
     \todo calculate the margines for the serial transmission with respect to the
     maximum speed of the s88 bus!
-    \todo implement the circular buffer more efficiently (ie without blocking )
+    \todo implement the circular buffer more efficiently (ie without blocking and tidying)
 */
 
 #include "s88_queue.h"
@@ -130,7 +130,7 @@ void queue_reading(const reading_t reading) {
 /*! gets an element from the queue. Intended to run on main thread --
     call only if you know that queue has an element, checked with
     has_reading().
-    \pre had_reading() must return nonnull.
+    \pre has_reading() must return nonnull.
 */
 reading_t dequeue_reading() {
   return sensor_buffer[read_idx++];
@@ -139,7 +139,6 @@ reading_t dequeue_reading() {
 /** only to be called if we have exclusive access to the queue:
     removes all elements from it.
 */
-
 void reset_queue() {
   read_idx = 0;
   write_idx = 0;

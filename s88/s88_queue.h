@@ -1,5 +1,5 @@
 /* 
- *  Copyright 2014 Andre Gruning <libredcc@email.de>
+ * Copyright 2014 Andre Gruning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -20,8 +20,6 @@
 #define S88_QUEUE 1
 
 #include "s88_types.h"
-
-
 
 /*! \file
   \todo It would actually be good to implement the queue as a class -- we

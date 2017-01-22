@@ -22,8 +22,6 @@
     contains macro definitions that look like functions to set and read
     the used pins. This is done so that the code in s88_hardware.c
     does not need to be changed when different hardware pins are used.  
-
-    \todo insert the correct Arduino pin names
  */
 
 #ifndef S88_HARDWARE_H
@@ -74,7 +72,9 @@
 /*! Start reading the S88 bus. For AVR, this enables overflow
     interrupt generation and that's it as we set up all other things
     beforehand. */
-#define start_s88() do {TCNT0 = 0; TIFR0  &= ~ _BV(OCF0A); TIMSK0 |= _BV(OCIE0A);} while(0)
-#define stop_s88() do {TCNT0 = 0; TIMSK0 &= ~ _BV(OCIE0A);} while(0)
+#define start_s88() do {TCNT0 = 0; TIFR0  &= ~_BV(OCF0A); TIMSK0 |= _BV(OCIE0A);} while(0)
+
+/** stop generating interrupts for s88 */
+#define stop_s88() do {TCNT0 = 0; TIMSK0 &= ~_BV(OCIE0A);} while(0)
 
 #endif

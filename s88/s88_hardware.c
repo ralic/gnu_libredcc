@@ -55,7 +55,7 @@ void init_s88_hardware() {
   S88_PORT |= _BV(S88_DATA_PIN);
   
   /* set up s88 interrupt and timer. As s88 is not so time critical,
-     we take the timer with the lowest priority this is timer0. */
+     we take the timer with the lowest priority. This is timer 0. */
 
   // select CTC mode with OCRA as top:
   TCCR0A  = _BV(WGM01);

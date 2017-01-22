@@ -47,23 +47,19 @@
 /*! macro if defined some test code and test outputs are produced. */
 #undef TEST
 
-/*! flag to determin whether commincation over uart is in terminal
-    mode or binary mode.  In terminal mode bytes are transmitted as
-    two ascii chars in hexadecimal encoding, and in binary mode simply
-    as the byte.
+/*! flag to determin whether communication over UART is in terminal
+  mode or binary mode.  In terminal mode bytes are transmitted as
+  two ascii chars in hexadecimal encoding, and in binary mode simply
+  as the byte.
 */
 static uint8_t terminal_mode = 0;
-
-
 
 /** stores number of modules */
 static uint8_t num_modules = 0;
 
-
-
-/** This function reads a byte from the uart respecting the terminal_mode setting.
+/** reads a byte from the uart respecting the terminal_mode setting.
     @returns byte read from the uart.
- */
+*/
 inline static unsigned char fgetc_iav() {
   if(terminal_mode) {
     // read 2 ascii chars and convert to byte;
@@ -79,7 +75,7 @@ inline static unsigned char fgetc_iav() {
 /** write a byte to a stream respecting the terminal_mode setting.
     @param  byte to write
     @param f stream to write to
- */
+*/
 static inline void fputc_iav(const uint8_t byte, FILE* const f) {
   if(terminal_mode) {
     fprintf(f, "%02x", byte); 
@@ -89,46 +85,54 @@ static inline void fputc_iav(const uint8_t byte, FILE* const f) {
   }
 }
 
-/*! send all current readings (as stored in readings) via the UART
-    in the format as specified in the HSI88 specification. 
+/**
+   As header of the "i" and "m" replies, send the letter and the number
+   of registered modules.
 
-    This function is currently used as follows:
-    - when the s command is executed.
-    - when the m command is executed.
-    It is not used to communicate sensor updates while the s88 is
-    running.
+   @param letter the letter (either "i" or "m") to mark start of reply.
+*/
+static inline void send_registered_modules(const char letter)
+  fputc(letter, &uart);
+fputc_iav(num_modules, &uart);  // num of all modules.
+}
 
-    @param letter "i" if called in course of setting chain lengths, "m" if
-    requested by the "m" command.
 
-    @pre num_sensor is not zero, otherwise undefined behaviour.
+/**
+   send the reading of a module to the UART. 
+   Note internally module indices start from 0, however module numbers
+   are reported starting from 1.
 
-    @todo check whether volatile on num_sensor and READINGS is really
-    needed as we will probably switch off s88 anyway during calls to set_chain_length().
+*/
+static inline void send_module(const uint8_t module, const uin16_t value) {
 
-    @note this method seems to be the only place outside the ISR
-    where readings is read on the main thread.
+  // module number is one more than its index.
+  fputc_iav(module+1, &uart); 
+  fputc_iav(value / 0x100, &uart); // high byte first!
+  fputc_iav(value % 0x100, &uart); // low byte second!
+}
 
-    \todo check whether the callers need to stop polling the s88 while this
-    command is executed.
+
+/*! send all current readings via the UART
+  in the format as specified in the HSI88 specification. 
+
+  This function is currently used as follows:
+  - after the s command for the first sweep through the sensor chain.
+  - when the m command is executed.
+
+  s88 operation should be stopped when this function is executed.
+
+  @param letter "i" if called in course of setting chain lengths, "m" if
+  requested by the "m" command.
 */
 static void send_all_readings(const char letter) {
-  
-  fputc(letter, &uart);
 
-  //! \todo check whether this change works alright -- it is the only
-  //! (?) one I made while commenting these files.
-  // const uint8_t num_modules = ((num_sensor - 1) / 16) + 1;  // assert(num_sensor !=0)
-  fputc_iav(num_modules, &uart);  // reporting all sensors / modules.
+  send_connected_modules(letter);
 	    
-  uint8_t i;
-  for(i = 0; i < num_modules; i++) {
-
-    fputc_iav(i+1, &uart); // module number
-    fputc_iav(readings.module[i] / 0x100, &uart); // high byte first!
-    fputc_iav(readings.module[i] % 0x100, &uart); // low byte second!
+  for(uint8_t i = 0; i < num_modules; i++) {
+    send_module(i, readings.module[i]);
   }
-    fputc(EOL_CHAR, &uart); 
+
+  fputc(EOL_CHAR, &uart); 
 }
 
 /*! sets the number of sensors per chain - ie the length of the chain(s).
@@ -137,8 +141,6 @@ static void send_all_readings(const char letter) {
   add them up to form one long chain of sensors.
 
   \todo currently deals only with one chain. Should be 3 as in HSI88.
-
-  \todo make changing of chain length safe even if S88 is already running.
 */
 void set_chain_lengths() {
 
@@ -147,44 +149,38 @@ void set_chain_lengths() {
   uint8_t i;
   for(i = 0; i < MAX_CHAINS; i++) {
     new_modules+= fgetc_iav(); // read in length of each chain and add up
-			   // to form 1 long chain.
   }
 
-  // check command string is complete.
+  // check command is complete.
   if(fgetc(&uart) == EOL_CHAR) {
 
-    // end s88 traffic XXXXX we must not call this if we haven't started operating bexause otherwise the flag will never be reset to zero! => introduce a main thread only flag to indicated this! and staet_s88() must not be called directly, only, begin_s88(), perhaps with module number as arguments?
+    // stop s88
     end_s88();
-    
+
+    // module number in range?
     num_modules = (new_modules > MAX_MODULES) ? DEFAULT_MODULES : new_modules;
     
     fputc('s', &uart);
-    fputc_iav(num_modules, &uart); // new number of modules.
+    // output new number of modules.
+    fputc_iav(num_modules, &uart); 
     fputc(EOL_CHAR, &uart);
 
-    // S88 ISR never runs if modules == 0
-
-    // end of S88 operation?
-    // if(num_modules == 0) return;
-
-
-      // XXXXX at this point we need to check what happens to the other methods we call if modues is 0
-      
-    // officially we should scan here, but that implemntation would be
-    // inelegant, so we send just all readings as initialised and
-    // thereafter start the scanning 
-    // stop_s88();
+    /* officially we should scan here, but that implemntation would be
+       inelegant, so we send all just readings as initialised.
+    */
     send_all_readings('i');
+
+    // start s88 operation now.
     begin_s88(16*num_modules);
   }
-  // else do nothing [or error msg or just a cr in reply?]
+  // else do nothing [or error msg or just a cr in reply -- not clear from docu what Hsi88 does.]
 }
 
 /**
-   This function 
+   This function reads a reading from the queue and outputs it to the UART
 
-   \pre there are readings to handle
-   (eg established via has_reading()) before calling this function).
+   \pre There are readings to handle (eg established via
+   has_reading()) before calling this function).  
 
    \note This function does not handle a reading (ie returns without
    effect) when there are less then 10 bytes free in the uart
@@ -192,30 +188,20 @@ void set_chain_lengths() {
    that all characters can indeed be written to the uart tx queue
    without overflowing. 
 
-   \todo uart could have a better handling of overflows (eg stop
+   \todo UART could have a better handling of overflows (eg stop
    reading in the S88)
-
-   \todo extract common code between this and send_all_readings() */
+*/
 inline static void handle_reading() { 
 
-  if(uart_tx_free() >= 10) { // we are writing 10 chars terminal mode
-			     // or 6 in binary mode (and up to 7 or 8 in
-			     // test mode.
+  /* make sure to write in one go: 
+     we are writing 10 chars terminal mode:
+     message reads: "i01234567\r", ie 10 chars. */
+  if(uart_tx_free() >= 10) { 
     const reading_t reading = dequeue_reading();
 
 #ifdef IAV
-    //const uint8_t num_modules = ((num_sensor - 1) / 16) + 1;  // assert num_sensor != 0?
-
-    fputc('i', &uart);
-    fputc_iav(num_modules, &uart); // report number of connected modules
-    fputc_iav((reading.sensor / 16)+1, &uart); // module number =
-					       // sensor /16 -- sensor
-					       // numbers start from
-					       // zero, module numbers
-					       // from 1 in the HSI88 protocol
-
-    fputc_iav(reading.module_val / 0x100, &uart); // high byte first!
-    fputc_iav(reading.module_val % 0x100, &uart); // low byte second!
+    send_connected_modules('i');
+    send_module(reading.sensor / 16, reading.module_val);
     fputc(EOL_CHAR, &uart); 
 #else /* here we write 8 chars! For testing only we print the reading
 	 more human-readably. */
@@ -227,35 +213,29 @@ inline static void handle_reading() {
 /**!
    Main function.
    - enables the interrupts -- all other initialisation has been done by
-     naked functions in sections .init5 and .init8.
+   naked functions in sections .init5 and .init8.
    - checks whether we have any new commands pending via the uart,
-     parses and executed them.
+   parses and executed them.
    - checks whether we have any sensor updates and handles them.
    - is an eternal loop
 
-   xxxxx
+   \todo generally handle the UART better. Currently the code will
+   deadlock if the PC sends an incomplete command. This could be
+   remedied by having a watchdog routine or a real scheduler to
+   detected time-outs and then jump to the beginning of main again
+   without reinitialisation.
+*/
 
-
-   \todo add _noexit attribute
-   \todo handle the uart better -- as it is currently the code will
-    deadlock if the PC sends an incomplete command. THis could be
-   remedied by a real scheduler or by having a watchdog routine.
-
-
-
- */
+int main() __attribute__((noexit));
 int main() {
 
-  sei(); // start the interrupt, and hence polling the S88 bus.
+  sei(); // start the interrupts (needed for UART and later for S88)
 
   while(1) {
+
     // check whether we have a the beginning of the command
     if(uart_rx_received()) {
-
-#ifdef TEST
-      fputc('x', &uart);
-#endif
-
+      // Single first letter decides command.
       const char cmd = fgetc(&uart);
 
       /*! \note The calls below might deadlock if the PC never sends
@@ -263,63 +243,58 @@ int main() {
 	central is in binary more, the central will sends strings that
 	are shorter than expected.
 	
-	\todo look up watch dog in glibc -- does watch dog reset
-	preserve all memory content (except the stack?) -- ie are all
+	\todo look up watch dog in glibc for AVR and AVR data sheet:
+        - does watch dog reset preserve all memory content (and the stack)? -- ie are all
 	global vars still set?
-
-	\todo perhaps use a timer to time out?
-
-	First letter decides command. see HSI for all the available commands.
- */
+	\todo orperhaps use a timer to time out?
+      */
       switch(cmd) {
-      case 's': // takes a number of parameters and has a complicated
-		// output 
-	set_chain_lengths(); // so it has its own function
+      case 's': 
+	set_chain_lengths(); 
 	break;
-      case '\n': /** any of the the chars acceptable as EOL. \note We
-		     are accepting a wider range of EOL chars than the
-		     HSI88 specification which uses only \r */
-      case '\r':  //! \todo add case EOL_CHAR?
-	fputc(cmd, &uart); // echo EOL_CHAR
+	
+      case EOL_CHAR:
+	// echo EOL_CHAR
+	fputc(cmd, &uart); 
 	break;
-      case 'v': // no parameters -- answer for rocrail must start
-		// with a "'V'"
-	if(fgetc(&uart) == EOL_CHAR) { // HSI has response length of
-				       // 41 char, not sure whether
-				       // that is decisive.
-	  //! \todo think about an automatic version string from git
- 	  fputs("Version XXX IAV88 (C) Andre Gruening ", &uart);
-	  //! \todo replace this command with a concatented string
-	  //! via macro processing in the above fputs()
+	
+      case 'v': 
+	if(fgetc(&uart) == EOL_CHAR) {
+	  // original HSI88 has response length of 41 chars, not sure
+	  // whether is imporant for any central?
+	  //! \todo add an automatic version string from git
+ 	  fputs("ver. IAV88 (C) Andre Gruening 2014, 2017.", &uart);
 	  fputc(EOL_CHAR, &uart);
 	}
 	break;
-      case 't': // no arguments
+
+      case 't':
 	if(fgetc(&uart) == EOL_CHAR) {
 	  terminal_mode = !terminal_mode;
 	  fputs(terminal_mode ? "t1" : "t0", &uart);
 	  fputc(EOL_CHAR, &uart);
 	}
 	break;
-	// toggle binary or terminal mode -- not needed for rocrail as
-	// it starts working in binary mode 
-      case 'm':  // request update from layout
+
+      case 'm': 
 	if(fgetc(&uart) == EOL_CHAR) {
 	  end_s88();
 	  send_all_readings('m');
 	  begin_s88(16*num_modules);
 	}
 	break;
-      default: // unknown -- just echo the character, and do not block.
+
+      default:
+	// unknown cmd -- just echo the character, and do not block.
 	fputc(cmd, &uart);
 	break;
       }
-
     }
 
     // do we have new readings from the sensor?
     if(has_reading()) {
-      handle_reading(); // sends them in appropriate format over the UART
+      // send them to UART
+      handle_reading(); 
     }
   }
 }

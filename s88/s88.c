@@ -1,6 +1,6 @@
 /*! @file 
  *
- * \copyright Copyright 2014 André Grüning <libredcc@email.de>
+ * \copyright Copyright 2014, 2017 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *
@@ -24,27 +24,35 @@
   This file implements the driver for the S88 protocol. The only
   hardware dependent part is the use of ISR() further down. I refain
   from defining this as a normal function, and make an ISR() in the
-  hardware dependet source code somewhere else which then calls this
+  hardware dependent source code somewhere else which then calls this
   normal reason for performance reasons.
 
   \pre for AVR, timer0 needs to be set up so that the ISR() is called
-  with a regular frequency as done in init_s88_hardware(). 
+  with a regular frequency as done in init_s88_hardware().  The ISR()
+  then calls queue_reading() each time it finds a sensor on the S88
+  bus has changed sate. The queue behind queue_reading() serves to
+  transmit the sensor information to other code that reads a changed
+  sensor from the queue and then processes the changes sensor state --
+  in the current case this code is in s88_iav.c. 
 
   For S88 protocol details, \see http://www.s88-n.eu/index-en.html.
-  The ISR() then calls queue_reading() each time it finds a sensor on
-  the S88 bus has changed sate. The queue behind queue_reading()
-  serves to transmit the sensor information to other code that reads a changed
-  sensor from the queue and then processes the changes sensor state --
-  in the current case this code is in s88_iav.c.
 
-  \todo currently we implement only one chain of sensors -- instead of 3
-  as in the HSI
 
-  \page queue_size Estimating the necessary lenght of the queue
+  \todo Currently we implement only one chain of sensors -- instead of 3
+  as in the orginal HSI88.
+
+  \page queue_size Estimating the necessary length of the queue.
+  At each clock tick we read in one sensor. Clock ticks are maximally
+  30us for s88 (and 60us in our case) -- and each changed reading
+  creates on entry in the queue. These are then read in the main
+  thread an forwarded to the serial port. Each reading is translated
+  into 1+2+6+1 = 9 bits/30us = 3bits/10us = 0.3 10^6 / s = 300.000 baud.
+
+  If we always wait for a whole module then we have 300.000/16 = 18.75 kbd
+
   \todo reasoning here about the chosen size of queue -- balancing max
   speed of generation of events with rate of transmission of messages
   via the uart.
-
  */
 
 #include<uart.h>
@@ -55,65 +63,58 @@
 #include "s88_hardware.h"
 #include "s88_queue.h"
 
-/** flag to indicate whether s88 chain sweeping is to stop.
-    1. set to true in the main thread to indicate to ISR to stop when
+/** Flag to indicate whether s88 chain sweeping is to stop. Contract:
+    1. Set to true in the main thread to indicate to ISR to stop when
        chain sweep is complete.
-    2. if ISR reads this flag = true at the end, it stops s88 sweeping
+    2. If ISR reads this flag = true at the end of a sweep, it stops s88 sweeping
        and sets stopping to true to acknowledge that is has finised
 */
 static volatile bit_t stopping = 0;
 
-
-/** contains the current sensor readings. Its elements are accessed from
-    both interrupt and main thread, hence it is volatile. 
-    @todo does volatile have the disred effect? Is it needed? */
+/** Contains the current sensor readings. Its data is accessed from
+    ISR. The main thread only accesss it when s88 is stopped. */
 READINGS readings;
 
-/*! length of the sensor chain in bits. 
-    Iti is volatile because it may be set in the main programme, but
-    is read in ISR. */
+/*! Length of the sensor chain in bits. It is set in on the main
+    thread, but only when the s88 is stopped -- hence no need to make
+    volatile. */
 static sensor_t num_sensor = 0; 
 
-/*! takes a sensor reading, checks whether the sensor value has
-  changed from its previous stored value, and stores the new value. If
-  the value has changed, then the sensor reading is stored in the
+/*! Takes a sensor reading, checks whether the sensor value has
+  changed from its previous stored value, and stores the new value. 
+
+  If the value has changed, then the sensor reading is stored in the
   queue from s88_queue.c for passing on to a handler that runs on the
   main thread. 
 
-  \pre sensor is less than num_sensor, otherwise undefined behaviour
+  \pre sensor is less than num_sensor, otherwise undefined behaviour.
 
-  \todo  Shall I change this to state based stuff as in the DCC encoder
-  and decoders as it is costly to calculte the bit pointer position
-  each time from sensor. The disatvange would be that I then
-  introduce state into this function.
+  @param sensor sensor number between  0 and num_sensor-1
+  @param bit sensor value as read from layout
 
-  @param sensor sensor number -- sensor numbers start at 0 (and go up
-  to num_sensor-1)
-  @param bit sensor value
-
-  @todo rewrite so that changes are only send at the of a sweep
-  through the sensor chain? Would reduce load on the serial interface.  
+  @todo rewrite such that changes are only send at the of a sweep
+  through the sensor chain. Would reduce load on the serial interface
+  for Hsi88 protocol.
 */
 inline static void handle_reading(const sensor_t sensor, const bit_t bit) {
 
   const sensor_t byte_p = sensor / 8;
   const uint8_t bit_mask = 1 << (sensor % 8);
   
-  /* if past reading and current are different, queue the new reading
+  /* If current and new reading are different, queue the new reading
      for further handling.
-     
      \note The line below is a logical XOR, \see
      \http://stackoverflow.com/questions/1596668/logical-xor-operator-in-c 
   */
   if((!(readings.byte[byte_p] & bit_mask)) != (!bit)) {
-    readings.byte[byte_p] ^= bit_mask; // toggle bit in reading testing
+    readings.byte[byte_p] ^= bit_mask; // update bit in current reading.
    
-    /* changed sensor states have this format due to the HSI output
-       format -- which only deals with sensors in "modules" of 16- */
+    /* changed sensor states have this format due to the Hsi88
+       protocol: */
     const reading_t new_reading = {
       .sensor = sensor,
       .value = bit,
-      .module_val = readings.module[sensor / 16]
+      .module_val = readings.module[ sensor / 16 ]
     };
 
     /** see \ref queue_size. 
@@ -132,7 +133,8 @@ inline static void handle_reading(const sensor_t sensor, const bit_t bit) {
     For details of the S88 bus protocol and timings 
     \see http://www.opendcc.de/s88/s88_n/s88-timing.html
 
-    \note Due to the structure of the function we read always at least sensors 0 and 1 -- even if num_sensor <= 2
+    \note Due to the structure of the function we read always at least
+    sensors 0 and 1 -- even if num_sensor <= 2 
  */
 ISR(TIMER0_COMPA_vect){
 
@@ -217,15 +219,15 @@ ISR(TIMER0_COMPA_vect){
 	state = load;
 
 	/* at this point:
-	   1. all lines ar switched of
-	   2. all sensor have been read in this sweep down the sensor
+	   1. all lines have been switched of
+	   2. all sensord have been read in this sweep down the sensor
               chain, and the next clock cycle would begin a new sweep.
 	   3. all reading have been put into the queie. 
 	   So the sweep is comlete. Ideal time to check whether we
 	   should be stopping:
 	*/
 
-	// main ask us to stop, so we do it here:
+	// main asks us to stop, so we do it here:
 	if(stopping) {
 	  // stop timer interrupt here.
 	  stop_s88();
@@ -241,7 +243,8 @@ ISR(TIMER0_COMPA_vect){
 
 
 /**
- must only be called from main.
+gently stops s88 operation.
+Must only be called from main.
  1. Requested ISR to stop via stopping flag
  2. empties queue;
  */
@@ -260,13 +263,14 @@ void end_s88() {
   }
 }
 
+/** start s88 operation
+    @param sensors number of sensors on the s88 chain */
 void begin_s88(const sensor_t sensors) {
   num_sensor = sensors;
   if(num_sensor) start_s88();
 }
 
   
-
 /*! initialises the hardware independent part of the s88 reader:
   - sets all initial readings to zero. */
 void init_s88() __attribute__((naked));
