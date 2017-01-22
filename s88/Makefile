@@ -33,7 +33,7 @@ CXX = avr-g++
 CC = avr-gcc
 AS = avr-gcc
 
-CFLAGS = -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) $(DEFS) -I $(INCLUDE_DIR) # -fno-jump-tables -
+CFLAGS = -std=gnu11 -g -Wall $(OPTIMIZE) -mmcu=$(MCU_TARGET) $(DEFS) -I $(INCLUDE_DIR) # -fno-jump-tables -
 CXXFLAGS = $(CFLAGS) -fno-threadsafe-statics 
 #CXXFLAGS = $(CFLAGS) -fno-threadsafe-statics -fexceptions
 

@@ -91,9 +91,9 @@ static inline void fputc_iav(const uint8_t byte, FILE* const f) {
 
    @param letter the letter (either "i" or "m") to mark start of reply.
 */
-static inline void send_registered_modules(const char letter)
+static inline void send_registered_modules(const char letter) {
   fputc(letter, &uart);
-fputc_iav(num_modules, &uart);  // num of all modules.
+  fputc_iav(num_modules, &uart);  // num of all modules.
 }
 
 
@@ -103,7 +103,7 @@ fputc_iav(num_modules, &uart);  // num of all modules.
    are reported starting from 1.
 
 */
-static inline void send_module(const uint8_t module, const uin16_t value) {
+static inline void send_module(const uint8_t module, const uint16_t value) {
 
   // module number is one more than its index.
   fputc_iav(module+1, &uart); 
@@ -123,15 +123,21 @@ static inline void send_module(const uint8_t module, const uin16_t value) {
 
   @param letter "i" if called in course of setting chain lengths, "m" if
   requested by the "m" command.
+
+  @note blocks if UART buffer is full!
 */
 static void send_all_readings(const char letter) {
 
-  send_connected_modules(letter);
+  send_registered_modules(letter);
 	    
   for(uint8_t i = 0; i < num_modules; i++) {
+    // wait for uart buffer:
+    while(uart_tx_free() < 7); 
     send_module(i, readings.module[i]);
   }
 
+  while(uart_tx_free() < 10);
+  // wait again
   fputc(EOL_CHAR, &uart); 
 }
 
@@ -193,14 +199,14 @@ void set_chain_lengths() {
 */
 inline static void handle_reading() { 
 
-  /* make sure to write in one go: 
-     we are writing 10 chars terminal mode:
+  /* make sure to write in one go as to not block!
+     We are writing 10 chars terminal mode:
      message reads: "i01234567\r", ie 10 chars. */
   if(uart_tx_free() >= 10) { 
     const reading_t reading = dequeue_reading();
 
 #ifdef IAV
-    send_connected_modules('i');
+    send_registered_modules('i');
     send_module(reading.sensor / 16, reading.module_val);
     fputc(EOL_CHAR, &uart); 
 #else /* here we write 8 chars! For testing only we print the reading
@@ -226,7 +232,8 @@ inline static void handle_reading() {
    without reinitialisation.
 */
 
-int main() __attribute__((noexit));
+
+int main() __attribute__((OS_main));
 int main() {
 
   sei(); // start the interrupts (needed for UART and later for S88)
