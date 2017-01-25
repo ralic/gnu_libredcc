@@ -132,12 +132,12 @@ static void send_all_readings(const char letter) {
 	    
   for(uint8_t i = 0; i < num_modules; i++) {
     // wait for uart buffer:
-    while(uart_tx_free() < 7); 
+    while(uart_tx_free() < 6); 
     send_module(i, readings.module[i]);
   }
 
-  while(uart_tx_free() < 10);
   // wait again
+  while(uart_tx_free() < 10);
   fputc(EOL_CHAR, &uart); 
 }
 

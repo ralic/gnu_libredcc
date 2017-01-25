@@ -35,7 +35,8 @@
 #define S88_PIN PINB
 
 
-//! Connect this AVR pin (Arduino Uno Pin 8) to the LOAD pin of the S88 bus
+//! Connect this AVR pin (Arduino Uno Pin 8) to the LOAD pin (some
+//! time called PS (preset?) pin of the S88 bus.
 #define S88_LOAD_PIN PB0
 
 //! Connect this AVR pin (Arduino Uno Pin 9) to the RESET pin of the S88 bus
@@ -44,13 +45,13 @@
 //! Connect this AVR pin (Arduino Uno Pin 10) to the CLOCK pin of the S88 bus
 #define S88_CLOCK_PIN PB2
 
+//! Connect this AVR pin (Arduino Uno Pin 11) to the LINE pin of the S88 bus
+#define S88_DATA_PIN PB3
+
 #if DEBUG
 //! This is the LED on the Ardino Uno board (Pin 13) -- for testing and debugging purposes only
 #define S88_TEST_PIN PB5
 #endif 
-
-//! Connect this AVR pin (Arduino Uno Pin 11) to the LINE pin of the S88 bus
-#define S88_DATA_PIN PB3
 
 /** The following macros are used to switch on and off the various
     lines of the s88 bus: */
