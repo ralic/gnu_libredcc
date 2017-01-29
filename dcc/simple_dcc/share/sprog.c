@@ -306,7 +306,8 @@ void sprog() {
 	exit(0);
 	break;
       case '?':
-	FPUTL("MYPROG -- Version X.XX", stdout);
+	FPUTL("MYPROG pretending to be:\n" 
+	      "SPROG Ver 10\n", stdout);
 	break;
       case 'S':
 	// output status -- to be done
