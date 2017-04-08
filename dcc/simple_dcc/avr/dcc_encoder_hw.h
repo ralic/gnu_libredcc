@@ -1,5 +1,5 @@
 /* 
- * Copyright 2014 André Grüning <libredcc@email.de>
+ * Copyright 2014, 2017 André Grüning <libredcc@email.de>
  *
  * This file is part of LibreDCC
  *

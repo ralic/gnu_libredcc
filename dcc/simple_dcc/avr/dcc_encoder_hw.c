@@ -57,6 +57,10 @@ ISR(TIMER2_COMPA_vect) {
   PORTB ^= _BV(PB2) | _BV(PB3); // toggle outputs
 #elif MOTOR_SHIELD
   PORTB ^= _BV(PB4) | _BV(PB5);
+#elif XDUINO_SHIELD
+  PORTB ^= _BV(PB0) | _BV(PB3);
+#else
+#error using unknown hardware
 #endif
 
   toggle++;
@@ -70,15 +74,17 @@ ISR(TIMER2_COMPA_vect) {
 inline static void dcc_signal_off() {
 
   TCCR2B = 0; // timer off
-  #ifdef L620x
+#ifdef L620x
   PORTB &= ~ _BV(PB0); // enable off
-  #elif MOTOR_SHIELD
+#elif MOTOR_SHIELD
   PORTB &= ~ _BV(PB3);
   PORTD &= ~ _BV(PD3);
-  #else
+#elif XDUINO_SHIELD
+  PORTB &= ~ _BV(PB1);
+#else
   // switch the output OCR2A to zero for the sake of strange boosters:
   PORTB &= ~ _BV(PB3);
-  #endif
+#endif
 
 #ifdef SHORTCUT
   //! disable short cut interrupt.
@@ -164,12 +170,16 @@ void dcc_on() {
 		      // been processed before the switch on -- or
 		      // will be processed after it.
 
-  #ifdef L620x
+#ifdef L620x
   PORTB |= _BV(PB0); // enable on
-  #elif MOTOR_SHIELD
+#elif MOTOR_SHIELD
   PORTB |= _BV(PB3);
   PORTD |= _BV(PD3);
-  #endif
+#elif XDUINO_SHIELD
+  PORTB |= _BV(PB1);
+#else
+#error undefined hardware
+#endif
   
   #ifdef SHORTCUT
 
@@ -231,7 +241,11 @@ void init_encoder() {
   PORTD &= ~ _BV(PD3);
   DDRB |= _BV(PB3) | _BV(PB4) | _BV(PB5); // make output
   DDRD |= _BV(PD3);
-#else
+#elif XDUINO_SHIELD
+  PORTB &= ~(_BV(PB0) | _BV(PB1)); // init off
+  PORTB |= _BV(PB3); // init on
+  DDRB |= _BV(PB0) | _BV(PB3) | _BV(PB1); // make output
+#else // PLAIN
   // we use OC2A pin = PB3 as output for the dcc signal.
   TCCR2A = _BV(COM2A0) | _BV(WGM21); // toggle OC2A on compare match and CTC mode.
 
